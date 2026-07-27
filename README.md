@@ -1,7 +1,7 @@
-# AEO / GEO Visibility — PCS
+# masteraeo.com
 
 Monorepo for the AI visibility product: public Next.js site + Express API.
-Admin portal is out of scope for now.
+See `docs/PRODUCT_PLAN.md` for phases and progress.
 
 ## Structure
 
@@ -9,10 +9,10 @@ Admin portal is out of scope for now.
 apps/api      Express + MongoDB + Anthropic (secrets, LLM, jobs)
 apps/web      Next.js static export + Ant Design + Redux Toolkit + Persist
 packages/shared   Shared CATEGORIES, MODELS, DTOs
+docs/         Product plan and delivery tracking
 ```
 
-The original prototype (`geo-visibility-mvp-v3.jsx`) is kept as a reference.
-Claude still **simulates** ChatGPT / Gemini / Perplexity styles (planned fake multi-model).
+Claude **simulates** ChatGPT / Gemini / Perplexity styles (planned fake multi-model).
 
 ## Prerequisites
 
@@ -26,40 +26,30 @@ Claude still **simulates** ChatGPT / Gemini / Perplexity styles (planned fake mu
 npm install
 cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local
-# edit apps/api/.env and set ANTHROPIC_API_KEY + MONGODB_URI
+# edit apps/api/.env — set all required vars (no defaults in code)
 npm run build:shared
 ```
 
 ## Develop
 
 ```bash
-# terminal 1
 npm run dev:api
-
-# terminal 2
 npm run dev:web
 ```
 
 - Web: http://localhost:3000  
 - API: http://localhost:4000/api/v1/health  
 
-## Production build (static web)
+## Seed users
+
+Add `JWT_SECRET`, `JWT_EXPIRES_IN`, and `SIGNUP_ENABLED=false` to `apps/api/.env` (see `.env.example`).
 
 ```bash
-npm run build:shared
-npm run build:api
-npm run build:web
-# apps/web/out contains the static export
+SEED_ADMIN_EMAIL=admin@masteraeo.com \
+SEED_ADMIN_PASSWORD='choose-a-password' \
+SEED_BUSINESS_EMAIL=demo@masteraeo.com \
+SEED_BUSINESS_PASSWORD='choose-a-password' \
+npm run seed
 ```
 
-## API overview
-
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/api/v1/business/search` | Find business candidates |
-| POST | `/api/v1/prompts/generate` | Generate 5 buyer prompts |
-| POST | `/api/v1/visibility/jobs` | Start async visibility job |
-| GET | `/api/v1/visibility/jobs/:id` | Poll job status / results |
-| POST | `/api/v1/plans` | Build action plan from job |
-| POST | `/api/v1/plans/items/generate` | Generate one content item |
-| GET | `/api/v1/reports/:id` | HTML report payload |
+Then open `/login` and use the business account. Signup remains invite-only while `SIGNUP_ENABLED=false`.

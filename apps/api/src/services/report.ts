@@ -28,10 +28,10 @@ export function buildReportHtml(state: {
 
   let html = "";
   html += `<div class="rpt-header">`;
-  html += `<div class="rpt-eyebrow">AI Visibility Report</div>`;
+  html += `<div class="rpt-eyebrow">AI Visibility Report · Master AEO</div>`;
   html += `<div class="rpt-title">${esc(selected ? selected.name : "Untitled business")}</div>`;
   html += `<div class="rpt-sub">${esc(category || "")}${category && location ? ", " : ""}${esc(location)}</div>`;
-  html += `<div class="rpt-brand">Pal Consultancy Services, PCS Solution</div>`;
+  html += `<div class="rpt-brand">Master AEO</div>`;
   html += `</div>`;
 
   if (results && score) {
@@ -87,7 +87,7 @@ export function buildReportHtml(state: {
 }
 
 export function wrapReportDocument(bodyHtml: string): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Visibility Report</title><style>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>AI Visibility Report · Master AEO</title><style>
     body { font-family: Georgia, serif; color: #1A241F; padding: 40px; max-width: 720px; margin: 0 auto; background: #FFFFFF; }
     .rpt-header { border-bottom: 2px solid #1A241F; padding-bottom: 16px; margin-bottom: 24px; }
     .rpt-eyebrow { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: #55705F; margin-bottom: 6px; }

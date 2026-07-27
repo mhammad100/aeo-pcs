@@ -3,8 +3,8 @@ import Providers from "@/components/Providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Visibility | Pal Consultancy Services",
-  description: "Find your business, check your AI visibility, get a plan.",
+  title: "Master AEO | AI Visibility",
+  description: "Find your business, check your AI visibility, get a plan. Master AEO",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,7 +1,6 @@
 import path from "path";
 import dotenv from "dotenv";
 
-// Resolve from this file so it works whether cwd is repo root or apps/api
 dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 function required(name: string): string {
@@ -12,10 +11,20 @@ function required(name: string): string {
   return value;
 }
 
+function requiredBool(name: string): boolean {
+  const value = required(name).toLowerCase();
+  if (value === "true" || value === "1") return true;
+  if (value === "false" || value === "0") return false;
+  throw new Error(`${name} must be true or false`);
+}
+
 export const env = {
   port: Number(required("PORT")),
   mongoUri: required("MONGODB_URI"),
   anthropicApiKey: required("ANTHROPIC_API_KEY"),
   anthropicModel: required("ANTHROPIC_MODEL"),
   corsOrigin: required("CORS_ORIGIN"),
+  jwtSecret: required("JWT_SECRET"),
+  jwtExpiresIn: required("JWT_EXPIRES_IN"),
+  signupEnabled: requiredBool("SIGNUP_ENABLED"),
 };

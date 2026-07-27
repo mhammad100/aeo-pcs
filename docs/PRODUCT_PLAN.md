@@ -1,7 +1,7 @@
-# masteraeo.com — Product & Delivery Plan
+# Master AEO — Product & Delivery Plan
 
 **Platform:** masteraeo.com  
-**Repo:** `aeo-pcs` (working name; product brand is masteraeo.com)  
+**Repo:** `aeo-pcs` (working name; product brand is Master AEO)  
 **Last updated:** 2026-07-27  
 **Status:** Planning + early foundation (v0.1)
 
@@ -99,14 +99,14 @@ Tracked as **v0.1 — Foundation**.
 | Cursor rule: never read `.env` secrets | Done | `.cursor/rules/no-env-secrets.mdc` |
 | MVP reference file kept | Done | `geo-visibility-mvp-v3.jsx` |
 | Public marketing site | Not started | |
-| Auth / users / roles | Not started | |
-| Business profile gate + links | Not started | |
-| Stepper UX | Not started | Still single page |
+| Auth / users / roles | Done | JWT login; signup disabled via SIGNUP_ENABLED |
+| Business profile gate + links | Not started | Model fields exist; onboarding UI is B3 |
+| Stepper UX | Not started | Still single page inside /app/visibility |
 | Usage token logging | Not started | |
 | Business panel (insights, checklist, billing) | Not started | |
 | Admin app | Not started | |
 | Plans / subscriptions | Not started | |
-| Redux Persist SSR fix | Not started | Warning in console |
+| Redux Persist SSR fix | Done | Client noop storage; persist business/prompts + jobId only |
 
 ---
 
@@ -130,14 +130,14 @@ Versions can ship as internal milestones before public launch.
 
 ### Phase A — Stabilize foundation (v0.2 start)
 **Milestone A1 — Client hardening**
-- [ ] Fix redux-persist SSR storage (client-only / noop)
-- [ ] Persist only light draft state (not huge LLM payloads)
-- [ ] Brand copy → masteraeo.com (replace PCS placeholders in UI/report)
+- [x] Fix redux-persist SSR storage (client-only / noop)
+- [x] Persist only light draft state (not huge LLM payloads)
+- [x] Brand copy → masteraeo.com (replace PCS placeholders in UI/report)
 
 **Milestone A2 — Identity models (additive)**
-- [ ] `User` (email, passwordHash, role: `admin` | `business`, status)
-- [ ] `Business` linked to user (profile fields + `profileCompletedAt`)
-- [ ] Attach `userId` / `businessId` to `VisibilityJob` (keep old jobs readable)
+- [x] `User` (email, passwordHash, role: `admin` | `business`, status)
+- [x] `Business` linked to user (profile fields + `profileCompletedAt`)
+- [x] Attach `userId` / `businessId` to `VisibilityJob` (keep old jobs readable)
 
 **Exit:** API boots with auth models; no user data loss path defined.
 
@@ -150,10 +150,10 @@ Versions can ship as internal milestones before public launch.
 - [ ] Shared public layout / nav
 
 **Milestone B2 — Auth UX**
-- [ ] Login page
-- [ ] Signup page **disabled** (message: invite-only / contact)
-- [ ] JWT (or session) auth on API; `GET /me`
-- [ ] Protected `/app/*` client gate
+- [x] Login page
+- [x] Signup page **disabled** (message: invite-only / contact)
+- [x] JWT (or session) auth on API; `GET /me`
+- [x] Protected `/app/*` client gate
 
 **Milestone B3 — Profile onboarding gate**
 - [ ] Onboarding form: website (required), Google Business (optional), social links (addable)
@@ -363,10 +363,10 @@ Update this table as work completes.
 | — | Country field | v0.1 | **Done** | 2026-07-27 |
 | — | Env required + path fix | v0.1 | **Done** | 2026-07-27 |
 | — | no-env-secrets Cursor rule | v0.1 | **Done** | 2026-07-27 |
-| A1 | Persist SSR fix + branding | v0.2 | Todo | |
-| A2 | User + Business models | v0.2 | Todo | |
+| A1 | Persist SSR fix + branding | v0.2 | **Done** | 2026-07-27 |
+| A2 | User + Business models | v0.2 | **Done** | 2026-07-27 |
 | B1 | Landing + pricing shell | v0.2 | Todo | |
-| B2 | Login + disabled signup + JWT | v0.2 | Todo | |
+| B2 | Login + disabled signup + JWT | v0.2 | **Done** | 2026-07-27 |
 | B3 | Profile onboarding gate | v0.2 | Todo | |
 | C1 | Business panel shell | v0.3 | Todo | |
 | C2 | Visibility stepper | v0.3 | Todo | |

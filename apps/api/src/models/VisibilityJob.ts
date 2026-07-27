@@ -56,6 +56,8 @@ const ManualSchema = new Schema(
 
 const VisibilityJobSchema = new Schema(
   {
+    userId: { type: Schema.Types.ObjectId, ref: "User", index: true },
+    businessId: { type: Schema.Types.ObjectId, ref: "Business", index: true },
     status: {
       type: String,
       enum: ["queued", "running", "completed", "failed"],

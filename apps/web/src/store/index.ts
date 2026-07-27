@@ -9,21 +9,29 @@ import {
   PURGE,
   REGISTER,
 } from "redux-persist";
-import storage from "redux-persist/lib/storage";
+import storage from "./storage";
+import authReducer from "./authSlice";
 import businessReducer from "./businessSlice";
 import promptsReducer from "./promptsSlice";
 import visibilityReducer from "./visibilitySlice";
 
+const visibilityPersistConfig = {
+  key: "visibility",
+  storage,
+  whitelist: ["jobId"] as string[],
+};
+
 const rootReducer = combineReducers({
+  auth: authReducer,
   business: businessReducer,
   prompts: promptsReducer,
-  visibility: visibilityReducer,
+  visibility: persistReducer(visibilityPersistConfig, visibilityReducer),
 });
 
 const persistConfig = {
-  key: "aeo-pcs",
+  key: "masteraeo",
   storage,
-  whitelist: ["business", "prompts", "visibility"],
+  whitelist: ["auth", "business", "prompts", "visibility"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

@@ -249,16 +249,16 @@ export default function VisibilityWizard() {
       : 0;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0F1A17", color: "#EDEAE1" }}>
-      <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 24px 80px" }}>
+    <div style={{ color: "#EDEAE1" }}>
+      <div style={{ maxWidth: 960 }}>
         <Space direction="vertical" size={8} style={{ width: "100%", marginBottom: 24 }}>
           <Text style={{ color: "#8FBF9F", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: 13 }}>
-            AI Visibility and Fix It
+            Visibility check
           </Text>
-          <Title level={1} style={{ margin: 0, color: "#EDEAE1", fontSize: 32 }}>
-            Find your business, check your AI visibility, get a plan.
+          <Title level={2} style={{ margin: 0, color: "#EDEAE1" }}>
+            Run prompts and measure AI mentions
           </Title>
-          <Text type="secondary">Built by Pal Consultancy Services</Text>
+          <Text type="secondary">Signed-in session · masteraeo.com</Text>
           <Button onClick={onDownloadReport} disabled={!business.selected || !visibility.jobId}>
             Download report
           </Button>
@@ -533,7 +533,7 @@ export default function VisibilityWizard() {
             color: "#5C6E64",
           }}
         >
-          Pal Consultancy Services, PCS Solution
+          masteraeo.com
         </div>
       </div>
     </div>

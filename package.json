@@ -11,6 +11,7 @@
     "build": "npm run build -w @aeo-pcs/shared && npm run build -w @aeo-pcs/api && npm run build -w @aeo-pcs/web",
     "build:shared": "npm run build -w @aeo-pcs/shared",
     "build:api": "npm run build -w @aeo-pcs/api",
-    "build:web": "npm run build -w @aeo-pcs/web"
+    "build:web": "npm run build -w @aeo-pcs/web",
+    "seed": "npm run seed -w @aeo-pcs/api"
   }
 }

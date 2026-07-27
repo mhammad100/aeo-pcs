@@ -1,3 +1,7 @@
+import type { AuthUser, LoginResponse, MeResponse } from "@aeo-pcs/shared";
+import { store } from "@/store";
+import { logout } from "@/store/authSlice";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
 export class ApiError extends Error {
@@ -10,15 +14,20 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = store.getState().auth.token;
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init?.headers || {}),
     },
   });
 
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && token) {
+    store.dispatch(logout());
+  }
   if (!res.ok) {
     throw new ApiError((data as { error?: string }).error || "Request failed", res.status);
   }
@@ -26,6 +35,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  login: (body: { email: string; password: string }) =>
+    request<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  signup: (body: { email: string; password: string }) =>
+    request<LoginResponse>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  me: () => request<MeResponse>("/auth/me"),
+
   searchBusiness: (body: { name: string; city: string; country: string }) =>
     request<{ candidates: import("@aeo-pcs/shared").BusinessCandidate[] }>("/business/search", {
       method: "POST",
@@ -56,9 +79,12 @@ export const api = {
     }),
 
   getVisibilityJob: (jobId: string) =>
-    request<import("@aeo-pcs/shared").VisibilityJob & { plan?: import("@aeo-pcs/shared").ActionPlan; itemOutputs?: Record<string, string> }>(
-      `/visibility/jobs/${jobId}`
-    ),
+    request<
+      import("@aeo-pcs/shared").VisibilityJob & {
+        plan?: import("@aeo-pcs/shared").ActionPlan;
+        itemOutputs?: Record<string, string>;
+      }
+    >(`/visibility/jobs/${jobId}`),
 
   buildPlan: (jobId: string) =>
     request<{ plan: import("@aeo-pcs/shared").ActionPlan }>("/plans", {
@@ -80,3 +106,5 @@ export const api = {
   getReport: (jobId: string) =>
     request<{ html: string; filename: string }>(`/reports/${jobId}`),
 };
+
+export type { AuthUser };
