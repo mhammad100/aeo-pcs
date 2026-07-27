@@ -1,0 +1,530 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Button,
+  Card,
+  Col,
+  Input,
+  Progress,
+  Row,
+  Select,
+  Space,
+  Steps,
+  Typography,
+} from "antd";
+import { CATEGORIES } from "@aeo-pcs/shared";
+import { api } from "@/lib/api";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import {
+  setCandidates,
+  setCategory,
+  setCity,
+  setNameQuery,
+  setSelected,
+} from "@/store/businessSlice";
+import { clearPrompts, setPrompts, updatePrompt } from "@/store/promptsSlice";
+import {
+  resetVisibility,
+  setError,
+  setGeneratingItemId,
+  setItemOutput,
+  setJobId,
+  setJobSnapshot,
+  setPlan,
+  setUiBusy,
+} from "@/store/visibilitySlice";
+
+const { Title, Text, Paragraph } = Typography;
+
+function matchCategory(raw?: string): string {
+  if (!raw) return "Other";
+  const matched = CATEGORIES.find((cat) =>
+    cat.toLowerCase().includes(raw.toLowerCase().split(" ")[0])
+  );
+  return matched || "Other";
+}
+
+function downloadBlob(html: string, filename: string) {
+  const blob = new Blob([html], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+export default function VisibilityWizard() {
+  const dispatch = useAppDispatch();
+  const business = useAppSelector((s) => s.business);
+  const prompts = useAppSelector((s) => s.prompts.prompts);
+  const visibility = useAppSelector((s) => s.visibility);
+  const [localBusyLabel, setLocalBusyLabel] = useState<string | null>(null);
+
+  const currentStep = useMemo(() => {
+    if (visibility.plan) return 3;
+    if (visibility.results) return 2;
+    if (business.selected && prompts.length) return 1;
+    if (business.selected) return 1;
+    return 0;
+  }, [business.selected, prompts.length, visibility.plan, visibility.results]);
+
+  useEffect(() => {
+    if (!visibility.jobId) return;
+    if (visibility.status === "completed" || visibility.status === "failed") return;
+
+    let cancelled = false;
+    const poll = async () => {
+      try {
+        const job = await api.getVisibilityJob(visibility.jobId!);
+        if (cancelled) return;
+        dispatch(
+          setJobSnapshot({
+            status: job.status,
+            progress: job.progress,
+            results: job.results,
+            score: job.score,
+            plan: job.plan,
+            itemOutputs: job.itemOutputs,
+            error: job.error,
+          })
+        );
+      } catch (err) {
+        if (!cancelled) {
+          dispatch(setError(err instanceof Error ? err.message : "Failed to poll job"));
+        }
+      }
+    };
+
+    poll();
+    const id = window.setInterval(poll, 2500);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [dispatch, visibility.jobId, visibility.status]);
+
+  async function onSearch() {
+    if (!business.nameQuery.trim()) return;
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel("Searching");
+    dispatch(setError(null));
+    dispatch(setCandidates([]));
+    dispatch(setSelected(null));
+    dispatch(clearPrompts());
+    dispatch(resetVisibility());
+    try {
+      const { candidates } = await api.searchBusiness({
+        name: business.nameQuery.trim(),
+        city: business.city.trim(),
+      });
+      dispatch(setCandidates(candidates));
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Business search failed"));
+    } finally {
+      dispatch(setUiBusy(false));
+      setLocalBusyLabel(null);
+    }
+  }
+
+  function onPick(candidate: (typeof business.candidates)[number]) {
+    dispatch(setSelected(candidate));
+    dispatch(setCategory(matchCategory(candidate.category)));
+    dispatch(clearPrompts());
+    dispatch(resetVisibility());
+  }
+
+  async function onGeneratePrompts() {
+    if (!business.selected) return;
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel("Generating prompts");
+    dispatch(setError(null));
+    try {
+      const { prompts: next } = await api.generatePrompts({
+        business: business.selected,
+        category: business.category,
+        city: business.city,
+      });
+      dispatch(setPrompts(next));
+      dispatch(resetVisibility());
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Prompt generation failed"));
+    } finally {
+      dispatch(setUiBusy(false));
+      setLocalBusyLabel(null);
+    }
+  }
+
+  async function onRunCheck() {
+    if (!business.selected || !prompts.length) return;
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel("Starting visibility check");
+    dispatch(setError(null));
+    dispatch(setPlan(null));
+    try {
+      const { jobId } = await api.createVisibilityJob({
+        business: business.selected,
+        category: business.category,
+        city: business.city,
+        prompts,
+      });
+      dispatch(setJobId(jobId));
+      dispatch(
+        setJobSnapshot({
+          status: "queued",
+          progress: { completed: 0, total: prompts.length * 3 },
+        })
+      );
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Visibility check failed"));
+    } finally {
+      dispatch(setUiBusy(false));
+      setLocalBusyLabel(null);
+    }
+  }
+
+  async function onBuildPlan() {
+    if (!visibility.jobId) return;
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel("Building action plan");
+    dispatch(setError(null));
+    try {
+      const { plan } = await api.buildPlan(visibility.jobId);
+      dispatch(setPlan(plan));
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Action plan failed"));
+    } finally {
+      dispatch(setUiBusy(false));
+      setLocalBusyLabel(null);
+    }
+  }
+
+  async function onGenerateItem(item: { id: string; title: string; description: string }) {
+    if (!visibility.jobId) return;
+    dispatch(setGeneratingItemId(item.id));
+    dispatch(setError(null));
+    try {
+      const { content } = await api.generateItem({
+        jobId: visibility.jobId,
+        itemId: item.id,
+        title: item.title,
+        description: item.description,
+      });
+      dispatch(setItemOutput({ id: item.id, content }));
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Couldn't generate that item"));
+    } finally {
+      dispatch(setGeneratingItemId(null));
+    }
+  }
+
+  async function onDownloadReport() {
+    if (!visibility.jobId || !business.selected) return;
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel("Preparing report");
+    try {
+      const report = await api.getReport(visibility.jobId);
+      downloadBlob(report.html, report.filename);
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Report download failed"));
+    } finally {
+      dispatch(setUiBusy(false));
+      setLocalBusyLabel(null);
+    }
+  }
+
+  const jobRunning =
+    visibility.status === "queued" || visibility.status === "running";
+  const progressPct =
+    visibility.progress && visibility.progress.total
+      ? Math.round((visibility.progress.completed / visibility.progress.total) * 100)
+      : 0;
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0F1A17", color: "#EDEAE1" }}>
+      <div style={{ maxWidth: 960, margin: "0 auto", padding: "40px 24px 80px" }}>
+        <Space direction="vertical" size={8} style={{ width: "100%", marginBottom: 24 }}>
+          <Text style={{ color: "#8FBF9F", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: 13 }}>
+            AI Visibility and Fix It
+          </Text>
+          <Title level={1} style={{ margin: 0, color: "#EDEAE1", fontSize: 32 }}>
+            Find your business, check your AI visibility, get a plan.
+          </Title>
+          <Text type="secondary">Built by Pal Consultancy Services</Text>
+          <Button onClick={onDownloadReport} disabled={!business.selected || !visibility.jobId}>
+            Download report
+          </Button>
+        </Space>
+
+        <Steps
+          current={currentStep}
+          style={{ marginBottom: 28 }}
+          items={[
+            { title: "Find business" },
+            { title: "Prompts" },
+            { title: "Visibility" },
+            { title: "Action plan" },
+          ]}
+        />
+
+        {visibility.error && (
+          <Alert
+            type="error"
+            showIcon
+            message={visibility.error}
+            style={{ marginBottom: 20 }}
+            closable
+            onClose={() => dispatch(setError(null))}
+          />
+        )}
+
+        <Card title="Step 1. Find your business" style={{ marginBottom: 20 }}>
+          <Row gutter={10}>
+            <Col xs={24} md={12}>
+              <Input
+                value={business.nameQuery}
+                onChange={(e) => dispatch(setNameQuery(e.target.value))}
+                placeholder="Type business name"
+                onPressEnter={onSearch}
+              />
+            </Col>
+            <Col xs={24} md={8}>
+              <Input
+                value={business.city}
+                onChange={(e) => dispatch(setCity(e.target.value))}
+                placeholder="City"
+              />
+            </Col>
+            <Col xs={24} md={4}>
+              <Button
+                type="primary"
+                block
+                loading={visibility.uiBusy && localBusyLabel === "Searching"}
+                onClick={onSearch}
+              >
+                Search
+              </Button>
+            </Col>
+          </Row>
+
+          {business.candidates.length > 0 && (
+            <Space direction="vertical" style={{ width: "100%", marginTop: 16 }}>
+              {business.candidates.map((c, i) => {
+                const selected = business.selected?.name === c.name;
+                return (
+                  <Card
+                    key={`${c.name}-${i}`}
+                    size="small"
+                    hoverable
+                    onClick={() => onPick(c)}
+                    style={{
+                      borderColor: selected ? "#C9773D" : undefined,
+                      background: selected ? "#C9773D22" : undefined,
+                    }}
+                  >
+                    <Text strong>{c.name}</Text>
+                    <div>
+                      <Text type="secondary">
+                        {c.category} in {c.address}
+                      </Text>
+                    </div>
+                    {c.description && <Paragraph type="secondary">{c.description}</Paragraph>}
+                  </Card>
+                );
+              })}
+            </Space>
+          )}
+        </Card>
+
+        {business.selected && (
+          <Card title="Step 2. Confirm category and generate prompts" style={{ marginBottom: 20 }}>
+            <Row gutter={10} style={{ marginBottom: prompts.length ? 16 : 0 }}>
+              <Col xs={24} md={16}>
+                <Select
+                  style={{ width: "100%" }}
+                  value={business.category || undefined}
+                  onChange={(v) => dispatch(setCategory(v))}
+                  options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                />
+              </Col>
+              <Col xs={24} md={8}>
+                <Button
+                  type="primary"
+                  block
+                  loading={visibility.uiBusy && localBusyLabel === "Generating prompts"}
+                  onClick={onGeneratePrompts}
+                >
+                  Generate 5 prompts
+                </Button>
+              </Col>
+            </Row>
+
+            {prompts.length > 0 && (
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {prompts.map((p, i) => (
+                  <Input
+                    key={i}
+                    value={p}
+                    onChange={(e) => dispatch(updatePrompt({ index: i, value: e.target.value }))}
+                  />
+                ))}
+                <Button
+                  type="primary"
+                  loading={jobRunning || (visibility.uiBusy && localBusyLabel === "Starting visibility check")}
+                  onClick={onRunCheck}
+                >
+                  {jobRunning ? "Running visibility check" : "Run visibility check"}
+                </Button>
+              </Space>
+            )}
+          </Card>
+        )}
+
+        {jobRunning && (
+          <Card style={{ marginBottom: 20 }}>
+            <Text>Checking AI visibility across simulated model styles…</Text>
+            <Progress percent={progressPct} style={{ marginTop: 12 }} />
+            {visibility.progress?.currentModel && (
+              <Text type="secondary">
+                {visibility.progress.currentModel}
+                {visibility.progress.currentPrompt
+                  ? ` — ${visibility.progress.currentPrompt}`
+                  : ""}
+              </Text>
+            )}
+          </Card>
+        )}
+
+        {visibility.results && visibility.score && (
+          <Card style={{ marginBottom: 20 }}>
+            <Space align="baseline" style={{ marginBottom: 16 }}>
+              <Title
+                level={1}
+                style={{
+                  margin: 0,
+                  color: visibility.score.visibilityPct >= 50 ? "#8FBF9F" : "#E8967A",
+                }}
+              >
+                {visibility.score.visibilityPct}%
+              </Title>
+              <Text type="secondary">
+                AI visibility score. {business.selected?.name} was mentioned in{" "}
+                {visibility.score.totalMentions} of {visibility.score.totalChecks} model responses
+                across {visibility.results.length} prompts.
+              </Text>
+            </Space>
+
+            <Space direction="vertical" style={{ width: "100%" }} size={16}>
+              {visibility.results.map((r, i) => (
+                <Card key={i} size="small" title={r.prompt}>
+                  {r.perModel.map((m) => (
+                    <div
+                      key={m.model}
+                      style={{
+                        marginBottom: 12,
+                        paddingLeft: 12,
+                        borderLeft: `3px solid ${m.mentioned ? "#8FBF9F" : "#5C4A45"}`,
+                      }}
+                    >
+                      <Text style={{ color: m.mentioned ? "#8FBF9F" : "#E8967A" }}>
+                        {m.model}, {m.mentioned ? "mentioned" : "not mentioned"}
+                      </Text>
+                      <Paragraph style={{ marginBottom: 4 }}>{m.answer}</Paragraph>
+                      {m.sources.length > 0 && (
+                        <Text type="secondary">
+                          Sources cited: {m.sources.map((s) => s.domain).join(", ")}
+                        </Text>
+                      )}
+                    </div>
+                  ))}
+                </Card>
+              ))}
+            </Space>
+
+            {!visibility.plan && (
+              <Button
+                style={{ marginTop: 16 }}
+                loading={visibility.uiBusy && localBusyLabel === "Building action plan"}
+                onClick={onBuildPlan}
+              >
+                Build action plan
+              </Button>
+            )}
+          </Card>
+        )}
+
+        {visibility.plan && (
+          <Space direction="vertical" style={{ width: "100%" }} size={20}>
+            <div>
+              <Text style={{ color: "#8FBF9F", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                Ready made solutions
+              </Text>
+              <Paragraph type="secondary">
+                This tool can generate these for you right now. Press generate, then copy the result
+                onto your website or listings.
+              </Paragraph>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {visibility.plan.automatable.map((item) => (
+                  <Card
+                    key={item.id}
+                    size="small"
+                    title={item.title}
+                    extra={
+                      <Button
+                        type="primary"
+                        loading={visibility.generatingItemId === item.id}
+                        onClick={() => onGenerateItem(item)}
+                      >
+                        {visibility.itemOutputs[item.id] ? "Regenerate" : "Generate"}
+                      </Button>
+                    }
+                  >
+                    <Paragraph type="secondary">{item.description}</Paragraph>
+                    {visibility.itemOutputs[item.id] && (
+                      <Card size="small" style={{ whiteSpace: "pre-wrap" }}>
+                        {visibility.itemOutputs[item.id]}
+                      </Card>
+                    )}
+                  </Card>
+                ))}
+              </Space>
+            </div>
+
+            <div>
+              <Text style={{ color: "#C9773D", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                Needs your action
+              </Text>
+              <Paragraph type="secondary">
+                These need a human step, a login, or a real-world action this tool cannot take on
+                your behalf.
+              </Paragraph>
+              <Space direction="vertical" style={{ width: "100%" }}>
+                {visibility.plan.manual.map((item, i) => (
+                  <Card key={i} size="small" title={item.title}>
+                    <Paragraph style={{ marginBottom: 0 }}>{item.guidance}</Paragraph>
+                  </Card>
+                ))}
+              </Space>
+            </div>
+          </Space>
+        )}
+
+        <div
+          style={{
+            marginTop: 48,
+            paddingTop: 20,
+            borderTop: "1px solid #2B3B34",
+            fontSize: 12,
+            color: "#5C6E64",
+          }}
+        >
+          Pal Consultancy Services, PCS Solution
+        </div>
+      </div>
+    </div>
+  );
+}

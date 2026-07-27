@@ -1,0 +1,16 @@
+{
+  "name": "aeo-pcs",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w @aeo-pcs/api",
+    "dev:web": "npm run dev -w @aeo-pcs/web",
+    "build": "npm run build -w @aeo-pcs/shared && npm run build -w @aeo-pcs/api && npm run build -w @aeo-pcs/web",
+    "build:shared": "npm run build -w @aeo-pcs/shared",
+    "build:api": "npm run build -w @aeo-pcs/api",
+    "build:web": "npm run build -w @aeo-pcs/web"
+  }
+}
