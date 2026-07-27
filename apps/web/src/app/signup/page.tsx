@@ -7,30 +7,35 @@ const { Title, Paragraph, Text } = Typography;
 
 export default function SignupPage() {
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0F1A17", padding: 24 }}>
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
       <Card style={{ width: "100%", maxWidth: 480 }}>
-        <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Master AEO
-        </Text>
+        <Link href="/" style={{ color: "var(--ma-accent-soft)", fontFamily: "var(--ma-font-display)" }}>
+          masteraeo
+        </Link>
         <Title level={2} style={{ marginTop: 8 }}>
-          Sign up
+          Get started
         </Title>
         <Alert
           type="info"
           showIcon
           message="Signup is invite-only for now"
-          description="Self-serve signup is disabled. Contact info@masteraeo.com for an account, or log in if you already have one."
-          style={{ marginBottom: 20 }}
+          description="Self-serve signup is disabled while we onboard early businesses. Contact us for an account, or log in if you already have access."
+          style={{ marginBottom: 20, marginTop: 12 }}
         />
         <Paragraph type="secondary">
-          Business onboarding (profile, website, Google Business, social links) will start right after
-          account creation when signup is enabled.
+          After access is granted, you will complete your business profile (website, optional Google
+          Business and social links), then land in your dashboard.
         </Paragraph>
         <Link href="/login">
           <Button type="primary" block>
             Go to log in
           </Button>
         </Link>
+        <div style={{ marginTop: 16 }}>
+          <Text type="secondary">
+            Or email <a href="mailto:hello@masteraeo.com">hello@masteraeo.com</a>
+          </Text>
+        </div>
       </Card>
     </div>
   );

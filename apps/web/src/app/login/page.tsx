@@ -26,7 +26,8 @@ export default function LoginPage() {
         router.replace("/app");
       } else {
         router.replace("/app/onboarding/profile");
-      }    } catch (err) {
+      }
+    } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {
       setLoading(false);
@@ -34,16 +35,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0F1A17", padding: 24 }}>
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
       <Card style={{ width: "100%", maxWidth: 420 }}>
-        <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Master AEO
-        </Text>
+        <Link href="/" style={{ color: "var(--ma-accent-soft)", fontFamily: "var(--ma-font-display)" }}>
+          masteraeo
+        </Link>
         <Title level={2} style={{ marginTop: 8 }}>
           Log in
         </Title>
-        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
-        <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
+        <Text type="secondary">Enter your business dashboard</Text>
+        {error && <Alert type="error" showIcon message={error} style={{ margin: "16px 0" }} />}
+        <Form layout="vertical" onFinish={onFinish} requiredMark={false} style={{ marginTop: 16 }}>
           <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}>
             <Input autoComplete="email" />
           </Form.Item>
@@ -56,7 +58,7 @@ export default function LoginPage() {
         </Form>
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">
-            No account? <Link href="/signup">Sign up</Link>
+            No account? <Link href="/signup">Request access</Link>
           </Text>
         </div>
       </Card>

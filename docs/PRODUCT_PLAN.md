@@ -98,7 +98,7 @@ Tracked as **v0.1 — Foundation**.
 | Env required vars, path-resolved `.env` | Done | No defaults |
 | Cursor rule: never read `.env` secrets | Done | `.cursor/rules/no-env-secrets.mdc` |
 | MVP reference file kept | Done | `geo-visibility-mvp-v3.jsx` |
-| Public marketing site | Not started | |
+| Public marketing site | Done | Home, features, pricing, about + public nav/footer |
 | Auth / users / roles | Done | JWT login; signup disabled via SIGNUP_ENABLED |
 | Business profile gate + links | Done | Onboarding + ProfileGate; visibility blocked until complete |
 | Stepper UX | Not started | Still single page inside /app/visibility |
@@ -145,9 +145,10 @@ Versions can ship as internal milestones before public launch.
 
 ### Phase B — Public face & auth (v0.2)
 **Milestone B1 — Marketing**
-- [ ] Landing page (brand-first)
-- [ ] Pricing placeholder
-- [ ] Shared public layout / nav
+- [x] Landing page (brand-first)
+- [x] Pricing placeholder
+- [x] Shared public layout / nav
+- [x] Features + About pages (public site face)
 
 **Milestone B2 — Auth UX**
 - [x] Login page
@@ -365,7 +366,7 @@ Update this table as work completes.
 | — | no-env-secrets Cursor rule | v0.1 | **Done** | 2026-07-27 |
 | A1 | Persist SSR fix + branding | v0.2 | **Done** | 2026-07-27 |
 | A2 | User + Business models | v0.2 | **Done** | 2026-07-27 |
-| B1 | Landing + pricing shell | v0.2 | Todo | |
+| B1 | Landing + pricing shell | v0.2 | **Done** | 2026-07-27 |
 | B2 | Login + disabled signup + JWT | v0.2 | **Done** | 2026-07-27 |
 | B3 | Profile onboarding gate | v0.2 | **Done** | 2026-07-27 |
 | C1 | Business panel shell | v0.3 | Todo | |

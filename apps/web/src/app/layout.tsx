@@ -1,16 +1,40 @@
 import type { Metadata } from "next";
+import { Fraunces, Manrope } from "next/font/google";
 import Providers from "@/components/Providers";
 import "./globals.css";
 
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Master AEO | AI Visibility",
-  description: "Find your business, check your AI visibility, get a plan. Master AEO",
+  title: {
+    default: "masteraeo — AI visibility for your business",
+    template: "%s · masteraeo",
+  },
+  description:
+    "masteraeo helps businesses measure how often they appear in AI assistants, then deliver a clear action plan to improve visibility.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
+      <body
+        style={
+          {
+            "--ma-font-display": "var(--font-fraunces), Georgia, serif",
+            "--ma-font-body": "var(--font-manrope), system-ui, sans-serif",
+          } as React.CSSProperties
+        }
+      >
         <Providers>{children}</Providers>
       </body>
     </html>
