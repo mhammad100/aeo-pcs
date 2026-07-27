@@ -1,9 +1,11 @@
+import path from "path";
 import dotenv from "dotenv";
 
-dotenv.config();
+// Resolve from this file so it works whether cwd is repo root or apps/api
+dotenv.config({ path: path.resolve(__dirname, "../../.env") });
 
 function required(name: string): string {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) {
     throw new Error(`Missing required env var: ${name}`);
   }
@@ -11,15 +13,9 @@ function required(name: string): string {
 }
 
 export const env = {
-  port: Number(process.env.PORT || 4000),
-  mongoUri: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/aeo-pcs",
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY || "",
-  anthropicModel: process.env.ANTHROPIC_MODEL || "claude-sonnet-4-6",
-  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
+  port: Number(required("PORT")),
+  mongoUri: required("MONGODB_URI"),
+  anthropicApiKey: required("ANTHROPIC_API_KEY"),
+  anthropicModel: required("ANTHROPIC_MODEL"),
+  corsOrigin: required("CORS_ORIGIN"),
 };
-
-export function assertAnthropicConfigured() {
-  if (!env.anthropicApiKey || env.anthropicApiKey === "your_anthropic_api_key_here") {
-    throw new Error("ANTHROPIC_API_KEY is not configured");
-  }
-}

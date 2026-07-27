@@ -21,6 +21,7 @@ import {
   setCandidates,
   setCategory,
   setCity,
+  setCountry,
   setNameQuery,
   setSelected,
 } from "@/store/businessSlice";
@@ -109,7 +110,7 @@ export default function VisibilityWizard() {
   }, [dispatch, visibility.jobId, visibility.status]);
 
   async function onSearch() {
-    if (!business.nameQuery.trim()) return;
+    if (!business.nameQuery.trim() || !business.city.trim() || !business.country.trim()) return;
     dispatch(setUiBusy(true));
     setLocalBusyLabel("Searching");
     dispatch(setError(null));
@@ -121,6 +122,7 @@ export default function VisibilityWizard() {
       const { candidates } = await api.searchBusiness({
         name: business.nameQuery.trim(),
         city: business.city.trim(),
+        country: business.country.trim(),
       });
       dispatch(setCandidates(candidates));
     } catch (err) {
@@ -148,6 +150,7 @@ export default function VisibilityWizard() {
         business: business.selected,
         category: business.category,
         city: business.city,
+        country: business.country,
       });
       dispatch(setPrompts(next));
       dispatch(resetVisibility());
@@ -170,6 +173,7 @@ export default function VisibilityWizard() {
         business: business.selected,
         category: business.category,
         city: business.city,
+        country: business.country,
         prompts,
       });
       dispatch(setJobId(jobId));
@@ -284,7 +288,7 @@ export default function VisibilityWizard() {
 
         <Card title="Step 1. Find your business" style={{ marginBottom: 20 }}>
           <Row gutter={10}>
-            <Col xs={24} md={12}>
+            <Col xs={24} md={8}>
               <Input
                 value={business.nameQuery}
                 onChange={(e) => dispatch(setNameQuery(e.target.value))}
@@ -292,14 +296,21 @@ export default function VisibilityWizard() {
                 onPressEnter={onSearch}
               />
             </Col>
-            <Col xs={24} md={8}>
+            <Col xs={24} md={5}>
               <Input
                 value={business.city}
                 onChange={(e) => dispatch(setCity(e.target.value))}
                 placeholder="City"
               />
             </Col>
-            <Col xs={24} md={4}>
+            <Col xs={24} md={5}>
+              <Input
+                value={business.country}
+                onChange={(e) => dispatch(setCountry(e.target.value))}
+                placeholder="Country"
+              />
+            </Col>
+            <Col xs={24} md={6}>
               <Button
                 type="primary"
                 block

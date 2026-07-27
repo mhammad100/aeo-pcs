@@ -30,9 +30,10 @@ apiRouter.post(
   validate([
     body("name").isString().trim().isLength({ min: 1, max: 200 }),
     body("city").isString().trim().isLength({ min: 1, max: 100 }),
+    body("country").isString().trim().isLength({ min: 1, max: 100 }),
   ]),
   asyncHandler(async (req, res) => {
-    const candidates = await searchBusiness(req.body.name, req.body.city);
+    const candidates = await searchBusiness(req.body.name, req.body.city, req.body.country);
     res.json({ candidates });
   })
 );
@@ -46,12 +47,14 @@ apiRouter.post(
       .trim()
       .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
     body("city").isString().trim().isLength({ min: 1, max: 100 }),
+    body("country").isString().trim().isLength({ min: 1, max: 100 }),
   ]),
   asyncHandler(async (req, res) => {
     const prompts = await generatePrompts({
       business: req.body.business,
       category: req.body.category,
       city: req.body.city,
+      country: req.body.country,
     });
     res.json({ prompts });
   })
@@ -66,6 +69,7 @@ apiRouter.post(
       .trim()
       .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
     body("city").isString().trim().isLength({ min: 1, max: 100 }),
+    body("country").isString().trim().isLength({ min: 1, max: 100 }),
     body("prompts").isArray({ min: 1, max: 5 }),
     body("prompts.*").isString().trim().isLength({ min: 3, max: 300 }),
   ]),
@@ -79,6 +83,7 @@ apiRouter.post(
       business: req.body.business,
       category: req.body.category,
       city: req.body.city,
+      country: req.body.country,
       prompts: req.body.prompts,
       itemOutputs: {},
     });
@@ -109,6 +114,7 @@ apiRouter.get(
       business: job.business,
       category: job.category,
       city: job.city,
+      country: job.country,
       prompts: job.prompts,
       results: job.results,
       score: job.score,
@@ -135,6 +141,7 @@ apiRouter.post(
       business: job.business as never,
       category: job.category || "Other",
       city: job.city || "",
+      country: job.country || "",
       results: job.results as never,
     });
 
@@ -163,6 +170,7 @@ apiRouter.post(
       business: job.business as never,
       category: job.category || "Other",
       city: job.city || "",
+      country: job.country || "",
       item: { title: req.body.title, description: req.body.description },
     });
 
@@ -189,6 +197,7 @@ apiRouter.get(
       selected: (job.business as never) || null,
       category: job.category || "",
       city: job.city || "",
+      country: job.country || "",
       results: (job.results as never) || null,
       score: (job.score as never) || null,
       plan: (job.plan as never) || null,

@@ -63,6 +63,7 @@ export type VisibilityJob = {
   business: BusinessCandidate;
   category: Category | string;
   city: string;
+  country: string;
   prompts: string[];
   results?: PromptResult[];
   score?: VisibilityScore;
@@ -76,6 +77,7 @@ export type VisibilityJob = {
 export type SearchBusinessRequest = {
   name: string;
   city: string;
+  country: string;
 };
 
 export type SearchBusinessResponse = {
@@ -86,6 +88,7 @@ export type GeneratePromptsRequest = {
   business: BusinessCandidate;
   category: string;
   city: string;
+  country: string;
 };
 
 export type GeneratePromptsResponse = {
@@ -96,6 +99,7 @@ export type CreateVisibilityJobRequest = {
   business: BusinessCandidate;
   category: string;
   city: string;
+  country: string;
   prompts: string[];
 };
 

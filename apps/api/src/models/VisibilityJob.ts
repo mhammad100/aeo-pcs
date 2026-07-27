@@ -70,6 +70,7 @@ const VisibilityJobSchema = new Schema(
     business: BusinessSchema,
     category: String,
     city: String,
+    country: String,
     prompts: [String],
     results: [PromptResultSchema],
     score: {

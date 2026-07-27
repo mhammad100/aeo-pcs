@@ -26,7 +26,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  searchBusiness: (body: { name: string; city: string }) =>
+  searchBusiness: (body: { name: string; city: string; country: string }) =>
     request<{ candidates: import("@aeo-pcs/shared").BusinessCandidate[] }>("/business/search", {
       method: "POST",
       body: JSON.stringify(body),
@@ -36,6 +36,7 @@ export const api = {
     business: import("@aeo-pcs/shared").BusinessCandidate;
     category: string;
     city: string;
+    country: string;
   }) =>
     request<{ prompts: string[] }>("/prompts/generate", {
       method: "POST",
@@ -46,6 +47,7 @@ export const api = {
     business: import("@aeo-pcs/shared").BusinessCandidate;
     category: string;
     city: string;
+    country: string;
     prompts: string[];
   }) =>
     request<{ jobId: string }>("/visibility/jobs", {

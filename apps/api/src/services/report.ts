@@ -16,18 +16,21 @@ export function buildReportHtml(state: {
   selected: BusinessCandidate | null;
   category: string;
   city: string;
+  country: string;
   results?: PromptResult[] | null;
   score?: VisibilityScore | null;
   plan?: ActionPlan | null;
   itemOutputs?: Record<string, string>;
 }): string {
-  const { selected, category, city, results, score, plan, itemOutputs = {} } = state;
+  const { selected, category, city, country, results, score, plan, itemOutputs = {} } = state;
+
+  const location = [city, country].filter(Boolean).join(", ");
 
   let html = "";
   html += `<div class="rpt-header">`;
   html += `<div class="rpt-eyebrow">AI Visibility Report</div>`;
   html += `<div class="rpt-title">${esc(selected ? selected.name : "Untitled business")}</div>`;
-  html += `<div class="rpt-sub">${esc(category || "")}${category && city ? ", " : ""}${esc(city || "")}</div>`;
+  html += `<div class="rpt-sub">${esc(category || "")}${category && location ? ", " : ""}${esc(location)}</div>`;
   html += `<div class="rpt-brand">Pal Consultancy Services, PCS Solution</div>`;
   html += `</div>`;
 

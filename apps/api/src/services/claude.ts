@@ -1,5 +1,5 @@
 import type { Source } from "@aeo-pcs/shared";
-import { assertAnthropicConfigured, env } from "../config/env";
+import { env } from "../config/env";
 
 export type ClaudeCallResult = {
   text: string;
@@ -18,8 +18,6 @@ export async function callClaude(options: {
   useWebSearch?: boolean;
   maxTokens?: number;
 }): Promise<ClaudeCallResult> {
-  assertAnthropicConfigured();
-
   const body: Record<string, unknown> = {
     model: env.anthropicModel,
     max_tokens: options.maxTokens ?? 1200,
