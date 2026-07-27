@@ -67,12 +67,6 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  searchBusiness: (body: { name: string; city: string; country: string }) =>
-    request<{ candidates: import("@aeo-pcs/shared").BusinessCandidate[] }>("/business/search", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
-
   generatePrompts: (body: {
     business: import("@aeo-pcs/shared").BusinessCandidate;
     category: string;
@@ -85,10 +79,7 @@ export const api = {
     }),
 
   createVisibilityJob: (body: {
-    business: import("@aeo-pcs/shared").BusinessCandidate;
     category: string;
-    city: string;
-    country: string;
     prompts: string[];
   }) =>
     request<{ jobId: string }>("/visibility/jobs", {

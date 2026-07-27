@@ -173,8 +173,8 @@ Versions can ship as internal milestones before public launch.
 
 **Milestone C2 — Visibility stepper**
 - [ ] Real Steps UI (one step visible at a time)
-- [ ] Steps: confirm business → prompts → run → results → plan
-- [ ] No mid-flow business search identity capture (optional “verify listing” later)
+- [x] Steps: confirm business → prompts → run → results → plan
+- [x] No mid-flow business search identity capture (optional “verify listing” later)
 
 **Milestone C3 — History & insights**
 - [ ] List past visibility jobs

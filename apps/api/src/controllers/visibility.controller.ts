@@ -5,10 +5,7 @@ import * as visibilityJobsService from "../services/visibilityJobs.service";
 export async function createJob(req: AuthedRequest, res: Response) {
   const result = await visibilityJobsService.createVisibilityJob({
     userId: req.userId!,
-    business: req.body.business,
     category: req.body.category,
-    city: req.body.city,
-    country: req.body.country,
     prompts: req.body.prompts,
   });
   res.status(202).json(result);

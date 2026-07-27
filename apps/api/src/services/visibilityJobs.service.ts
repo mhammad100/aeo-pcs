@@ -45,16 +45,23 @@ function serializeJob(job: Record<string, unknown>) {
 
 export async function createVisibilityJob(input: {
   userId: string;
-  business: BusinessCandidate;
   category: string;
-  city: string;
-  country: string;
   prompts: string[];
 }) {
   const owned = await BusinessModel.findOne({ ownerUserId: input.userId });
   if (!owned?.profileCompletedAt) {
     throw new AppError("Complete your business profile before running a visibility check", 403);
   }
+  if (!owned.name?.trim() || !owned.city?.trim() || !owned.country?.trim()) {
+    throw new AppError("Business profile is incomplete", 400);
+  }
+
+  const business: BusinessCandidate = {
+    name: owned.name.trim(),
+    category: input.category || owned.category || "Other",
+    address: [owned.city, owned.country].filter(Boolean).join(", "),
+    description: owned.description || "",
+  };
 
   const job = await VisibilityJobModel.create({
     userId: input.userId,
@@ -64,10 +71,10 @@ export async function createVisibilityJob(input: {
       completed: 0,
       total: input.prompts.length * 3,
     },
-    business: input.business,
-    category: input.category,
-    city: input.city,
-    country: input.country,
+    business,
+    category: input.category || owned.category || "Other",
+    city: owned.city,
+    country: owned.country,
     prompts: input.prompts,
     itemOutputs: {},
   });
@@ -103,11 +110,16 @@ export async function buildPlanForJob(input: {
     throw new AppError("Visibility job is not completed yet", 400);
   }
 
+  const profile = job.businessId
+    ? await BusinessModel.findById(job.businessId).select("websiteUrl").lean()
+    : null;
+
   const plan = await buildActionPlan({
     business: job.business as never,
     category: job.category || "Other",
     city: job.city || "",
     country: job.country || "",
+    websiteUrl: profile?.websiteUrl || undefined,
     results: job.results as never,
   });
 

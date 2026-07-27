@@ -73,13 +73,10 @@ export const generatePromptsValidators = [
 ];
 
 export const createVisibilityJobValidators = [
-  ...candidateBusinessBody,
   body("category")
     .isString()
     .trim()
     .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
-  body("city").isString().trim().isLength({ min: 1, max: 100 }),
-  body("country").isString().trim().isLength({ min: 1, max: 100 }),
   body("prompts").isArray({ min: 1, max: 5 }),
   body("prompts.*").isString().trim().isLength({ min: 3, max: 300 }),
 ];

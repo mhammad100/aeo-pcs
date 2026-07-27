@@ -7,6 +7,7 @@ export async function buildActionPlan(input: {
   category: string;
   city: string;
   country: string;
+  websiteUrl?: string;
   results: PromptResult[];
 }): Promise<ActionPlan> {
   const allSourceDomains = dedupeSources(input.results.flatMap((r) => r.perModel.flatMap((m) => m.sources)))
@@ -18,11 +19,40 @@ export async function buildActionPlan(input: {
     .map((r) => `Prompt: ${r.prompt}\n` + r.perModel.map((m) => `${m.model}: ${m.answer}`).join("\n"))
     .join("\n\n");
 
-  const system = `You are an AI visibility consultant. Analyze why the business "${input.business.name}" (${input.category}, ${input.city}, ${input.country}) is or isn't appearing in AI assistant answers, given the domains currently getting cited and the model answers below. Produce ONLY a JSON object with two arrays: automatable and manual. Each item in automatable is content or copy this tool can generate right now for the business owner, with fields id (short slug), title (short action label, plain text, five words max), description (one plain sentence explaining what it produces). Include 3 to 5 automatable items such as an FAQ content block, a comparison paragraph, a Google Business Profile description, a structured data snippet description, or short-form answer content for forums. Each item in manual is a real-world action the business owner must do themselves that this tool cannot do for them, with fields title (short action label, five words max) and guidance (two to three plain sentences explaining exactly what to do and why it helps AI visibility, no markdown). Include 3 to 5 manual items such as claiming or updating a Google Business Profile, getting listed on specific relevant directories, earning reviews on Google or industry-specific platforms, getting mentioned in local press or blogs, or building presence on forums like Reddit or Quora where AI models pull citations from. Return valid JSON only, no markdown fences, no extra text.`;
+  const system = `You are an AI visibility consultant with web search. Before writing the plan, search the web to verify whether "${input.business.name}" in ${input.city}, ${input.country} already has a Google Business Profile / Google Maps listing (prefer maps.google.com / Google Business results that match this business name and location${input.websiteUrl ? `, and website ${input.websiteUrl}` : ""}).
 
-  const userMsg = `Domains currently cited by AI models instead of this business: ${allSourceDomains || "none captured"}\n\nContext from AI answers:\n${competitorContext}`;
+Rules for Google Business Profile in the manual list:
+- If you find a matching listing: do NOT suggest claiming or creating a Google Business Profile. Instead recommend concrete improvements if needed (categories, description, photos, posts, Q&A, reviews) or skip GBP entirely if it already looks solid.
+- If you find no matching listing: include claiming or creating a Google Business Profile as a manual item.
+- Base that decision only on your search findings, not assumptions.
 
-  const { text } = await callClaude({ prompt: userMsg, system, useWebSearch: false });
+Then analyze why the business is or isn't appearing in AI assistant answers, given the domains currently getting cited and the model answers below.
+
+Produce ONLY a JSON object with two arrays: automatable and manual.
+- Each automatable item is content or copy this tool can generate right now, with fields id (short slug), title (short action label, plain text, five words max), description (one plain sentence explaining what it produces). Include 3 to 5 items such as an FAQ content block, a comparison paragraph, a Google Business Profile description (only if a listing exists or should be created), a structured data snippet description, or short-form answer content for forums.
+- Each manual item is a real-world action the business owner must do themselves, with fields title (short action label, five words max) and guidance (two to three plain sentences explaining exactly what to do and why it helps AI visibility, no markdown). Include 3 to 5 items grounded in your search and the citation gaps — for example optimizing an existing Google listing, earning reviews, getting listed on relevant directories that appeared in citations, local press, or forum presence. Do not invent a "claim Google Business Profile" action when a matching listing already exists.
+
+Return valid JSON only, no markdown fences, no extra text.`;
+
+  const identityBits = [
+    `Business: ${input.business.name}`,
+    `Category: ${input.category}`,
+    `Location: ${input.city}, ${input.country}`,
+    input.business.address ? `Address: ${input.business.address}` : "",
+    input.websiteUrl ? `Website: ${input.websiteUrl}` : "",
+    input.business.description ? `Description: ${input.business.description}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const userMsg = `${identityBits}\n\nDomains currently cited by AI models instead of this business: ${allSourceDomains || "none captured"}\n\nContext from AI answers:\n${competitorContext}`;
+
+  const { text } = await callClaude({
+    prompt: userMsg,
+    system,
+    useWebSearch: true,
+    maxTokens: 2000,
+  });
   const parsed = safeParseJSON<ActionPlan>(text);
 
   if (!parsed?.automatable || !parsed?.manual) {

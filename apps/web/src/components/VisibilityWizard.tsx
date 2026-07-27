@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -11,21 +12,15 @@ import {
   Row,
   Select,
   Space,
+  Spin,
   Steps,
   Typography,
 } from "antd";
 import { CATEGORIES } from "@aeo-pcs/shared";
 import { api } from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import {
-  setCandidates,
-  setCategory,
-  setCity,
-  setCountry,
-  setNameQuery,
-  setSelected,
-} from "@/store/businessSlice";
-import { clearPrompts, setPrompts, updatePrompt } from "@/store/promptsSlice";
+import { hydrateFromProfile, setCategory } from "@/store/businessSlice";
+import { setPrompts, updatePrompt } from "@/store/promptsSlice";
 import {
   resetVisibility,
   setError,
@@ -38,14 +33,6 @@ import {
 } from "@/store/visibilitySlice";
 
 const { Title, Text, Paragraph } = Typography;
-
-function matchCategory(raw?: string): string {
-  if (!raw) return "Other";
-  const matched = CATEGORIES.find((cat) =>
-    cat.toLowerCase().includes(raw.toLowerCase().split(" ")[0])
-  );
-  return matched || "Other";
-}
 
 function downloadBlob(html: string, filename: string) {
   const blob = new Blob([html], { type: "text/html" });
@@ -65,14 +52,45 @@ export default function VisibilityWizard() {
   const prompts = useAppSelector((s) => s.prompts.prompts);
   const visibility = useAppSelector((s) => s.visibility);
   const [localBusyLabel, setLocalBusyLabel] = useState<string | null>(null);
+  const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
 
   const currentStep = useMemo(() => {
     if (visibility.plan) return 3;
     if (visibility.results) return 2;
-    if (business.selected && prompts.length) return 1;
-    if (business.selected) return 1;
+    if (prompts.length) return 1;
     return 0;
-  }, [business.selected, prompts.length, visibility.plan, visibility.results]);
+  }, [prompts.length, visibility.plan, visibility.results]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setProfileLoading(true);
+      dispatch(setError(null));
+      try {
+        const { business: profile } = await api.getMyBusiness();
+        if (cancelled) return;
+        dispatch(
+          hydrateFromProfile({
+            name: profile.name,
+            category: profile.category,
+            city: profile.city,
+            country: profile.country,
+            description: profile.description,
+            websiteUrl: profile.websiteUrl,
+          })
+        );
+      } catch (err) {
+        if (!cancelled) {
+          dispatch(setError(err instanceof Error ? err.message : "Failed to load business profile"));
+        }
+      } finally {
+        if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (!visibility.jobId) return;
@@ -109,37 +127,6 @@ export default function VisibilityWizard() {
     };
   }, [dispatch, visibility.jobId, visibility.status]);
 
-  async function onSearch() {
-    if (!business.nameQuery.trim() || !business.city.trim() || !business.country.trim()) return;
-    dispatch(setUiBusy(true));
-    setLocalBusyLabel("Searching");
-    dispatch(setError(null));
-    dispatch(setCandidates([]));
-    dispatch(setSelected(null));
-    dispatch(clearPrompts());
-    dispatch(resetVisibility());
-    try {
-      const { candidates } = await api.searchBusiness({
-        name: business.nameQuery.trim(),
-        city: business.city.trim(),
-        country: business.country.trim(),
-      });
-      dispatch(setCandidates(candidates));
-    } catch (err) {
-      dispatch(setError(err instanceof Error ? err.message : "Business search failed"));
-    } finally {
-      dispatch(setUiBusy(false));
-      setLocalBusyLabel(null);
-    }
-  }
-
-  function onPick(candidate: (typeof business.candidates)[number]) {
-    dispatch(setSelected(candidate));
-    dispatch(setCategory(matchCategory(candidate.category)));
-    dispatch(clearPrompts());
-    dispatch(resetVisibility());
-  }
-
   async function onGeneratePrompts() {
     if (!business.selected) return;
     dispatch(setUiBusy(true));
@@ -170,10 +157,7 @@ export default function VisibilityWizard() {
     dispatch(setPlan(null));
     try {
       const { jobId } = await api.createVisibilityJob({
-        business: business.selected,
         category: business.category,
-        city: business.city,
-        country: business.country,
         prompts,
       });
       dispatch(setJobId(jobId));
@@ -241,12 +225,19 @@ export default function VisibilityWizard() {
     }
   }
 
-  const jobRunning =
-    visibility.status === "queued" || visibility.status === "running";
+  const jobRunning = visibility.status === "queued" || visibility.status === "running";
   const progressPct =
     visibility.progress && visibility.progress.total
       ? Math.round((visibility.progress.completed / visibility.progress.total) * 100)
       : 0;
+
+  if (profileLoading) {
+    return (
+      <div style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
+        <Spin tip="Loading your business…" />
+      </div>
+    );
+  }
 
   return (
     <div style={{ color: "#EDEAE1" }}>
@@ -268,7 +259,7 @@ export default function VisibilityWizard() {
           current={currentStep}
           style={{ marginBottom: 28 }}
           items={[
-            { title: "Find business" },
+            { title: "Confirm business" },
             { title: "Prompts" },
             { title: "Visibility" },
             { title: "Action plan" },
@@ -286,73 +277,36 @@ export default function VisibilityWizard() {
           />
         )}
 
-        <Card title="Step 1. Find your business" style={{ marginBottom: 20 }}>
-          <Row gutter={10}>
-            <Col xs={24} md={8}>
-              <Input
-                value={business.nameQuery}
-                onChange={(e) => dispatch(setNameQuery(e.target.value))}
-                placeholder="Type business name"
-                onPressEnter={onSearch}
-              />
-            </Col>
-            <Col xs={24} md={5}>
-              <Input
-                value={business.city}
-                onChange={(e) => dispatch(setCity(e.target.value))}
-                placeholder="City"
-              />
-            </Col>
-            <Col xs={24} md={5}>
-              <Input
-                value={business.country}
-                onChange={(e) => dispatch(setCountry(e.target.value))}
-                placeholder="Country"
-              />
-            </Col>
-            <Col xs={24} md={6}>
-              <Button
-                type="primary"
-                block
-                loading={visibility.uiBusy && localBusyLabel === "Searching"}
-                onClick={onSearch}
-              >
-                Search
-              </Button>
-            </Col>
-          </Row>
-
-          {business.candidates.length > 0 && (
-            <Space direction="vertical" style={{ width: "100%", marginTop: 16 }}>
-              {business.candidates.map((c, i) => {
-                const selected = business.selected?.name === c.name;
-                return (
-                  <Card
-                    key={`${c.name}-${i}`}
-                    size="small"
-                    hoverable
-                    onClick={() => onPick(c)}
-                    style={{
-                      borderColor: selected ? "#C9773D" : undefined,
-                      background: selected ? "#C9773D22" : undefined,
-                    }}
-                  >
-                    <Text strong>{c.name}</Text>
-                    <div>
-                      <Text type="secondary">
-                        {c.category} in {c.address}
-                      </Text>
-                    </div>
-                    {c.description && <Paragraph type="secondary">{c.description}</Paragraph>}
-                  </Card>
-                );
-              })}
-            </Space>
-          )}
-        </Card>
+        {business.selected && (
+          <Card title="Your business" style={{ marginBottom: 20 }}>
+            <Paragraph style={{ marginBottom: 4 }}>
+              <Text strong>{business.selected.name}</Text>
+            </Paragraph>
+            <Paragraph type="secondary" style={{ marginBottom: 4 }}>
+              {[business.city, business.country].filter(Boolean).join(", ")}
+              {business.category ? ` · ${business.category}` : ""}
+            </Paragraph>
+            {business.websiteUrl && (
+              <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+                <a href={business.websiteUrl} target="_blank" rel="noreferrer">
+                  {business.websiteUrl}
+                </a>
+              </Paragraph>
+            )}
+            {business.selected.description && (
+              <Paragraph type="secondary" style={{ marginBottom: 12 }}>
+                {business.selected.description}
+              </Paragraph>
+            )}
+            <Text type="secondary">
+              Identity comes from your saved profile.{" "}
+              <Link href="/app/onboarding/profile">Edit profile</Link>
+            </Text>
+          </Card>
+        )}
 
         {business.selected && (
-          <Card title="Step 2. Confirm category and generate prompts" style={{ marginBottom: 20 }}>
+          <Card title="Generate prompts" style={{ marginBottom: 20 }}>
             <Row gutter={10} style={{ marginBottom: prompts.length ? 16 : 0 }}>
               <Col xs={24} md={16}>
                 <Select
@@ -385,7 +339,9 @@ export default function VisibilityWizard() {
                 ))}
                 <Button
                   type="primary"
-                  loading={jobRunning || (visibility.uiBusy && localBusyLabel === "Starting visibility check")}
+                  loading={
+                    jobRunning || (visibility.uiBusy && localBusyLabel === "Starting visibility check")
+                  }
                   onClick={onRunCheck}
                 >
                   {jobRunning ? "Running visibility check" : "Run visibility check"}

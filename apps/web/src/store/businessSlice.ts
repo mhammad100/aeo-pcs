@@ -2,61 +2,63 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { BusinessCandidate } from "@aeo-pcs/shared";
 
 type BusinessState = {
-  nameQuery: string;
   city: string;
   country: string;
-  candidates: BusinessCandidate[];
   selected: BusinessCandidate | null;
   category: string;
+  websiteUrl: string;
+  profileLoaded: boolean;
 };
 
 const initialState: BusinessState = {
-  nameQuery: "",
-  city: "Ahmedabad",
-  country: "India",
-  candidates: [],
+  city: "",
+  country: "",
   selected: null,
   category: "",
+  websiteUrl: "",
+  profileLoaded: false,
 };
 
 const businessSlice = createSlice({
   name: "business",
   initialState,
   reducers: {
-    setNameQuery(state, action: PayloadAction<string>) {
-      state.nameQuery = action.payload;
-    },
-    setCity(state, action: PayloadAction<string>) {
-      state.city = action.payload;
-    },
-    setCountry(state, action: PayloadAction<string>) {
-      state.country = action.payload;
-    },
-    setCandidates(state, action: PayloadAction<BusinessCandidate[]>) {
-      state.candidates = action.payload;
-    },
-    setSelected(state, action: PayloadAction<BusinessCandidate | null>) {
-      state.selected = action.payload;
+    hydrateFromProfile(
+      state,
+      action: PayloadAction<{
+        name: string;
+        category: string;
+        city: string;
+        country: string;
+        description?: string;
+        websiteUrl?: string;
+      }>
+    ) {
+      const p = action.payload;
+      state.selected = {
+        name: p.name,
+        category: p.category || "Other",
+        address: [p.city, p.country].filter(Boolean).join(", "),
+        description: p.description || "",
+      };
+      state.category = p.category || "Other";
+      state.city = p.city || "";
+      state.country = p.country || "";
+      state.websiteUrl = p.websiteUrl || "";
+      state.profileLoaded = true;
     },
     setCategory(state, action: PayloadAction<string>) {
       state.category = action.payload;
+      if (state.selected) {
+        state.selected.category = action.payload;
+      }
     },
-    resetBusinessDownstream(state) {
-      state.candidates = [];
-      state.selected = null;
-      state.category = "";
+    clearBusiness(state) {
+      Object.assign(state, initialState);
     },
   },
 });
 
-export const {
-  setNameQuery,
-  setCity,
-  setCountry,
-  setCandidates,
-  setSelected,
-  setCategory,
-  resetBusinessDownstream,
-} = businessSlice.actions;
+export const { hydrateFromProfile, setCategory, clearBusiness } = businessSlice.actions;
 
 export default businessSlice.reducer;
