@@ -49,6 +49,24 @@ export const api = {
 
   me: () => request<MeResponse>("/auth/me"),
 
+  getMyBusiness: () =>
+    request<{ business: import("@aeo-pcs/shared").BusinessProfile }>("/businesses/me"),
+
+  updateMyBusiness: (body: {
+    name: string;
+    category: string;
+    city: string;
+    country: string;
+    description?: string;
+    websiteUrl: string;
+    googleBusinessUrl?: string;
+    socialLinks?: { label: string; url: string }[];
+  }) =>
+    request<{ business: import("@aeo-pcs/shared").BusinessProfile }>("/businesses/me", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+
   searchBusiness: (body: { name: string; city: string; country: string }) =>
     request<{ candidates: import("@aeo-pcs/shared").BusinessCandidate[] }>("/business/search", {
       method: "POST",

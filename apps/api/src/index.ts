@@ -3,7 +3,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { connectMongo } from "./config/db";
 import { env } from "./config/env";
-import { apiRouter } from "./routes/api";
+import { apiRouter } from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 async function main() {

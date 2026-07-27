@@ -100,7 +100,7 @@ Tracked as **v0.1 — Foundation**.
 | MVP reference file kept | Done | `geo-visibility-mvp-v3.jsx` |
 | Public marketing site | Not started | |
 | Auth / users / roles | Done | JWT login; signup disabled via SIGNUP_ENABLED |
-| Business profile gate + links | Not started | Model fields exist; onboarding UI is B3 |
+| Business profile gate + links | Done | Onboarding + ProfileGate; visibility blocked until complete |
 | Stepper UX | Not started | Still single page inside /app/visibility |
 | Usage token logging | Not started | |
 | Business panel (insights, checklist, billing) | Not started | |
@@ -156,10 +156,10 @@ Versions can ship as internal milestones before public launch.
 - [x] Protected `/app/*` client gate
 
 **Milestone B3 — Profile onboarding gate**
-- [ ] Onboarding form: website (required), Google Business (optional), social links (addable)
-- [ ] Plus existing name/category/city/country/description
-- [ ] Redirect incomplete profiles to onboarding after login
-- [ ] Block visibility until `profileCompletedAt` set
+- [x] Onboarding form: website (required), Google Business (optional), social links (addable)
+- [x] Plus existing name/category/city/country/description
+- [x] Redirect incomplete profiles to onboarding after login
+- [x] Block visibility until `profileCompletedAt` set
 
 **Exit:** User can log in (seeded/admin-created), complete profile, reach empty panel shell.
 
@@ -367,7 +367,7 @@ Update this table as work completes.
 | A2 | User + Business models | v0.2 | **Done** | 2026-07-27 |
 | B1 | Landing + pricing shell | v0.2 | Todo | |
 | B2 | Login + disabled signup + JWT | v0.2 | **Done** | 2026-07-27 |
-| B3 | Profile onboarding gate | v0.2 | Todo | |
+| B3 | Profile onboarding gate | v0.2 | **Done** | 2026-07-27 |
 | C1 | Business panel shell | v0.3 | Todo | |
 | C2 | Visibility stepper | v0.3 | Todo | |
 | C3 | History + MoM insights | v0.3 | Todo | |

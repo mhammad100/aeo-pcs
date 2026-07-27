@@ -1,0 +1,179 @@
+import type { BusinessCandidate, UserRole } from "@aeo-pcs/shared";
+import { BusinessModel } from "../models/Business";
+import { VisibilityJobModel } from "../models/VisibilityJob";
+import { AppError } from "../utils/AppError";
+import { enqueueVisibilityJob } from "./jobRunner";
+import { buildActionPlan, generateItemContent } from "./plan";
+import { buildReportHtml, wrapReportDocument } from "./report";
+
+function mapItemOutputs(itemOutputs: unknown): Record<string, string> {
+  if (itemOutputs instanceof Map) {
+    return Object.fromEntries(itemOutputs);
+  }
+  return (itemOutputs as Record<string, string>) || {};
+}
+
+function assertJobAccess(
+  job: { userId?: unknown },
+  userId: string,
+  userRole?: UserRole
+) {
+  if (job.userId && String(job.userId) !== userId && userRole !== "admin") {
+    throw new AppError("Forbidden", 403);
+  }
+}
+
+function serializeJob(job: Record<string, unknown>) {
+  return {
+    id: String(job._id),
+    status: job.status,
+    progress: job.progress,
+    business: job.business,
+    category: job.category,
+    city: job.city,
+    country: job.country,
+    prompts: job.prompts,
+    results: job.results,
+    score: job.score,
+    plan: job.plan,
+    itemOutputs: mapItemOutputs(job.itemOutputs),
+    error: job.error,
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+  };
+}
+
+export async function createVisibilityJob(input: {
+  userId: string;
+  business: BusinessCandidate;
+  category: string;
+  city: string;
+  country: string;
+  prompts: string[];
+}) {
+  const owned = await BusinessModel.findOne({ ownerUserId: input.userId });
+  if (!owned?.profileCompletedAt) {
+    throw new AppError("Complete your business profile before running a visibility check", 403);
+  }
+
+  const job = await VisibilityJobModel.create({
+    userId: input.userId,
+    businessId: owned._id,
+    status: "queued",
+    progress: {
+      completed: 0,
+      total: input.prompts.length * 3,
+    },
+    business: input.business,
+    category: input.category,
+    city: input.city,
+    country: input.country,
+    prompts: input.prompts,
+    itemOutputs: {},
+  });
+
+  await enqueueVisibilityJob(String(job._id));
+  return { jobId: String(job._id) };
+}
+
+export async function getVisibilityJob(input: {
+  jobId: string;
+  userId: string;
+  userRole?: UserRole;
+}) {
+  const job = await VisibilityJobModel.findById(input.jobId).lean();
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+  assertJobAccess(job, input.userId, input.userRole);
+  return serializeJob(job as Record<string, unknown>);
+}
+
+export async function buildPlanForJob(input: {
+  jobId: string;
+  userId: string;
+  userRole?: UserRole;
+}) {
+  const job = await VisibilityJobModel.findById(input.jobId);
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+  assertJobAccess(job, input.userId, input.userRole);
+  if (job.status !== "completed" || !job.results?.length) {
+    throw new AppError("Visibility job is not completed yet", 400);
+  }
+
+  const plan = await buildActionPlan({
+    business: job.business as never,
+    category: job.category || "Other",
+    city: job.city || "",
+    country: job.country || "",
+    results: job.results as never,
+  });
+
+  job.set("plan", plan);
+  job.set("itemOutputs", {});
+  await job.save();
+  return { plan };
+}
+
+export async function generatePlanItem(input: {
+  jobId: string;
+  userId: string;
+  userRole?: UserRole;
+  itemId: string;
+  title: string;
+  description: string;
+}) {
+  const job = await VisibilityJobModel.findById(input.jobId);
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+  assertJobAccess(job, input.userId, input.userRole);
+  if (!job.plan) {
+    throw new AppError("Action plan not built yet", 400);
+  }
+
+  const content = await generateItemContent({
+    business: job.business as never,
+    category: job.category || "Other",
+    city: job.city || "",
+    country: job.country || "",
+    item: { title: input.title, description: input.description },
+  });
+
+  job.set(`itemOutputs.${input.itemId}`, content);
+  await job.save();
+  return { content };
+}
+
+export async function getReportForJob(input: {
+  jobId: string;
+  userId: string;
+  userRole?: UserRole;
+}) {
+  const job = await VisibilityJobModel.findById(input.jobId).lean();
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+  assertJobAccess(job, input.userId, input.userRole);
+
+  const itemOutputs = mapItemOutputs(job.itemOutputs);
+  const bodyHtml = buildReportHtml({
+    selected: (job.business as never) || null,
+    category: job.category || "",
+    city: job.city || "",
+    country: job.country || "",
+    results: (job.results as never) || null,
+    score: (job.score as never) || null,
+    plan: (job.plan as never) || null,
+    itemOutputs,
+  });
+
+  const html = wrapReportDocument(bodyHtml);
+  const nameSafe = (job.business?.name || "report").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  return {
+    html,
+    filename: `ai-visibility-report-${nameSafe}.html`,
+  };
+}

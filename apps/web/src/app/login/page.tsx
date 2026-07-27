@@ -22,8 +22,11 @@ export default function LoginPage() {
     try {
       const res = await api.login(values);
       dispatch(setCredentials(res));
-      router.replace("/app");
-    } catch (err) {
+      if (res.user.business?.profileCompletedAt) {
+        router.replace("/app");
+      } else {
+        router.replace("/app/onboarding/profile");
+      }    } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {
       setLoading(false);

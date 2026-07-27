@@ -9,7 +9,7 @@ const { Title, Paragraph, Text } = Typography;
 
 export default function AppDashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
-  const profileComplete = Boolean(user?.business?.profileCompletedAt);
+  const biz = user?.business;
 
   return (
     <AppShell>
@@ -17,23 +17,32 @@ export default function AppDashboardPage() {
         Dashboard
       </Title>
       <Paragraph type="secondary">
-        Welcome{user?.email ? `, ${user.email}` : ""}. This is your business panel shell — insights,
-        subscription, and billing land in later milestones.
+        Welcome{user?.email ? `, ${user.email}` : ""}. Your profile is ready — run a visibility check
+        when you want to measure AI mentions.
       </Paragraph>
 
       <Card style={{ marginBottom: 16 }}>
         <Text strong>Business profile</Text>
-        <Paragraph type="secondary" style={{ marginBottom: 12 }}>
-          {profileComplete
-            ? "Profile marked complete."
-            : "Profile incomplete — onboarding gate (website, Google Business, socials) is next (B3)."}
+        <Paragraph type="secondary" style={{ marginBottom: 8 }}>
+          Complete · used for all visibility runs
         </Paragraph>
-        {user?.business && (
-          <Paragraph style={{ marginBottom: 0 }}>
-            {user.business.name || "Unnamed business"}
-            {user.business.city ? ` · ${user.business.city}` : ""}
-            {user.business.country ? `, ${user.business.country}` : ""}
-          </Paragraph>
+        {biz && (
+          <>
+            <Paragraph style={{ marginBottom: 4 }}>
+              <Text strong>{biz.name}</Text>
+              {biz.category ? ` · ${biz.category}` : ""}
+            </Paragraph>
+            <Paragraph type="secondary" style={{ marginBottom: 4 }}>
+              {[biz.city, biz.country].filter(Boolean).join(", ")}
+            </Paragraph>
+            {biz.websiteUrl && (
+              <Paragraph style={{ marginBottom: 0 }}>
+                <a href={biz.websiteUrl} target="_blank" rel="noreferrer">
+                  {biz.websiteUrl}
+                </a>
+              </Paragraph>
+            )}
+          </>
         )}
       </Card>
 

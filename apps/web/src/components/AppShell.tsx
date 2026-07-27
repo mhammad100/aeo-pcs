@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button, Layout, Menu, Typography } from "antd";
 import AuthGuard from "@/components/AuthGuard";
+import ProfileGate from "@/components/ProfileGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/authSlice";
 
@@ -29,38 +30,40 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGuard>
-      <Layout style={{ minHeight: "100vh", background: "#0F1A17" }}>
-        <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#152420" }}>
-          <div style={{ padding: 20 }}>
-            <Text strong style={{ color: "#8FBF9F", letterSpacing: "0.08em" }}>
-              Master AEO
-            </Text>
-          </div>
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={[selected]}
-            items={items}
-            style={{ background: "#152420", borderInlineEnd: "none" }}
-          />
-        </Sider>
-        <Layout style={{ background: "#0F1A17" }}>
-          <Header
-            style={{
-              background: "#152420",
-              display: "flex",
-              justifyContent: "flex-end",
-              alignItems: "center",
-              gap: 16,
-              paddingInline: 24,
-            }}
-          >
-            <Text type="secondary">{user?.email}</Text>
-            <Button onClick={onLogout}>Log out</Button>
-          </Header>
-          <Content style={{ padding: 24 }}>{children}</Content>
+      <ProfileGate>
+        <Layout style={{ minHeight: "100vh", background: "#0F1A17" }}>
+          <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#152420" }}>
+            <div style={{ padding: 20 }}>
+              <Text strong style={{ color: "#8FBF9F", letterSpacing: "0.08em" }}>
+                masteraeo.com
+              </Text>
+            </div>
+            <Menu
+              theme="dark"
+              mode="inline"
+              selectedKeys={[selected]}
+              items={items}
+              style={{ background: "#152420", borderInlineEnd: "none" }}
+            />
+          </Sider>
+          <Layout style={{ background: "#0F1A17" }}>
+            <Header
+              style={{
+                background: "#152420",
+                display: "flex",
+                justifyContent: "flex-end",
+                alignItems: "center",
+                gap: 16,
+                paddingInline: 24,
+              }}
+            >
+              <Text type="secondary">{user?.email}</Text>
+              <Button onClick={onLogout}>Log out</Button>
+            </Header>
+            <Content style={{ padding: 24 }}>{children}</Content>
+          </Layout>
         </Layout>
-      </Layout>
+      </ProfileGate>
     </AuthGuard>
   );
 }
