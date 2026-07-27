@@ -85,6 +85,14 @@ a {
   overflow: visible;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+}
+
+.ma-hero > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .ma-hero-viewport {
@@ -93,6 +101,7 @@ a {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .ma-hero-bg {
@@ -303,8 +312,10 @@ a {
 
 .ma-section {
   padding: 88px 24px;
+  width: 100%;
   max-width: 1120px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .ma-section-label {
@@ -654,10 +665,11 @@ a {
 }
 
 .ma-faq {
-  display: grid;
-  gap: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   width: 100%;
-  max-width: 640px;
+  max-width: 40rem;
   min-width: 0;
   box-sizing: border-box;
 }
@@ -666,15 +678,17 @@ a {
   border-bottom: 1px solid var(--ma-line);
   padding: 18px 0;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
   box-sizing: border-box;
 }
 
 .ma-faq summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
+  column-gap: 16px;
+  width: 100%;
   cursor: pointer;
   font-family: var(--ma-font-display);
   font-size: 1.1rem;
@@ -687,7 +701,6 @@ a {
 
 .ma-faq summary::after {
   content: "+";
-  flex-shrink: 0;
   color: var(--ma-accent);
   font-weight: 600;
   line-height: 1;
@@ -702,7 +715,7 @@ a {
   color: var(--ma-muted);
   line-height: 1.6;
   max-width: 100%;
-  overflow-wrap: break-word;
+  overflow-wrap: anywhere;
 }
 
 .ma-deliverables {
