@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
       <Card style={{ width: "100%", maxWidth: 420 }}>
         <Link href="/" style={{ color: "var(--ma-accent-soft)", fontFamily: "var(--ma-font-display)" }}>
-          masteraeo
+          Master AEO
         </Link>
         <Title level={2} style={{ marginTop: 8 }}>
           Log in

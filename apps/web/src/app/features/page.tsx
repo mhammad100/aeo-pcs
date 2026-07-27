@@ -4,7 +4,7 @@ import PublicShell from "@/components/marketing/PublicShell";
 
 export const metadata: Metadata = {
   title: "Features",
-  description: "AI visibility scoring, action plans, and month-over-month insights from masteraeo.",
+  description: "AI visibility scoring, action plans, and month-over-month insights from Master AEO.",
 };
 
 export default function FeaturesPage() {
@@ -16,7 +16,7 @@ export default function FeaturesPage() {
           Everything you need to earn a place in AI answers
         </h1>
         <p className="ma-section-copy">
-          masteraeo combines measurement and remediation so local and growing businesses can compete
+          Master AEO combines measurement and remediation so local and growing businesses can compete
           where customers increasingly ask for recommendations.
         </p>
 

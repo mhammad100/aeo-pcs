@@ -4,7 +4,7 @@ import PublicShell from "@/components/marketing/PublicShell";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "masteraeo helps businesses understand and improve how they appear in AI assistants.",
+  description: "Master AEO helps businesses understand and improve how they appear in AI assistants.",
 };
 
 export default function AboutPage() {
@@ -16,7 +16,7 @@ export default function AboutPage() {
           We help businesses earn a seat in AI answers
         </h1>
         <p className="ma-section-copy" style={{ maxWidth: "52ch" }}>
-          masteraeo.com is building practical AI visibility tools for local and growing companies —
+          Master AEO is building practical AI visibility tools for local and growing companies —
           measure whether assistants recommend you, understand who gets cited instead, and leave with
           a concrete plan.
         </p>

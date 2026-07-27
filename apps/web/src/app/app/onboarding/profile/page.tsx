@@ -77,7 +77,7 @@ export default function OnboardingProfilePage() {
       <div style={{ minHeight: "100vh", background: "#0F1A17", padding: "40px 24px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            masteraeo.com
+            Master AEO
           </Text>
           <Title level={2} style={{ color: "#EDEAE1", marginTop: 8 }}>
             Complete your business profile

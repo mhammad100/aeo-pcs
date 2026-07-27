@@ -4,7 +4,7 @@ import PublicShell from "@/components/marketing/PublicShell";
 
 export const metadata: Metadata = {
   title: "Pricing",
-  description: "Simple plans for AI visibility measurement and action planning with masteraeo.",
+  description: "Simple plans for AI visibility measurement and action planning with Master AEO.",
 };
 
 const tiers = [

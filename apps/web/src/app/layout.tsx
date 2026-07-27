@@ -17,11 +17,11 @@ const manrope = Manrope({
 
 export const metadata: Metadata = {
   title: {
-    default: "masteraeo — AI visibility for your business",
-    template: "%s · masteraeo",
+    default: "Master AEO — AI visibility for your business",
+    template: "%s · Master AEO",
   },
   description:
-    "masteraeo helps businesses measure how often they appear in AI assistants, then deliver a clear action plan to improve visibility.",
+    "Master AEO helps businesses measure how often they appear in AI assistants, then deliver a clear action plan to improve visibility.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

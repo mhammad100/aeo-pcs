@@ -1,4 +1,4 @@
-# masteraeo.com
+# Master AEO (masteraeo.com)
 
 Monorepo for the AI visibility product.
 

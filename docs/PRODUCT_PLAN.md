@@ -1,6 +1,6 @@
 # Master AEO — Product & Delivery Plan
 
-**Platform:** masteraeo.com  
+**Platform:** Master AEO (masteraeo.com)  
 **Repo:** `aeo-pcs` (working name; product brand is Master AEO)  
 **Last updated:** 2026-07-27  
 **Status:** Planning + early foundation (v0.1)
@@ -34,7 +34,7 @@ Help local and SMB businesses measure and improve how often they appear in AI as
 ## 2. Product requirements (consolidated)
 
 ### 2.1 Public face
-- Marketing landing for masteraeo.com (brand-first hero, product story, CTA).
+- Marketing landing for Master AEO (brand-first hero, product story, CTA).
 - Pricing page (backed by Plans when available).
 - Login + Signup pages (signup disabled / invite-only messaging for now).
 
@@ -132,7 +132,7 @@ Versions can ship as internal milestones before public launch.
 **Milestone A1 — Client hardening**
 - [x] Fix redux-persist SSR storage (client-only / noop)
 - [x] Persist only light draft state (not huge LLM payloads)
-- [x] Brand copy → masteraeo.com (replace PCS placeholders in UI/report)
+- [x] Brand copy → Master AEO (replace PCS placeholders in UI/report)
 
 **Milestone A2 — Identity models (additive)**
 - [x] `User` (email, passwordHash, role: `admin` | `business`, status)
@@ -382,7 +382,7 @@ Update this table as work completes.
 
 ## 10. Recommended next execution order
 
-1. **A1** Persist fix + masteraeo branding  
+1. **A1** Persist fix + Master AEO branding  
 2. **A2 + B2** Auth models + login (seed admin + one business)  
 3. **B3** Profile gate (website / GBP / socials)  
 4. **B1** Landing page  

@@ -35,7 +35,7 @@ export default function LoginPage() {
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
       <Card style={{ width: "100%", maxWidth: 420 }}>
         <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          masteraeo.com
+          Master AEO
         </Text>
         <Title level={2} style={{ marginTop: 8 }}>
           Admin login

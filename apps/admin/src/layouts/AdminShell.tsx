@@ -27,7 +27,7 @@ export default function AdminShell() {
       <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#152420" }}>
         <div style={{ padding: 20 }}>
           <Text strong style={{ color: "#8FBF9F", letterSpacing: "0.06em" }}>
-            masteraeo admin
+            Master AEO Admin
           </Text>
         </div>
         <Menu

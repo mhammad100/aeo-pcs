@@ -258,7 +258,7 @@ export default function VisibilityWizard() {
           <Title level={2} style={{ margin: 0, color: "#EDEAE1" }}>
             Run prompts and measure AI mentions
           </Title>
-          <Text type="secondary">Signed-in session · masteraeo.com</Text>
+          <Text type="secondary">Signed-in session · Master AEO</Text>
           <Button onClick={onDownloadReport} disabled={!business.selected || !visibility.jobId}>
             Download report
           </Button>
@@ -533,7 +533,7 @@ export default function VisibilityWizard() {
             color: "#5C6E64",
           }}
         >
-          masteraeo.com
+          Master AEO
         </div>
       </div>
     </div>
