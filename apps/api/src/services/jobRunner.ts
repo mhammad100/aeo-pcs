@@ -31,6 +31,11 @@ async function processVisibilityJob(jobId: string) {
     const { results, score } = await runVisibilityCheck({
       businessName: job.business?.name || "",
       prompts: job.prompts || [],
+      usage: {
+        userId: job.userId ? String(job.userId) : null,
+        businessId: job.businessId ? String(job.businessId) : null,
+        refs: { jobId },
+      },
       onProgress: async ({ completed, total, currentPrompt, currentModel }) => {
         await VisibilityJobModel.findByIdAndUpdate(jobId, {
           progress: { completed, total, currentPrompt, currentModel },

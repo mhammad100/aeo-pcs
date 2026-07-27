@@ -1,53 +1,56 @@
-import type { Metadata } from "next";
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import PublicShell from "@/components/marketing/PublicShell";
-
-export const metadata: Metadata = {
-  title: "Pricing",
-  description: "Simple plans for AI visibility measurement and action planning with Master AEO.",
-};
-
-const tiers = [
-  {
-    name: "Starter",
-    amount: "Invite",
-    blurb: "For single-location businesses getting their first AI visibility baseline.",
-    points: ["Business profile & onboarding", "Visibility checks", "Action plan & report"],
-  },
-  {
-    name: "Growth",
-    amount: "Soon",
-    blurb: "For teams that need recurring runs, history, and checklist tracking.",
-    points: ["Month-over-month insights", "Action checklist", "Priority support"],
-  },
-  {
-    name: "Agency",
-    amount: "Custom",
-    blurb: "For operators managing multiple brands under one roof.",
-    points: ["Multi-business workflows", "Usage visibility", "Onboarding help"],
-  },
-];
+import { api } from "@/lib/api";
+import type { ProductPlan } from "@aeo-pcs/shared";
 
 export default function PricingPage() {
+  const [plans, setPlans] = useState<ProductPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await api.listCatalogPlans();
+        if (!cancelled) setPlans(res.plans);
+      } catch {
+        if (!cancelled) setPlans([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <PublicShell>
       <div className="ma-page" style={{ maxWidth: 1120 }}>
         <div className="ma-section-label">Pricing</div>
         <h1 className="ma-section-title">Start with access. Scale when plans unlock.</h1>
         <p className="ma-section-copy">
-          Self-serve signup is invite-only while we onboard early businesses. Final plan pricing will
-          publish here as subscriptions go live.
+          Self-serve signup is invite-only while we onboard early businesses. Plan prices below come
+          from the live catalog.
         </p>
         <div className="ma-price-grid">
-          {tiers.map((t) => (
-            <div key={t.name} className="ma-price">
+          {loading && <p style={{ color: "var(--ma-muted)" }}>Loading plans…</p>}
+          {!loading && plans.length === 0 && (
+            <p style={{ color: "var(--ma-muted)" }}>Plans will appear here shortly.</p>
+          )}
+          {plans.map((t) => (
+            <div key={t.id} className="ma-price">
               <h3>{t.name}</h3>
-              <p className="amount">{t.amount}</p>
+              <p className="amount">{t.priceLabel || `${t.currency} ${t.price}`}</p>
               <p style={{ color: "var(--ma-muted)", marginTop: 0, marginBottom: 16 }}>{t.blurb}</p>
               <ul>
-                {t.points.map((p) => (
+                {t.features.map((p) => (
                   <li key={p}>{p}</li>
                 ))}
+                <li>{t.limits.visibilityRunsPerMonth} visibility runs / month</li>
               </ul>
             </div>
           ))}

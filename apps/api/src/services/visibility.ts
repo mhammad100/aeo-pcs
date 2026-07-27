@@ -1,5 +1,5 @@
 import { MODELS, type PromptResult, type VisibilityScore } from "@aeo-pcs/shared";
-import { callClaude } from "./claude";
+import { callClaude, type ClaudeUsageContext } from "./claude";
 import { dedupeSources, extractMentioned, NO_MARKDOWN_RULE } from "../utils/llm";
 
 export function computeScore(results: PromptResult[]): VisibilityScore {
@@ -18,6 +18,7 @@ export function computeScore(results: PromptResult[]): VisibilityScore {
 export async function runVisibilityCheck(input: {
   businessName: string;
   prompts: string[];
+  usage?: Omit<ClaudeUsageContext, "feature">;
   onProgress?: (info: {
     completed: number;
     total: number;
@@ -36,9 +37,19 @@ export async function runVisibilityCheck(input: {
         await input.onProgress({ completed, total, currentPrompt: prompt, currentModel: model });
       }
 
-      // Planned: simulate ChatGPT / Gemini / Perplexity via Claude style prompts (not live multi-provider).
       const system = `You are simulating how a ${model} AI assistant answers a real user's question, grounded in actual current web search results. Search the web, then answer naturally as that assistant would, naming specific real businesses relevant to the query and location. Keep it to 4-6 sentences and name at least 2-3 businesses if the search results support it. ${NO_MARKDOWN_RULE}`;
-      const { text, sources } = await callClaude({ prompt, system, useWebSearch: true });
+      const { text, sources } = await callClaude({
+        prompt,
+        system,
+        useWebSearch: true,
+        usage: input.usage
+          ? {
+              ...input.usage,
+              feature: "visibility",
+              refs: { ...(input.usage.refs || {}), simulatedModel: model },
+            }
+          : undefined,
+      });
       const mentioned = extractMentioned(text, input.businessName);
       perModel.push({
         model,

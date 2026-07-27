@@ -8,6 +8,7 @@ export async function generate(req: AuthedRequest, res: Response) {
     category: req.body.category,
     city: req.body.city,
     country: req.body.country,
+    usage: { userId: req.userId },
   });
   res.json({ prompts });
 }

@@ -13,6 +13,10 @@ visibilityRouter.post(
   asyncHandler(visibilityController.createJob)
 );
 
+visibilityRouter.get("/jobs", requireAuth, asyncHandler(visibilityController.listJobs));
+
+visibilityRouter.get("/insights", requireAuth, asyncHandler(visibilityController.getInsights));
+
 visibilityRouter.get(
   "/jobs/:jobId",
   requireAuth,

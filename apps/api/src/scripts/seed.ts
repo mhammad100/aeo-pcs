@@ -67,6 +67,10 @@ async function main() {
   }
 
   await connectMongo();
+  const { ensureDefaultPlans } = await import("../services/productPlans.service");
+  const { ensureDefaultCostRates } = await import("../services/usage.service");
+  await ensureDefaultPlans();
+  await ensureDefaultCostRates();
   await upsertUser({ email: adminEmail, password: adminPassword, role: "admin" });
 
   const bizEmail = process.env.SEED_BUSINESS_EMAIL?.trim();

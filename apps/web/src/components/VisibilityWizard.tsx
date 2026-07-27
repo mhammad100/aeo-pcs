@@ -53,13 +53,22 @@ export default function VisibilityWizard() {
   const visibility = useAppSelector((s) => s.visibility);
   const [localBusyLabel, setLocalBusyLabel] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
+  const [stepOverride, setStepOverride] = useState<number | null>(null);
 
-  const currentStep = useMemo(() => {
+  const derivedStep = useMemo(() => {
     if (visibility.plan) return 3;
-    if (visibility.results) return 2;
+    if (visibility.results || visibility.status === "queued" || visibility.status === "running") {
+      return 2;
+    }
     if (prompts.length) return 1;
     return 0;
-  }, [prompts.length, visibility.plan, visibility.results]);
+  }, [prompts.length, visibility.plan, visibility.results, visibility.status]);
+
+  const currentStep = stepOverride ?? derivedStep;
+
+  useEffect(() => {
+    setStepOverride(null);
+  }, [derivedStep]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +150,7 @@ export default function VisibilityWizard() {
       });
       dispatch(setPrompts(next));
       dispatch(resetVisibility());
+      setStepOverride(1);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Prompt generation failed"));
     } finally {
@@ -167,6 +177,7 @@ export default function VisibilityWizard() {
           progress: { completed: 0, total: prompts.length * 3 },
         })
       );
+      setStepOverride(2);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Visibility check failed"));
     } finally {
@@ -183,6 +194,7 @@ export default function VisibilityWizard() {
     try {
       const { plan } = await api.buildPlan(visibility.jobId);
       dispatch(setPlan(plan));
+      setStepOverride(3);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Action plan failed"));
     } finally {
@@ -259,7 +271,7 @@ export default function VisibilityWizard() {
           current={currentStep}
           style={{ marginBottom: 28 }}
           items={[
-            { title: "Confirm business" },
+            { title: "Confirm" },
             { title: "Prompts" },
             { title: "Visibility" },
             { title: "Action plan" },
@@ -277,8 +289,8 @@ export default function VisibilityWizard() {
           />
         )}
 
-        {business.selected && (
-          <Card title="Your business" style={{ marginBottom: 20 }}>
+        {currentStep === 0 && business.selected && (
+          <Card title="Confirm your business">
             <Paragraph style={{ marginBottom: 4 }}>
               <Text strong>{business.selected.name}</Text>
             </Paragraph>
@@ -298,15 +310,24 @@ export default function VisibilityWizard() {
                 {business.selected.description}
               </Paragraph>
             )}
-            <Text type="secondary">
-              Identity comes from your saved profile.{" "}
-              <Link href="/app/onboarding/profile">Edit profile</Link>
-            </Text>
+            <Paragraph type="secondary">
+              Identity comes from your saved profile. <Link href="/app/settings">Edit in Settings</Link>
+            </Paragraph>
+            <Button type="primary" onClick={() => setStepOverride(1)}>
+              Continue to prompts
+            </Button>
           </Card>
         )}
 
-        {business.selected && (
-          <Card title="Generate prompts" style={{ marginBottom: 20 }}>
+        {currentStep === 1 && business.selected && (
+          <Card
+            title="Generate prompts"
+            extra={
+              <Button type="link" onClick={() => setStepOverride(0)}>
+                Back
+              </Button>
+            }
+          >
             <Row gutter={10} style={{ marginBottom: prompts.length ? 16 : 0 }}>
               <Col xs={24} md={16}>
                 <Select
@@ -344,95 +365,124 @@ export default function VisibilityWizard() {
                   }
                   onClick={onRunCheck}
                 >
-                  {jobRunning ? "Running visibility check" : "Run visibility check"}
+                  Run visibility check
                 </Button>
               </Space>
             )}
           </Card>
         )}
 
-        {jobRunning && (
-          <Card style={{ marginBottom: 20 }}>
-            <Text>Checking AI visibility across simulated model styles…</Text>
-            <Progress percent={progressPct} style={{ marginTop: 12 }} />
-            {visibility.progress?.currentModel && (
-              <Text type="secondary">
-                {visibility.progress.currentModel}
-                {visibility.progress.currentPrompt
-                  ? ` — ${visibility.progress.currentPrompt}`
-                  : ""}
-              </Text>
-            )}
-          </Card>
-        )}
+        {currentStep === 2 && (
+          <Space direction="vertical" style={{ width: "100%" }} size={16}>
+            <Card
+              extra={
+                !jobRunning && visibility.results ? (
+                  <Button type="link" onClick={() => setStepOverride(1)}>
+                    Back to prompts
+                  </Button>
+                ) : null
+              }
+            >
+              {jobRunning && (
+                <>
+                  <Text>Checking AI visibility across simulated model styles…</Text>
+                  <Progress percent={progressPct} style={{ marginTop: 12 }} />
+                  {visibility.progress?.currentModel && (
+                    <Text type="secondary">
+                      {visibility.progress.currentModel}
+                      {visibility.progress.currentPrompt
+                        ? ` — ${visibility.progress.currentPrompt}`
+                        : ""}
+                    </Text>
+                  )}
+                </>
+              )}
 
-        {visibility.results && visibility.score && (
-          <Card style={{ marginBottom: 20 }}>
-            <Space align="baseline" style={{ marginBottom: 16 }}>
-              <Title
-                level={1}
-                style={{
-                  margin: 0,
-                  color: visibility.score.visibilityPct >= 50 ? "#8FBF9F" : "#E8967A",
-                }}
-              >
-                {visibility.score.visibilityPct}%
-              </Title>
-              <Text type="secondary">
-                AI visibility score. {business.selected?.name} was mentioned in{" "}
-                {visibility.score.totalMentions} of {visibility.score.totalChecks} model responses
-                across {visibility.results.length} prompts.
-              </Text>
-            </Space>
-
-            <Space direction="vertical" style={{ width: "100%" }} size={16}>
-              {visibility.results.map((r, i) => (
-                <Card key={i} size="small" title={r.prompt}>
-                  {r.perModel.map((m) => (
-                    <div
-                      key={m.model}
+              {!jobRunning && visibility.results && visibility.score && (
+                <>
+                  <Space align="baseline" style={{ marginBottom: 16 }}>
+                    <Title
+                      level={1}
                       style={{
-                        marginBottom: 12,
-                        paddingLeft: 12,
-                        borderLeft: `3px solid ${m.mentioned ? "#8FBF9F" : "#5C4A45"}`,
+                        margin: 0,
+                        color: visibility.score.visibilityPct >= 50 ? "#8FBF9F" : "#E8967A",
                       }}
                     >
-                      <Text style={{ color: m.mentioned ? "#8FBF9F" : "#E8967A" }}>
-                        {m.model}, {m.mentioned ? "mentioned" : "not mentioned"}
-                      </Text>
-                      <Paragraph style={{ marginBottom: 4 }}>{m.answer}</Paragraph>
-                      {m.sources.length > 0 && (
-                        <Text type="secondary">
-                          Sources cited: {m.sources.map((s) => s.domain).join(", ")}
-                        </Text>
-                      )}
-                    </div>
-                  ))}
-                </Card>
-              ))}
-            </Space>
+                      {visibility.score.visibilityPct}%
+                    </Title>
+                    <Text type="secondary">
+                      AI visibility score. {business.selected?.name} was mentioned in{" "}
+                      {visibility.score.totalMentions} of {visibility.score.totalChecks} model
+                      responses across {visibility.results.length} prompts.
+                    </Text>
+                  </Space>
 
-            {!visibility.plan && (
-              <Button
-                style={{ marginTop: 16 }}
-                loading={visibility.uiBusy && localBusyLabel === "Building action plan"}
-                onClick={onBuildPlan}
-              >
-                Build action plan
-              </Button>
-            )}
-          </Card>
+                  <Space direction="vertical" style={{ width: "100%" }} size={16}>
+                    {visibility.results.map((r, i) => (
+                      <Card key={i} size="small" title={r.prompt}>
+                        {r.perModel.map((m) => (
+                          <div
+                            key={m.model}
+                            style={{
+                              marginBottom: 12,
+                              paddingLeft: 12,
+                              borderLeft: `3px solid ${m.mentioned ? "#8FBF9F" : "#5C4A45"}`,
+                            }}
+                          >
+                            <Text style={{ color: m.mentioned ? "#8FBF9F" : "#E8967A" }}>
+                              {m.model}, {m.mentioned ? "mentioned" : "not mentioned"}
+                            </Text>
+                            <Paragraph style={{ marginBottom: 4 }}>{m.answer}</Paragraph>
+                            {m.sources.length > 0 && (
+                              <Text type="secondary">
+                                Sources cited: {m.sources.map((s) => s.domain).join(", ")}
+                              </Text>
+                            )}
+                          </div>
+                        ))}
+                      </Card>
+                    ))}
+                  </Space>
+
+                  {!visibility.plan && (
+                    <Button
+                      type="primary"
+                      style={{ marginTop: 16 }}
+                      loading={visibility.uiBusy && localBusyLabel === "Building action plan"}
+                      onClick={onBuildPlan}
+                    >
+                      Build action plan
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {!jobRunning && !visibility.results && (
+                <Text type="secondary">Start a run from the prompts step.</Text>
+              )}
+            </Card>
+          </Space>
         )}
 
-        {visibility.plan && (
+        {currentStep === 3 && visibility.plan && (
           <Space direction="vertical" style={{ width: "100%" }} size={20}>
-            <div>
+            <Card
+              extra={
+                <Space>
+                  <Link href="/app/action-plan">
+                    <Button>Open checklist</Button>
+                  </Link>
+                  <Button type="link" onClick={() => setStepOverride(2)}>
+                    Back to results
+                  </Button>
+                </Space>
+              }
+            >
               <Text style={{ color: "#8FBF9F", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Ready made solutions
               </Text>
               <Paragraph type="secondary">
-                This tool can generate these for you right now. Press generate, then copy the result
-                onto your website or listings.
+                Generate copy here, then track completion on the Action plan checklist.
               </Paragraph>
               <Space direction="vertical" style={{ width: "100%" }}>
                 {visibility.plan.automatable.map((item) => (
@@ -459,15 +509,14 @@ export default function VisibilityWizard() {
                   </Card>
                 ))}
               </Space>
-            </div>
+            </Card>
 
             <div>
               <Text style={{ color: "#C9773D", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 Needs your action
               </Text>
               <Paragraph type="secondary">
-                These need a human step, a login, or a real-world action this tool cannot take on
-                your behalf.
+                These need a human step. Mark them done on the Action plan page.
               </Paragraph>
               <Space direction="vertical" style={{ width: "100%" }}>
                 {visibility.plan.manual.map((item, i) => (
@@ -479,18 +528,6 @@ export default function VisibilityWizard() {
             </div>
           </Space>
         )}
-
-        <div
-          style={{
-            marginTop: 48,
-            paddingTop: 20,
-            borderTop: "1px solid #2B3B34",
-            fontSize: 12,
-            color: "#5C6E64",
-          }}
-        >
-          Master AEO
-        </div>
       </div>
     </div>
   );

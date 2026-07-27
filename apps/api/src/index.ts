@@ -8,6 +8,10 @@ import { errorHandler } from "./middleware/errorHandler";
 
 async function main() {
   await connectMongo();
+  const { ensureDefaultPlans } = await import("./services/productPlans.service");
+  const { ensureDefaultCostRates } = await import("./services/usage.service");
+  await ensureDefaultPlans();
+  await ensureDefaultCostRates();
 
   const app = express();
   app.use(

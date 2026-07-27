@@ -130,3 +130,114 @@ export type ReportResponse = {
   html: string;
   filename: string;
 };
+
+export type ChecklistItemKind = "automatable" | "manual";
+
+export type ChecklistItem = {
+  key: string;
+  kind: ChecklistItemKind;
+  title: string;
+  guidance?: string;
+  done: boolean;
+  doneAt?: string | null;
+  note?: string;
+  sourceJobId?: string;
+};
+
+export type ChecklistProgress = {
+  total: number;
+  done: number;
+  percent: number;
+};
+
+export type VisibilityJobSummary = {
+  id: string;
+  status: JobStatus;
+  score?: VisibilityScore;
+  createdAt: string;
+  hasPlan: boolean;
+};
+
+export type BusinessInsights = {
+  latestScore: VisibilityScore | null;
+  currentMonthScore: VisibilityScore | null;
+  previousMonthScore: VisibilityScore | null;
+  scoreDelta: number | null;
+  checklist: ChecklistProgress;
+  recentJobs: VisibilityJobSummary[];
+};
+
+export type ProductPlanLimits = {
+  visibilityRunsPerMonth: number;
+};
+
+export type ProductPlan = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  currency: string;
+  priceLabel?: string;
+  blurb: string;
+  features: string[];
+  limits: ProductPlanLimits;
+  active: boolean;
+  sortOrder: number;
+};
+
+export type SubscriptionStatus = "active" | "canceled" | "past_due" | "trialing";
+
+export type SubscriptionInfo = {
+  id: string;
+  status: SubscriptionStatus;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  note?: string;
+  plan: ProductPlan | null;
+  runsUsedThisPeriod: number;
+  runsLimit: number;
+};
+
+export type InvoiceRecord = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "open" | "void";
+  periodLabel: string;
+  note?: string;
+  createdAt: string;
+};
+
+export type CostRate = {
+  id: string;
+  model: string;
+  inputPer1MTokens: number;
+  outputPer1MTokens: number;
+  currency: string;
+};
+
+export type UsageSummaryRow = {
+  key: string;
+  inputTokens: number;
+  outputTokens: number;
+  calls: number;
+  estimatedCost: number;
+};
+
+export type UsageProfitSummary = {
+  periodStart: string;
+  periodEnd: string;
+  totals: {
+    calls: number;
+    inputTokens: number;
+    outputTokens: number;
+    estimatedCost: number;
+    subscriptionRevenue: number;
+    margin: number;
+  };
+  byFeature: UsageSummaryRow[];
+  byModel: UsageSummaryRow[];
+  byDay: UsageSummaryRow[];
+  costRates: CostRate[];
+};
+

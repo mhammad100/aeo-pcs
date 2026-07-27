@@ -5,6 +5,11 @@ import { AppError } from "../utils/AppError";
 import { enqueueVisibilityJob } from "./jobRunner";
 import { buildActionPlan, generateItemContent } from "./plan";
 import { buildReportHtml, wrapReportDocument } from "./report";
+import { syncChecklistFromPlan } from "./checklist.service";
+import { getBusinessInsights, listVisibilityJobs } from "./insights.service";
+import { assertVisibilityRunAllowed } from "./subscriptions.service";
+
+export { getBusinessInsights, listVisibilityJobs };
 
 function mapItemOutputs(itemOutputs: unknown): Record<string, string> {
   if (itemOutputs instanceof Map) {
@@ -48,8 +53,8 @@ export async function createVisibilityJob(input: {
   category: string;
   prompts: string[];
 }) {
-  const owned = await BusinessModel.findOne({ ownerUserId: input.userId });
-  if (!owned?.profileCompletedAt) {
+  const owned = await assertVisibilityRunAllowed(input.userId);
+  if (!owned.profileCompletedAt) {
     throw new AppError("Complete your business profile before running a visibility check", 403);
   }
   if (!owned.name?.trim() || !owned.city?.trim() || !owned.country?.trim()) {
@@ -121,11 +126,25 @@ export async function buildPlanForJob(input: {
     country: job.country || "",
     websiteUrl: profile?.websiteUrl || undefined,
     results: job.results as never,
+    usage: {
+      userId: input.userId,
+      businessId: job.businessId ? String(job.businessId) : null,
+      refs: { jobId: input.jobId },
+    },
   });
 
   job.set("plan", plan);
   job.set("itemOutputs", {});
   await job.save();
+
+  if (job.businessId) {
+    await syncChecklistFromPlan({
+      businessId: String(job.businessId),
+      jobId: String(job._id),
+      plan,
+    });
+  }
+
   return { plan };
 }
 
@@ -152,6 +171,11 @@ export async function generatePlanItem(input: {
     city: job.city || "",
     country: job.country || "",
     item: { title: input.title, description: input.description },
+    usage: {
+      userId: input.userId,
+      businessId: job.businessId ? String(job.businessId) : null,
+      refs: { jobId: input.jobId, itemId: input.itemId },
+    },
   });
 
   job.set(`itemOutputs.${input.itemId}`, content);

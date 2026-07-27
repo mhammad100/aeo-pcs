@@ -8,6 +8,20 @@ const SocialLinkSchema = new Schema(
   { _id: false }
 );
 
+const ChecklistItemSchema = new Schema(
+  {
+    key: { type: String, required: true, trim: true },
+    kind: { type: String, enum: ["automatable", "manual"], required: true },
+    title: { type: String, required: true, trim: true },
+    guidance: { type: String, default: "", trim: true },
+    done: { type: Boolean, default: false },
+    doneAt: { type: Date, default: null },
+    note: { type: String, default: "", trim: true },
+    sourceJobId: { type: Schema.Types.ObjectId, ref: "VisibilityJob", default: null },
+  },
+  { _id: false }
+);
+
 const BusinessSchema = new Schema(
   {
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -19,6 +33,7 @@ const BusinessSchema = new Schema(
     websiteUrl: { type: String, default: "", trim: true },
     googleBusinessUrl: { type: String, default: "", trim: true },
     socialLinks: { type: [SocialLinkSchema], default: [] },
+    checklist: { type: [ChecklistItemSchema], default: [] },
     profileCompletedAt: { type: Date, default: null },
   },
   { timestamps: true }

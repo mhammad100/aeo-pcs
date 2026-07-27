@@ -71,4 +71,74 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+
+  listAdminPlans: () => request<{ plans: AdminPlan[] }>("/admin/plans"),
+  createAdminPlan: (body: CreatePlanBody) =>
+    request<{ plan: AdminPlan }>("/admin/plans", { method: "POST", body: JSON.stringify(body) }),
+  updateAdminPlan: (planId: string, body: Partial<CreatePlanBody>) =>
+    request<{ plan: AdminPlan }>(`/admin/plans/${planId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  listAdminSubscriptions: () =>
+    request<{
+      subscriptions: Array<{
+        id: string;
+        status: string;
+        businessId: string;
+        businessName: string;
+        plan: AdminPlan | null;
+      }>;
+    }>("/admin/subscriptions"),
+  assignSubscription: (body: {
+    businessId: string;
+    planId: string;
+    createInvoice?: boolean;
+    note?: string;
+  }) =>
+    request<{ subscription: unknown }>("/admin/subscriptions", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getUsageSummary: (days = 30) =>
+    request<{ summary: import("@aeo-pcs/shared").UsageProfitSummary }>(
+      `/admin/usage/summary?days=${days}`
+    ),
+  upsertCostRate: (body: {
+    model: string;
+    inputPer1MTokens: number;
+    outputPer1MTokens: number;
+    currency?: string;
+  }) =>
+    request<{ rate: import("@aeo-pcs/shared").CostRate }>("/admin/cost-rates", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+};
+
+export type AdminPlan = {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  currency: string;
+  priceLabel?: string;
+  blurb: string;
+  features: string[];
+  limits: { visibilityRunsPerMonth: number };
+  active: boolean;
+  sortOrder: number;
+};
+
+type CreatePlanBody = {
+  name: string;
+  slug?: string;
+  price: number;
+  currency?: string;
+  priceLabel?: string;
+  blurb?: string;
+  features?: string[];
+  visibilityRunsPerMonth?: number;
+  active?: boolean;
+  sortOrder?: number;
 };

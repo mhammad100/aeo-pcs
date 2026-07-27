@@ -9,7 +9,12 @@ export async function searchBusiness(
 ): Promise<BusinessCandidate[]> {
   const system = `You help find real businesses using web search. Search the web for the business the user names, in the given city and country. Return ONLY a JSON array (no prose, no markdown fences) of up to 4 candidate matches, each with fields: name, category, address, description.`;
   const userMsg = `Business name: "${name}", City: "${city}", Country: "${country}"`;
-  const { text } = await callClaude({ prompt: userMsg, system, useWebSearch: true });
+  const { text } = await callClaude({
+    prompt: userMsg,
+    system,
+    useWebSearch: true,
+    usage: { feature: "business_search" },
+  });
   const parsed = safeParseJSON<BusinessCandidate[]>(text);
 
   if (parsed && Array.isArray(parsed) && parsed.length) {

@@ -95,6 +95,28 @@ export const api = {
       }
     >(`/visibility/jobs/${jobId}`),
 
+  listVisibilityJobs: () =>
+    request<{ jobs: import("@aeo-pcs/shared").VisibilityJobSummary[] }>("/visibility/jobs"),
+
+  getInsights: () =>
+    request<{ insights: import("@aeo-pcs/shared").BusinessInsights }>("/visibility/insights"),
+
+  getChecklist: () =>
+    request<{
+      items: import("@aeo-pcs/shared").ChecklistItem[];
+      progress: import("@aeo-pcs/shared").ChecklistProgress;
+    }>("/action-plan/checklist"),
+
+  patchChecklistItem: (key: string, body: { done?: boolean; note?: string }) =>
+    request<{
+      item: import("@aeo-pcs/shared").ChecklistItem;
+      items: import("@aeo-pcs/shared").ChecklistItem[];
+      progress: import("@aeo-pcs/shared").ChecklistProgress;
+    }>(`/action-plan/checklist/${encodeURIComponent(key)}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+
   buildPlan: (jobId: string) =>
     request<{ plan: import("@aeo-pcs/shared").ActionPlan }>("/plans", {
       method: "POST",
@@ -114,6 +136,30 @@ export const api = {
 
   getReport: (jobId: string) =>
     request<{ html: string; filename: string }>(`/reports/${jobId}`),
+
+  listCatalogPlans: () =>
+    request<{ plans: import("@aeo-pcs/shared").ProductPlan[] }>("/catalog/plans"),
+
+  getMySubscription: () =>
+    request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/me"),
+
+  getMyInvoices: () =>
+    request<{ invoices: import("@aeo-pcs/shared").InvoiceRecord[] }>("/billing/invoices"),
+
+  getMyUsage: () =>
+    request<{
+      usage: {
+        periodStart: string;
+        periodEnd: string;
+        totals: {
+          calls: number;
+          inputTokens: number;
+          outputTokens: number;
+          estimatedCost: number;
+        };
+        byFeature: import("@aeo-pcs/shared").UsageSummaryRow[];
+      };
+    }>("/usage/me"),
 };
 
 export type { AuthUser };

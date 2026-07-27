@@ -11,17 +11,30 @@ import { logout } from "@/store/authSlice";
 const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
 
-const items = [
+const navItems = [
   { key: "/app", label: <Link href="/app">Dashboard</Link> },
   { key: "/app/visibility", label: <Link href="/app/visibility">Visibility</Link> },
+  { key: "/app/action-plan", label: <Link href="/app/action-plan">Action plan</Link> },
+  { key: "/app/subscription", label: <Link href="/app/subscription">Subscription</Link> },
+  { key: "/app/billing", label: <Link href="/app/billing">Billing</Link> },
+  { key: "/app/settings", label: <Link href="/app/settings">Settings</Link> },
 ];
+
+function selectedKey(pathname: string | null) {
+  if (!pathname) return "/app";
+  const match = navItems
+    .map((item) => item.key)
+    .filter((key) => key !== "/app")
+    .find((key) => pathname === key || pathname.startsWith(`${key}/`));
+  if (match) return match;
+  return "/app";
+}
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
-  const selected = pathname?.startsWith("/app/visibility") ? "/app/visibility" : "/app";
 
   function onLogout() {
     dispatch(logout());
@@ -41,8 +54,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Menu
               theme="dark"
               mode="inline"
-              selectedKeys={[selected]}
-              items={items}
+              selectedKeys={[selectedKey(pathname)]}
+              items={navItems}
               style={{ background: "#152420", borderInlineEnd: "none" }}
             />
           </Sider>

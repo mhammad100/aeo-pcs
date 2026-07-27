@@ -9,6 +9,13 @@ import { promptsRouter } from "./prompts.routes";
 import { visibilityRouter } from "./visibility.routes";
 import { plansRouter } from "./plans.routes";
 import { reportsRouter } from "./reports.routes";
+import { actionPlanRouter } from "./actionPlan.routes";
+import {
+  billingRouter,
+  catalogRouter,
+  subscriptionsRouter,
+  usageRouter,
+} from "./billing.routes";
 
 export const apiRouter = Router();
 
@@ -20,4 +27,9 @@ apiRouter.use("/business", businessSearchRouter);
 apiRouter.use("/prompts", promptsRouter);
 apiRouter.use("/visibility", visibilityRouter);
 apiRouter.use("/plans", plansRouter);
+apiRouter.use("/action-plan", actionPlanRouter);
+apiRouter.use("/catalog", catalogRouter);
+apiRouter.use("/billing", billingRouter);
+apiRouter.use("/subscriptions", subscriptionsRouter);
+apiRouter.use("/usage", usageRouter);
 apiRouter.use("/reports", reportsRouter);

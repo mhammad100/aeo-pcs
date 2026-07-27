@@ -3,6 +3,7 @@ import * as adminController from "../controllers/admin.controller";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { asyncHandler, validate } from "../middleware/validate";
 import { createAdminUserValidators, setUserStatusValidators } from "../validators";
+import { mountAdminBillingRoutes } from "./billing.routes";
 
 export const adminRouter = Router();
 
@@ -20,3 +21,5 @@ adminRouter.patch(
   validate(setUserStatusValidators),
   asyncHandler(adminController.setUserStatus)
 );
+
+mountAdminBillingRoutes(adminRouter);

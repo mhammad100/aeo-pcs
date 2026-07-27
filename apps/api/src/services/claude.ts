@@ -1,9 +1,19 @@
 import type { Source } from "@aeo-pcs/shared";
 import { env } from "../config/env";
+import { logUsageEvent } from "./usage.service";
 
 export type ClaudeCallResult = {
   text: string;
   sources: Source[];
+  inputTokens: number;
+  outputTokens: number;
+};
+
+export type ClaudeUsageContext = {
+  userId?: string | null;
+  businessId?: string | null;
+  feature: string;
+  refs?: Record<string, unknown>;
 };
 
 type ClaudeContentBlock = {
@@ -17,6 +27,7 @@ export async function callClaude(options: {
   system: string;
   useWebSearch?: boolean;
   maxTokens?: number;
+  usage?: ClaudeUsageContext;
 }): Promise<ClaudeCallResult> {
   const body: Record<string, unknown> = {
     model: env.anthropicModel,
@@ -42,6 +53,7 @@ export async function callClaude(options: {
 
   const data = (await res.json()) as {
     content?: ClaudeContentBlock[];
+    usage?: { input_tokens?: number; output_tokens?: number };
     error?: { message?: string };
   };
 
@@ -72,5 +84,20 @@ export async function callClaude(options: {
       });
     });
 
-  return { text, sources };
+  const inputTokens = data.usage?.input_tokens ?? 0;
+  const outputTokens = data.usage?.output_tokens ?? 0;
+
+  if (options.usage?.feature) {
+    await logUsageEvent({
+      userId: options.usage.userId,
+      businessId: options.usage.businessId,
+      feature: options.usage.feature,
+      model: env.anthropicModel,
+      inputTokens,
+      outputTokens,
+      refs: options.usage.refs,
+    });
+  }
+
+  return { text, sources, inputTokens, outputTokens };
 }

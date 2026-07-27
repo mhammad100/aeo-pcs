@@ -32,7 +32,7 @@ export default function DashboardPage() {
         </Col>
         <Col xs={24} md={8}>
           <Card title="Plans / Usage">
-            <Text type="secondary">CRUD and profit insights land in v0.4–v0.5.</Text>
+            <Text type="secondary">Manage catalog, assign subscriptions, track token margin.</Text>
             <div style={{ marginTop: 12 }}>
               <Link to="/plans">Plans</Link> · <Link to="/usage">Usage</Link>
             </div>

@@ -3,7 +3,7 @@
 **Platform:** Master AEO (masteraeo.com)  
 **Repo:** `aeo-pcs` (working name; product brand is Master AEO)  
 **Last updated:** 2026-07-27  
-**Status:** Planning + early foundation (v0.1)
+**Status:** v0.4–v0.5 complete (plans, billing stub, usage/profit); next v1.0 launch readiness
 
 This document is the source of truth for scope, phases, milestones, versions, and delivery tracking. Update the **Progress tracker** whenever work lands.
 
@@ -101,11 +101,11 @@ Tracked as **v0.1 — Foundation**.
 | Public marketing site | Done | Home, features, pricing, about + public nav/footer |
 | Auth / users / roles | Done | JWT login; signup disabled via SIGNUP_ENABLED |
 | Business profile gate + links | Done | Onboarding + ProfileGate; visibility blocked until complete |
-| Stepper UX | Not started | Still single page inside /app/visibility |
-| Usage token logging | Not started | |
-| Business panel (insights, checklist, billing) | Not started | |
-| Admin app | Partial | Vite app + login + users/businesses; plans/usage placeholders |
-| Plans / subscriptions | Not started | |
+| Stepper UX | Done | One step at a time on /app/visibility |
+| Usage token logging | Done | UsageEvent on every Claude call |
+| Business panel (insights, checklist, billing) | Done | Insights + checklist; billing/subscription live |
+| Admin app | Done | Users/businesses/plans/usage + profit summary |
+| Plans / subscriptions | Done | ProductPlan + Subscription + Invoice; quotas on visibility |
 | Redux Persist SSR fix | Done | Client noop storage; persist business/prompts + jobId only |
 
 ---
@@ -168,23 +168,23 @@ Versions can ship as internal milestones before public launch.
 
 ### Phase C — Business panel core (v0.3)
 **Milestone C1 — Panel shell**
-- [ ] `/app` layout: nav (Dashboard, Visibility, Action plan, Subscription, Billing, Settings)
-- [ ] Settings: edit business profile
+- [x] `/app` layout: nav (Dashboard, Visibility, Action plan, Subscription, Billing, Settings)
+- [x] Settings: edit business profile
 
 **Milestone C2 — Visibility stepper**
-- [ ] Real Steps UI (one step visible at a time)
+- [x] Real Steps UI (one step visible at a time)
 - [x] Steps: confirm business → prompts → run → results → plan
 - [x] No mid-flow business search identity capture (optional “verify listing” later)
 
 **Milestone C3 — History & insights**
-- [ ] List past visibility jobs
-- [ ] Current month vs previous month visibility score
-- [ ] Dashboard cards: latest score, trend, checklist progress
+- [x] List past visibility jobs
+- [x] Current month vs previous month visibility score
+- [x] Dashboard cards: latest score, trend, checklist progress
 
 **Milestone C4 — Action plan checklist**
-- [ ] Persist checklist state per business / plan item
-- [ ] User can tick items; store `done`, `doneAt`, optional note
-- [ ] Progress % on dashboard
+- [x] Persist checklist state per business / plan item
+- [x] User can tick items; store `done`, `doneAt`, optional note
+- [x] Progress % on dashboard
 
 **Exit:** Business can run checks in stepper, see MoM, work checklist.
 
@@ -192,18 +192,18 @@ Versions can ship as internal milestones before public launch.
 
 ### Phase D — Plans & billing shell (v0.4)
 **Milestone D1 — Plans**
-- [ ] Plan model + admin CRUD (name, price, currency, limits, features, active)
-- [ ] Public pricing reads active plans
+- [x] Plan model + admin CRUD (name, price, currency, limits, features, active)
+- [x] Public pricing reads active plans
 
 **Milestone D2 — Subscriptions**
-- [ ] Subscription per business (planId, period, status)
-- [ ] Enforce basic entitlements (e.g. runs/month) on visibility job create
-- [ ] Business “Subscription” page
+- [x] Subscription per business (planId, period, status)
+- [x] Enforce basic entitlements (e.g. runs/month) on visibility job create
+- [x] Business “Subscription” page
 
 **Milestone D3 — Billing stub**
-- [ ] Invoice/payment records (manual/admin-assigned OK)
-- [ ] Business “Billing” page lists history
-- [ ] (Defer Stripe to v1.x)
+- [x] Invoice/payment records (manual/admin-assigned OK)
+- [x] Business “Billing” page lists history
+- [x] (Defer Stripe to v1.x)
 
 **Exit:** Plan assigned to business; UI shows subscription + billing stub; quotas enforced lightly.
 
@@ -216,19 +216,19 @@ Versions can ship as internal milestones before public launch.
 
 **Milestone E2 — Admin operations**
 - [x] Create users / business accounts
-- [ ] Plans CRUD UI
+- [x] Plans CRUD UI
 - [x] List businesses, disable users
 
 **Milestone E3 — Usage logging**
-- [ ] Wrap Claude client: persist `UsageEvent` every call
-- [ ] Fields: user, business, feature, model, input/output tokens, refs, timestamps
-- [ ] Backfill not required for old calls
+- [x] Wrap Claude client: persist `UsageEvent` every call
+- [x] Fields: user, business, feature, model, input/output tokens, refs, timestamps
+- [x] Backfill not required for old calls
 
 **Milestone E4 — Insights & profit**
-- [ ] Admin dashboard: tokens by day/feature/model/user
-- [ ] Configurable cost rates per model
-- [ ] Revenue from active subscriptions − estimated cost = margin
-- [ ] Business-facing “your usage this period” (optional same milestone)
+- [x] Admin dashboard: tokens by day/feature/model/user
+- [x] Configurable cost rates per model
+- [x] Revenue from active subscriptions − estimated cost = margin
+- [x] Business-facing “your usage this period” (optional same milestone)
 
 **Exit:** Operators can run the platform commercially with visibility into cost/profit.
 
@@ -306,6 +306,7 @@ Versions can ship as internal milestones before public launch.
 **Business**  
 `ownerUserId`, `name`, `category`, `city`, `country`, `description`,  
 `websiteUrl`, `googleBusinessUrl?`, `socialLinks[{ label, url }]`,  
+`checklist[{ key, kind, title, guidance?, done, doneAt?, note?, sourceJobId? }]`,  
 `profileCompletedAt?`, timestamps  
 
 **Plan**  
@@ -369,13 +370,13 @@ Update this table as work completes.
 | B1 | Landing + pricing shell | v0.2 | **Done** | 2026-07-27 |
 | B2 | Login + disabled signup + JWT | v0.2 | **Done** | 2026-07-27 |
 | B3 | Profile onboarding gate | v0.2 | **Done** | 2026-07-27 |
-| C1 | Business panel shell | v0.3 | Todo | |
-| C2 | Visibility stepper | v0.3 | Todo | |
-| C3 | History + MoM insights | v0.3 | Todo | |
-| C4 | Action checklist | v0.3 | Todo | |
-| D1–D3 | Plans, subscription, billing stub | v0.4 | Todo | |
-| E1–E2 | Admin scaffold + users/businesses | v0.5 (pulled early) | **Partial** | 2026-07-27 |
-| E3–E4 | Usage logging + profit | v0.5 | Todo | |
+| C1 | Business panel shell | v0.3 | **Done** | 2026-07-27 |
+| C2 | Visibility stepper | v0.3 | **Done** | 2026-07-27 |
+| C3 | History + MoM insights | v0.3 | **Done** | 2026-07-27 |
+| C4 | Action checklist | v0.3 | **Done** | 2026-07-27 |
+| D1–D3 | Plans, subscription, billing stub | v0.4 | **Done** | 2026-07-27 |
+| E1–E2 | Admin scaffold + users/businesses | v0.5 (pulled early) | **Done** | 2026-07-27 |
+| E3–E4 | Usage logging + profit | v0.5 | **Done** | 2026-07-27 |
 | F1–F3 | Signup enable + launch | v1.0 | Todo | |
 
 ---

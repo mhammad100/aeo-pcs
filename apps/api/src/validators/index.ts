@@ -91,3 +91,67 @@ export const generatePlanItemValidators = [
   body("title").isString().trim().isLength({ min: 1, max: 120 }),
   body("description").isString().trim().isLength({ min: 1, max: 500 }),
 ];
+
+export const checklistKeyParamValidators = [
+  param("key").isString().trim().isLength({ min: 1, max: 200 }),
+];
+
+export const patchChecklistValidators = [
+  body("done").optional().isBoolean(),
+  body("note").optional().isString().trim().isLength({ max: 500 }),
+];
+
+export const planIdParamValidators = [param("planId").isMongoId()];
+
+export const createProductPlanValidators = [
+  body("name").isString().trim().isLength({ min: 1, max: 120 }),
+  body("slug").optional().isString().trim().isLength({ min: 1, max: 80 }),
+  body("price").isFloat({ min: 0 }),
+  body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+  body("priceLabel").optional().isString().trim().isLength({ max: 40 }),
+  body("blurb").optional().isString().trim().isLength({ max: 500 }),
+  body("features").optional().isArray({ max: 20 }),
+  body("features.*").optional().isString().trim().isLength({ max: 120 }),
+  body("visibilityRunsPerMonth").optional().isInt({ min: 0, max: 10000 }),
+  body("active").optional().isBoolean(),
+  body("sortOrder").optional().isInt({ min: 0, max: 1000 }),
+];
+
+export const updateProductPlanValidators = [
+  body("name").optional().isString().trim().isLength({ min: 1, max: 120 }),
+  body("slug").optional().isString().trim().isLength({ min: 1, max: 80 }),
+  body("price").optional().isFloat({ min: 0 }),
+  body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+  body("priceLabel").optional().isString().trim().isLength({ max: 40 }),
+  body("blurb").optional().isString().trim().isLength({ max: 500 }),
+  body("features").optional().isArray({ max: 20 }),
+  body("features.*").optional().isString().trim().isLength({ max: 120 }),
+  body("visibilityRunsPerMonth").optional().isInt({ min: 0, max: 10000 }),
+  body("active").optional().isBoolean(),
+  body("sortOrder").optional().isInt({ min: 0, max: 1000 }),
+];
+
+export const assignSubscriptionValidators = [
+  body("businessId").isMongoId(),
+  body("planId").isMongoId(),
+  body("status").optional().isIn(["active", "canceled", "past_due", "trialing"]),
+  body("note").optional().isString().trim().isLength({ max: 500 }),
+  body("createInvoice").optional().isBoolean(),
+];
+
+export const createInvoiceValidators = [
+  body("businessId").isMongoId(),
+  body("amount").isFloat({ min: 0 }),
+  body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+  body("status").optional().isIn(["paid", "open", "void"]),
+  body("periodLabel").optional().isString().trim().isLength({ max: 40 }),
+  body("note").optional().isString().trim().isLength({ max: 500 }),
+  body("subscriptionId").optional().isMongoId(),
+];
+
+export const upsertCostRateValidators = [
+  body("model").isString().trim().isLength({ min: 1, max: 120 }),
+  body("inputPer1MTokens").isFloat({ min: 0 }),
+  body("outputPer1MTokens").isFloat({ min: 0 }),
+  body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+];
