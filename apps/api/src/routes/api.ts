@@ -11,6 +11,7 @@ import { enqueueVisibilityJob } from "../services/jobRunner";
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { authRouter } from "./auth";
+import { adminRouter } from "./admin";
 
 const businessBody = [
   body("business.name").isString().trim().isLength({ min: 1, max: 200 }),
@@ -22,6 +23,7 @@ const businessBody = [
 export const apiRouter = Router();
 
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/admin", adminRouter);
 
 apiRouter.get(
   "/health",

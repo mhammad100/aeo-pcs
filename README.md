@@ -1,55 +1,43 @@
 # masteraeo.com
 
-Monorepo for the AI visibility product: public Next.js site + Express API.
-See `docs/PRODUCT_PLAN.md` for phases and progress.
-
-## Structure
+Monorepo for the AI visibility product.
 
 ```
-apps/api      Express + MongoDB + Anthropic (secrets, LLM, jobs)
-apps/web      Next.js static export + Ant Design + Redux Toolkit + Persist
-packages/shared   Shared CATEGORIES, MODELS, DTOs
-docs/         Product plan and delivery tracking
-```
-
-Claude **simulates** ChatGPT / Gemini / Perplexity styles (planned fake multi-model).
-
-## Prerequisites
-
-- Node 20+
-- MongoDB running locally (or a Mongo URI)
-- Anthropic API key
-
-## Setup
-
-```bash
-npm install
-cp apps/api/.env.example apps/api/.env
-cp apps/web/.env.example apps/web/.env.local
-# edit apps/api/.env — set all required vars (no defaults in code)
-npm run build:shared
+apps/api      Express + MongoDB + Anthropic
+apps/web      Public + business panel (Next.js static)
+apps/admin    Operator console (Vite + React)
+packages/shared
+docs/
 ```
 
 ## Develop
 
 ```bash
-npm run dev:api
-npm run dev:web
+npm install
+cp apps/api/.env.example apps/api/.env   # fill required vars
+cp apps/web/.env.example apps/web/.env.local
+cp apps/admin/.env.example apps/admin/.env
+
+npm run build:shared
+npm run dev:api      # :4000
+npm run dev:web      # :3000
+npm run dev:admin    # :5173
 ```
 
-- Web: http://localhost:3000  
-- API: http://localhost:4000/api/v1/health  
+CORS must allow both web and admin origins, e.g.  
+`CORS_ORIGIN=http://localhost:3000,http://localhost:5173`
 
-## Seed users
-
-Add `JWT_SECRET`, `JWT_EXPIRES_IN`, and `SIGNUP_ENABLED=false` to `apps/api/.env` (see `.env.example`).
+## Seed
 
 ```bash
 SEED_ADMIN_EMAIL=admin@masteraeo.com \
-SEED_ADMIN_PASSWORD='choose-a-password' \
+SEED_ADMIN_PASSWORD='...' \
 SEED_BUSINESS_EMAIL=demo@masteraeo.com \
-SEED_BUSINESS_PASSWORD='choose-a-password' \
+SEED_BUSINESS_PASSWORD='...' \
 npm run seed
 ```
 
-Then open `/login` and use the business account. Signup remains invite-only while `SIGNUP_ENABLED=false`.
+- Business login → `apps/web` `/login`  
+- Admin login → `apps/admin` `/login` (role must be `admin`)
+
+See `docs/PRODUCT_PLAN.md` for milestones.

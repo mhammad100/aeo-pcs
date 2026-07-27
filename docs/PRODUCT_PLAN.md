@@ -104,7 +104,7 @@ Tracked as **v0.1 — Foundation**.
 | Stepper UX | Not started | Still single page inside /app/visibility |
 | Usage token logging | Not started | |
 | Business panel (insights, checklist, billing) | Not started | |
-| Admin app | Not started | |
+| Admin app | Partial | Vite app + login + users/businesses; plans/usage placeholders |
 | Plans / subscriptions | Not started | |
 | Redux Persist SSR fix | Done | Client noop storage; persist business/prompts + jobId only |
 
@@ -210,13 +210,13 @@ Versions can ship as internal milestones before public launch.
 
 ### Phase E — Admin & usage profit (v0.5)
 **Milestone E1 — Admin app scaffold**
-- [ ] `apps/admin` Vite + React + TS + RTK + Persist + Ant Design
-- [ ] Admin login (role gate)
+- [x] `apps/admin` Vite + React + TS + RTK + Persist + Ant Design
+- [x] Admin login (role gate)
 
 **Milestone E2 — Admin operations**
-- [ ] Create users / business accounts
+- [x] Create users / business accounts
 - [ ] Plans CRUD UI
-- [ ] List businesses, disable users
+- [x] List businesses, disable users
 
 **Milestone E3 — Usage logging**
 - [ ] Wrap Claude client: persist `UsageEvent` every call
@@ -283,14 +283,14 @@ Versions can ship as internal milestones before public launch.
 /app/settings             Business profile
 ```
 
-### Admin (`apps/admin`)
+### Admin (`apps/admin`) — Vite, port 5173
 ```
 /login
-/                     Overview / profit
-/users                Create & manage
-/businesses
-/plans                CRUD
-/usage                Token explorer
+/                     Overview
+/users                Create & manage business users
+/businesses           List profiles
+/plans                Placeholder (v0.4)
+/usage                Placeholder (v0.5)
 ```
 
 ---
@@ -373,7 +373,8 @@ Update this table as work completes.
 | C3 | History + MoM insights | v0.3 | Todo | |
 | C4 | Action checklist | v0.3 | Todo | |
 | D1–D3 | Plans, subscription, billing stub | v0.4 | Todo | |
-| E1–E4 | Admin + usage + profit | v0.5 | Todo | |
+| E1–E2 | Admin scaffold + users/businesses | v0.5 (pulled early) | **Partial** | 2026-07-27 |
+| E3–E4 | Usage logging + profit | v0.5 | Todo | |
 | F1–F3 | Signup enable + launch | v1.0 | Todo | |
 
 ---

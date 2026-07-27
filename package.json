@@ -8,10 +8,12 @@
   "scripts": {
     "dev:api": "npm run dev -w @aeo-pcs/api",
     "dev:web": "npm run dev -w @aeo-pcs/web",
-    "build": "npm run build -w @aeo-pcs/shared && npm run build -w @aeo-pcs/api && npm run build -w @aeo-pcs/web",
+    "dev:admin": "npm run dev -w @aeo-pcs/admin",
+    "build": "npm run build -w @aeo-pcs/shared && npm run build -w @aeo-pcs/api && npm run build -w @aeo-pcs/web && npm run build -w @aeo-pcs/admin",
     "build:shared": "npm run build -w @aeo-pcs/shared",
     "build:api": "npm run build -w @aeo-pcs/api",
     "build:web": "npm run build -w @aeo-pcs/web",
+    "build:admin": "npm run build -w @aeo-pcs/admin",
     "seed": "npm run seed -w @aeo-pcs/api"
   }
 }
