@@ -1,0 +1,184 @@
+# Deploy web + admin + api to VPS over SSH.
+# Triggers on push to main (relevant paths) or manually via workflow_dispatch.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/cd.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DEPLOY_PATH: /var/www/aeo-pcs
+  # Bake production API base into static frontends at build time.
+  NEXT_PUBLIC_API_URL: https://api.masteraeo.com/api/v1
+  VITE_API_URL: https://api.masteraeo.com/api/v1
+  API_PORT: "4000"
+
+jobs:
+  deploy:
+    name: Build & deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared
+        run: npm run build:shared
+
+      - name: Build API
+        run: npm run build:api
+
+      - name: Build web
+        run: npm run build:web
+        env:
+          NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+
+      - name: Build admin
+        run: npm run build:admin
+        env:
+          VITE_API_URL: ${{ env.VITE_API_URL }}
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Ensure remote deploy directories
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "mkdir -p '${{ env.DEPLOY_PATH }}/apps/web/out' \
+                      '${{ env.DEPLOY_PATH }}/apps/admin/dist' \
+                      '${{ env.DEPLOY_PATH }}/apps/api' \
+                      '${{ env.DEPLOY_PATH }}/packages/shared'"
+
+      - name: Rsync root manifests
+        run: |
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            package.json package-lock.json \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/"
+
+      - name: Rsync packages/shared
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            --exclude node_modules \
+            --exclude .env \
+            packages/shared/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/packages/shared/"
+
+      - name: Rsync web out
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            apps/web/out/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/apps/web/out/"
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            apps/web/package.json \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/apps/web/"
+
+      - name: Rsync admin dist
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            apps/admin/dist/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/apps/admin/dist/"
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            apps/admin/package.json \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/apps/admin/"
+
+      - name: Rsync API
+        run: |
+          # No --delete so server-only files (e.g. .env) are preserved.
+          rsync -avz \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            --exclude node_modules \
+            --exclude .env \
+            --exclude .env.* \
+            --exclude src \
+            apps/api/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/apps/api/"
+
+      - name: Remote install & restart
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" <<REMOTE
+          set -euo pipefail
+          # Non-interactive SSH does not load ~/.bashrc — source nvm explicitly.
+          export NVM_DIR="\$HOME/.nvm"
+          if [ -s "\$NVM_DIR/nvm.sh" ]; then
+            . "\$NVM_DIR/nvm.sh"
+          elif [ -s /usr/local/nvm/nvm.sh ]; then
+            . /usr/local/nvm/nvm.sh
+          else
+            echo "nvm not found (\$NVM_DIR/nvm.sh); install Node or source nvm for this user"
+            exit 1
+          fi
+          nvm use default >/dev/null
+          command -v npm >/dev/null || { echo "npm still not on PATH after nvm"; exit 1; }
+
+          cd "${{ env.DEPLOY_PATH }}"
+          npm ci --omit=dev -w @aeo-pcs/shared -w @aeo-pcs/api
+
+          if command -v pm2 >/dev/null 2>&1; then
+            if pm2 describe aeo-api >/dev/null 2>&1; then
+              pm2 reload aeo-api
+            else
+              pm2 start apps/api/dist/index.js --name aeo-api --cwd "${{ env.DEPLOY_PATH }}"
+            fi
+          else
+            echo "pm2 not found — start apps/api/dist/index.js with your process manager"
+            exit 1
+          fi
+          REMOTE
+
+      - name: Smoke test
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -s <<REMOTE
+          set -euo pipefail
+          for i in \$(seq 1 30); do
+            if curl -fsS "http://127.0.0.1:${{ env.API_PORT }}/api/v1/health"; then
+              echo ""
+              echo "health ok (attempt \$i)"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "health check failed after 30s"
+          export NVM_DIR="\$HOME/.nvm"
+          if [ -s "\$NVM_DIR/nvm.sh" ]; then
+            . "\$NVM_DIR/nvm.sh"
+            nvm use default >/dev/null 2>&1 || true
+          fi
+          pm2 describe aeo-api || true
+          pm2 logs aeo-api --nostream --lines 50 || true
+          exit 1
+          REMOTE
