@@ -50,25 +50,45 @@ const visibilitySlice = createSlice({
       state,
       action: PayloadAction<{
         status: JobStatus;
-        progress?: VisibilityJobProgress;
-        results?: PromptResult[];
-        score?: VisibilityScore;
-        plan?: ActionPlan;
-        itemOutputs?: Record<string, string>;
-        error?: string;
+        progress?: VisibilityJobProgress | null;
+        results?: PromptResult[] | null;
+        score?: VisibilityScore | null;
+        plan?: ActionPlan | null;
+        itemOutputs?: Record<string, string> | null;
+        error?: string | null;
       }>
     ) {
       state.status = action.payload.status;
-      if (action.payload.progress) state.progress = action.payload.progress;
-      if (action.payload.results) state.results = action.payload.results;
-      if (action.payload.score) state.score = action.payload.score;
-      if (action.payload.plan) state.plan = action.payload.plan;
-      if (action.payload.itemOutputs) state.itemOutputs = action.payload.itemOutputs;
-      if (action.payload.error !== undefined) state.error = action.payload.error || null;
+      if ("progress" in action.payload) {
+        state.progress = action.payload.progress ?? null;
+      }
+      if ("results" in action.payload) {
+        state.results = action.payload.results ?? null;
+      }
+      if ("score" in action.payload) {
+        state.score = action.payload.score ?? null;
+      }
+      if ("plan" in action.payload) {
+        const plan = action.payload.plan ?? null;
+        const empty =
+          !plan ||
+          (!(plan.automatable?.length || 0) && !(plan.manual?.length || 0));
+        state.plan = empty ? null : plan;
+      }
+      if ("itemOutputs" in action.payload) {
+        state.itemOutputs = action.payload.itemOutputs || {};
+      }
+      if ("error" in action.payload) {
+        state.error = action.payload.error || null;
+      }
     },
     setPlan(state, action: PayloadAction<ActionPlan | null>) {
-      state.plan = action.payload;
-      if (!action.payload) state.itemOutputs = {};
+      const plan = action.payload;
+      const empty =
+        !plan ||
+        (!(plan.automatable?.length || 0) && !(plan.manual?.length || 0));
+      state.plan = empty ? null : plan;
+      if (empty) state.itemOutputs = {};
     },
     setItemOutput(state, action: PayloadAction<{ id: string; content: string }>) {
       state.itemOutputs[action.payload.id] = action.payload.content;

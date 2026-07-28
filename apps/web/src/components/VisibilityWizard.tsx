@@ -46,6 +46,11 @@ function downloadBlob(html: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
 
+function hasPlanContent(plan: { automatable?: unknown[]; manual?: unknown[] } | null | undefined) {
+  if (!plan) return false;
+  return (plan.automatable?.length || 0) > 0 || (plan.manual?.length || 0) > 0;
+}
+
 export default function VisibilityWizard() {
   const dispatch = useAppDispatch();
   const business = useAppSelector((s) => s.business);
@@ -55,16 +60,31 @@ export default function VisibilityWizard() {
   const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
   const [stepOverride, setStepOverride] = useState<number | null>(null);
 
+  const hasResults = Boolean(visibility.results?.length && visibility.score);
+  const hasPlan = hasPlanContent(visibility.plan);
+
   const derivedStep = useMemo(() => {
-    if (visibility.plan) return 3;
+    if (hasPlan) return 3;
     if (visibility.results || visibility.status === "queued" || visibility.status === "running") {
       return 2;
     }
+    if (visibility.status === "failed") return 2;
     if (prompts.length) return 1;
     return 0;
-  }, [prompts.length, visibility.plan, visibility.results, visibility.status]);
+  }, [hasPlan, prompts.length, visibility.results, visibility.status]);
 
   const currentStep = stepOverride ?? derivedStep;
+
+  const jobRunning = visibility.status === "queued" || visibility.status === "running";
+  const progressPct =
+    visibility.progress && visibility.progress.total
+      ? Math.round((visibility.progress.completed / visibility.progress.total) * 100)
+      : 0;
+
+  function onStartNewCheck() {
+    dispatch(resetVisibility());
+    setStepOverride(prompts.length ? 1 : 0);
+  }
 
   useEffect(() => {
     setStepOverride(null);
@@ -101,40 +121,59 @@ export default function VisibilityWizard() {
     };
   }, [dispatch]);
 
+  // Hydrate + poll by jobId only (do not stop early when status flips to completed).
   useEffect(() => {
     if (!visibility.jobId) return;
-    if (visibility.status === "completed" || visibility.status === "failed") return;
 
     let cancelled = false;
+    let intervalId: number | undefined;
+
+    const applyJob = (job: Awaited<ReturnType<typeof api.getVisibilityJob>>) => {
+      dispatch(
+        setJobSnapshot({
+          status: job.status,
+          progress: job.progress ?? null,
+          results: job.results?.length ? job.results : null,
+          score: job.score ?? null,
+          plan: hasPlanContent(job.plan) ? job.plan! : null,
+          itemOutputs: job.itemOutputs ?? {},
+          error: job.error ?? null,
+        })
+      );
+      return job.status;
+    };
+
     const poll = async () => {
       try {
         const job = await api.getVisibilityJob(visibility.jobId!);
-        if (cancelled) return;
-        dispatch(
-          setJobSnapshot({
-            status: job.status,
-            progress: job.progress,
-            results: job.results,
-            score: job.score,
-            plan: job.plan,
-            itemOutputs: job.itemOutputs,
-            error: job.error,
-          })
-        );
+        if (cancelled) return null;
+        return applyJob(job);
       } catch (err) {
         if (!cancelled) {
           dispatch(setError(err instanceof Error ? err.message : "Failed to poll job"));
         }
+        return null;
       }
     };
 
-    poll();
-    const id = window.setInterval(poll, 2500);
+    (async () => {
+      const status = await poll();
+      if (cancelled) return;
+      if (status === "queued" || status === "running") {
+        intervalId = window.setInterval(async () => {
+          const next = await poll();
+          if (next === "completed" || next === "failed") {
+            if (intervalId) window.clearInterval(intervalId);
+          }
+        }, 2500);
+      }
+    })();
+
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      if (intervalId) window.clearInterval(intervalId);
     };
-  }, [dispatch, visibility.jobId, visibility.status]);
+  }, [dispatch, visibility.jobId]);
 
   async function onGeneratePrompts() {
     if (!business.selected) return;
@@ -164,7 +203,6 @@ export default function VisibilityWizard() {
     dispatch(setUiBusy(true));
     setLocalBusyLabel("Starting visibility check");
     dispatch(setError(null));
-    dispatch(setPlan(null));
     try {
       const { jobId } = await api.createVisibilityJob({
         category: business.category,
@@ -175,6 +213,11 @@ export default function VisibilityWizard() {
         setJobSnapshot({
           status: "queued",
           progress: { completed: 0, total: prompts.length * 3 },
+          results: null,
+          score: null,
+          plan: null,
+          itemOutputs: {},
+          error: null,
         })
       );
       setStepOverride(2);
@@ -223,7 +266,7 @@ export default function VisibilityWizard() {
   }
 
   async function onDownloadReport() {
-    if (!visibility.jobId || !business.selected) return;
+    if (!visibility.jobId || !hasResults) return;
     dispatch(setUiBusy(true));
     setLocalBusyLabel("Preparing report");
     try {
@@ -237,12 +280,6 @@ export default function VisibilityWizard() {
     }
   }
 
-  const jobRunning = visibility.status === "queued" || visibility.status === "running";
-  const progressPct =
-    visibility.progress && visibility.progress.total
-      ? Math.round((visibility.progress.completed / visibility.progress.total) * 100)
-      : 0;
-
   if (profileLoading) {
     return (
       <div style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
@@ -255,16 +292,20 @@ export default function VisibilityWizard() {
     <div style={{ color: "#EDEAE1" }}>
       <div style={{ maxWidth: 960 }}>
         <Space direction="vertical" size={8} style={{ width: "100%", marginBottom: 24 }}>
-          <Text style={{ color: "#8FBF9F", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: 13 }}>
-            Visibility check
-          </Text>
-          <Title level={2} style={{ margin: 0, color: "#EDEAE1" }}>
-            Run prompts and measure AI mentions
-          </Title>
-          <Text type="secondary">Signed-in session · Master AEO</Text>
-          <Button onClick={onDownloadReport} disabled={!business.selected || !visibility.jobId}>
-            Download report
-          </Button>
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <Text style={{ color: "#8FBF9F", letterSpacing: "0.12em", textTransform: "uppercase", fontSize: 13 }}>
+                Visibility check
+              </Text>
+              <Title level={2} style={{ margin: "4px 0 0", color: "#EDEAE1" }}>
+                Run prompts and measure AI mentions
+              </Title>
+              <Text type="secondary">Signed-in session · Master AEO</Text>
+            </div>
+            {(visibility.jobId || hasResults || hasPlan || visibility.status === "failed") && (
+              <Button onClick={onStartNewCheck}>Start new check</Button>
+            )}
+          </div>
         </Space>
 
         <Steps
@@ -375,12 +416,23 @@ export default function VisibilityWizard() {
         {currentStep === 2 && (
           <Space direction="vertical" style={{ width: "100%" }} size={16}>
             <Card
+              title="Visibility results"
               extra={
-                !jobRunning && visibility.results ? (
-                  <Button type="link" onClick={() => setStepOverride(1)}>
-                    Back to prompts
-                  </Button>
-                ) : null
+                <Space>
+                  {hasResults && (
+                    <Button
+                      loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
+                      onClick={onDownloadReport}
+                    >
+                      Download report
+                    </Button>
+                  )}
+                  {!jobRunning && (
+                    <Button type="link" onClick={() => setStepOverride(1)}>
+                      Back to prompts
+                    </Button>
+                  )}
+                </Space>
               }
             >
               {jobRunning && (
@@ -398,7 +450,16 @@ export default function VisibilityWizard() {
                 </>
               )}
 
-              {!jobRunning && visibility.results && visibility.score && (
+              {visibility.status === "failed" && !jobRunning && (
+                <Alert
+                  type="error"
+                  showIcon
+                  message={visibility.error || "Visibility check failed"}
+                  style={{ marginBottom: 12 }}
+                />
+              )}
+
+              {!jobRunning && hasResults && visibility.results && visibility.score && (
                 <>
                   <Space align="baseline" style={{ marginBottom: 16 }}>
                     <Title
@@ -444,7 +505,7 @@ export default function VisibilityWizard() {
                     ))}
                   </Space>
 
-                  {!visibility.plan && (
+                  {!hasPlan && (
                     <Button
                       type="primary"
                       style={{ marginTop: 16 }}
@@ -454,23 +515,48 @@ export default function VisibilityWizard() {
                       Build action plan
                     </Button>
                   )}
+                  {hasPlan && (
+                    <Button type="primary" style={{ marginTop: 16 }} onClick={() => setStepOverride(3)}>
+                      View action plan
+                    </Button>
+                  )}
                 </>
               )}
 
-              {!jobRunning && !visibility.results && (
-                <Text type="secondary">Start a run from the prompts step.</Text>
+              {!jobRunning && !hasResults && (
+                <Space direction="vertical" size={12} style={{ width: "100%" }}>
+                  {visibility.status === "failed" ? null : (
+                    <Text type="secondary">
+                      {visibility.status === "completed"
+                        ? "Job finished but no results were saved. Start a new check."
+                        : "Start a run from the prompts step, or begin a new check."}
+                    </Text>
+                  )}
+                  <Button type="primary" onClick={onStartNewCheck}>
+                    Start new check
+                  </Button>
+                </Space>
               )}
             </Card>
           </Space>
         )}
 
-        {currentStep === 3 && visibility.plan && (
+        {currentStep === 3 && hasPlan && visibility.plan && (
           <Space direction="vertical" style={{ width: "100%" }} size={20}>
             <Card
+              title="Action plan"
               extra={
                 <Space>
+                  {hasResults && (
+                    <Button
+                      loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
+                      onClick={onDownloadReport}
+                    >
+                      Download report
+                    </Button>
+                  )}
                   <Link href="/app/action-plan">
-                    <Button>Open checklist</Button>
+                    <Button type="primary">Open checklist</Button>
                   </Link>
                   <Button type="link" onClick={() => setStepOverride(2)}>
                     Back to results

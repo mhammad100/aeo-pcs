@@ -8,6 +8,11 @@ const UsageEventSchema = new Schema(
     model: { type: String, required: true, trim: true, index: true },
     inputTokens: { type: Number, default: 0, min: 0 },
     outputTokens: { type: Number, default: 0, min: 0 },
+    /** Snapshot of rate at burn time ($ per 1M tokens) */
+    inputPer1MTokens: { type: Number, default: null },
+    outputPer1MTokens: { type: Number, default: null },
+    estimatedCost: { type: Number, default: null },
+    currency: { type: String, default: "USD" },
     refs: { type: Schema.Types.Mixed, default: {} },
   },
   { timestamps: { createdAt: true, updatedAt: false } }

@@ -64,7 +64,29 @@ function estimateCost(
   rate: { inputPer1MTokens: number; outputPer1MTokens: number } | undefined
 ) {
   if (!rate) return 0;
-  return (inputTokens / 1_000_000) * rate.inputPer1MTokens + (outputTokens / 1_000_000) * rate.outputPer1MTokens;
+  return (
+    (inputTokens / 1_000_000) * rate.inputPer1MTokens +
+    (outputTokens / 1_000_000) * rate.outputPer1MTokens
+  );
+}
+
+async function rateForModel(model: string) {
+  await ensureDefaultCostRates();
+  const rate =
+    (await CostRateModel.findOne({ model }).lean()) ||
+    (await CostRateModel.findOne().sort({ updatedAt: -1 }).lean());
+  if (!rate) {
+    return {
+      inputPer1MTokens: 3,
+      outputPer1MTokens: 15,
+      currency: "USD",
+    };
+  }
+  return {
+    inputPer1MTokens: rate.inputPer1MTokens,
+    outputPer1MTokens: rate.outputPer1MTokens,
+    currency: rate.currency || "USD",
+  };
 }
 
 export async function logUsageEvent(input: {
@@ -77,18 +99,42 @@ export async function logUsageEvent(input: {
   refs?: Record<string, unknown>;
 }) {
   try {
+    const inputTokens = Math.max(0, Math.round(input.inputTokens || 0));
+    const outputTokens = Math.max(0, Math.round(input.outputTokens || 0));
+    const rate = await rateForModel(input.model);
+    const estimatedCost = estimateCost(inputTokens, outputTokens, rate);
+
     await UsageEventModel.create({
       userId: input.userId || null,
       businessId: input.businessId || null,
       feature: input.feature,
       model: input.model,
-      inputTokens: Math.max(0, Math.round(input.inputTokens || 0)),
-      outputTokens: Math.max(0, Math.round(input.outputTokens || 0)),
+      inputTokens,
+      outputTokens,
+      inputPer1MTokens: rate.inputPer1MTokens,
+      outputPer1MTokens: rate.outputPer1MTokens,
+      estimatedCost,
+      currency: rate.currency,
       refs: input.refs || {},
     });
   } catch {
     // Never fail the primary LLM call on logging errors
   }
+}
+
+function eventCost(
+  ev: {
+    inputTokens?: number | null;
+    outputTokens?: number | null;
+    estimatedCost?: number | null;
+    model?: string | null;
+  },
+  rateByModel: Map<string, CostRate>
+) {
+  if (typeof ev.estimatedCost === "number") return ev.estimatedCost;
+  const inTok = ev.inputTokens || 0;
+  const outTok = ev.outputTokens || 0;
+  return estimateCost(inTok, outTok, rateByModel.get(ev.model || ""));
 }
 
 export async function getUsageProfitSummary(days = 30): Promise<UsageProfitSummary> {
@@ -100,7 +146,7 @@ export async function getUsageProfitSummary(days = 30): Promise<UsageProfitSumma
   const events = await UsageEventModel.find({
     createdAt: { $gte: periodStart, $lte: periodEnd },
   })
-    .select("feature model inputTokens outputTokens createdAt")
+    .select("feature model inputTokens outputTokens estimatedCost createdAt")
     .lean();
 
   const byFeatureMap = new Map<string, UsageSummaryRow>();
@@ -115,7 +161,7 @@ export async function getUsageProfitSummary(days = 30): Promise<UsageProfitSumma
   for (const ev of events) {
     const inTok = ev.inputTokens || 0;
     const outTok = ev.outputTokens || 0;
-    const cost = estimateCost(inTok, outTok, rateByModel.get(ev.model));
+    const cost = eventCost(ev, rateByModel);
     calls += 1;
     inputTokens += inTok;
     outputTokens += outTok;
@@ -179,7 +225,7 @@ export async function getBusinessUsageForUser(userId: string, days = 30) {
     businessId: business._id,
     createdAt: { $gte: periodStart, $lte: periodEnd },
   })
-    .select("feature model inputTokens outputTokens")
+    .select("feature model inputTokens outputTokens estimatedCost")
     .lean();
 
   let calls = 0;
@@ -191,7 +237,7 @@ export async function getBusinessUsageForUser(userId: string, days = 30) {
   for (const ev of events) {
     const inTok = ev.inputTokens || 0;
     const outTok = ev.outputTokens || 0;
-    const cost = estimateCost(inTok, outTok, rateByModel.get(ev.model));
+    const cost = eventCost(ev, rateByModel);
     calls += 1;
     inputTokens += inTok;
     outputTokens += outTok;

@@ -5,6 +5,7 @@ import { connectMongo } from "./config/db";
 import { env } from "./config/env";
 import { apiRouter } from "./routes";
 import { errorHandler } from "./middleware/errorHandler";
+import { requestLogger } from "./middleware/requestLogger";
 
 async function main() {
   await connectMongo();
@@ -12,6 +13,8 @@ async function main() {
   const { ensureDefaultCostRates } = await import("./services/usage.service");
   await ensureDefaultPlans();
   await ensureDefaultCostRates();
+  const { resumeInterruptedVisibilityJobs } = await import("./services/jobRunner");
+  await resumeInterruptedVisibilityJobs();
 
   const app = express();
   app.use(
@@ -20,6 +23,7 @@ async function main() {
     })
   );
   app.use(express.json({ limit: "1mb" }));
+  app.use(requestLogger);
 
   const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,

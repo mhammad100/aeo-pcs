@@ -28,6 +28,15 @@ function assertJobAccess(
   }
 }
 
+function normalizePlan(plan: unknown) {
+  if (!plan || typeof plan !== "object") return null;
+  const p = plan as { automatable?: unknown[]; manual?: unknown[] };
+  const automatable = Array.isArray(p.automatable) ? p.automatable : [];
+  const manual = Array.isArray(p.manual) ? p.manual : [];
+  if (!automatable.length && !manual.length) return null;
+  return { automatable, manual };
+}
+
 function serializeJob(job: Record<string, unknown>) {
   return {
     id: String(job._id),
@@ -38,11 +47,11 @@ function serializeJob(job: Record<string, unknown>) {
     city: job.city,
     country: job.country,
     prompts: job.prompts,
-    results: job.results,
-    score: job.score,
-    plan: job.plan,
+    results: Array.isArray(job.results) && job.results.length ? job.results : null,
+    score: job.score || null,
+    plan: normalizePlan(job.plan),
     itemOutputs: mapItemOutputs(job.itemOutputs),
-    error: job.error,
+    error: job.error || null,
     createdAt: job.createdAt,
     updatedAt: job.updatedAt,
   };
@@ -88,6 +97,33 @@ export async function createVisibilityJob(input: {
   return { jobId: String(job._id) };
 }
 
+const STALE_JOB_MS = 25 * 60 * 1000;
+
+async function failIfStale(job: {
+  _id: unknown;
+  status?: string;
+  updatedAt?: Date | string;
+}) {
+  if (job.status !== "queued" && job.status !== "running") return job;
+  if (!job.updatedAt) return job;
+  const age = Date.now() - new Date(job.updatedAt).getTime();
+  if (age <= STALE_JOB_MS) return job;
+
+  const updated = await VisibilityJobModel.findByIdAndUpdate(
+    job._id,
+    {
+      $set: {
+        status: "failed",
+        error: "Visibility check timed out. Please start a new check.",
+      },
+      $unset: { plan: 1 },
+    },
+    { new: true }
+  ).lean();
+
+  return (updated || job) as typeof job;
+}
+
 export async function getVisibilityJob(input: {
   jobId: string;
   userId: string;
@@ -98,7 +134,8 @@ export async function getVisibilityJob(input: {
     throw new AppError("Job not found", 404);
   }
   assertJobAccess(job, input.userId, input.userRole);
-  return serializeJob(job as Record<string, unknown>);
+  const resolved = await failIfStale(job);
+  return serializeJob(resolved as Record<string, unknown>);
 }
 
 export async function buildPlanForJob(input: {
@@ -193,6 +230,10 @@ export async function getReportForJob(input: {
     throw new AppError("Job not found", 404);
   }
   assertJobAccess(job, input.userId, input.userRole);
+
+  if (job.status !== "completed" || !job.results?.length || !job.score) {
+    throw new AppError("Visibility results are not ready yet", 400);
+  }
 
   const itemOutputs = mapItemOutputs(job.itemOutputs);
   const bodyHtml = buildReportHtml({

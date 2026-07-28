@@ -81,8 +81,15 @@ const VisibilityJobSchema = new Schema(
       totalChecks: Number,
     },
     plan: {
-      automatable: [AutomatableSchema],
-      manual: [ManualSchema],
+      type: new Schema(
+        {
+          automatable: { type: [AutomatableSchema], default: undefined },
+          manual: { type: [ManualSchema], default: undefined },
+        },
+        { _id: false }
+      ),
+      default: undefined,
+      required: false,
     },
     itemOutputs: {
       type: Map,
