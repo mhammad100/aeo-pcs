@@ -5,7 +5,7 @@ import { hashPassword } from "../utils/auth";
 import { toAuthUser } from "../utils/serialize";
 
 export async function listUsers() {
-  const users = await UserModel.find().sort({ createdAt: -1 }).lean();
+  const users = await UserModel.find({ role: "business" }).sort({ createdAt: -1 }).lean();
   const businesses = await BusinessModel.find().lean();
   const byOwner = new Map(businesses.map((b) => [String(b.ownerUserId), b]));
 
