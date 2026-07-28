@@ -1,4 +1,5 @@
 import { BusinessModel } from "../models/Business";
+import { AppError } from "../utils/AppError";
 import { toBusinessProfile } from "../utils/serialize";
 
 function isValidHttpUrl(value: string): boolean {
@@ -29,27 +30,11 @@ export function profileIsComplete(b: {
 
 export { isValidHttpUrl };
 
-async function getOrCreateOwnedBusiness(userId: string) {
-  let business = await BusinessModel.findOne({ ownerUserId: userId });
-  if (!business) {
-    business = await BusinessModel.create({
-      ownerUserId: userId,
-      name: "",
-      category: "",
-      city: "",
-      country: "",
-      description: "",
-      websiteUrl: "",
-      googleBusinessUrl: "",
-      socialLinks: [],
-      profileCompletedAt: null,
-    });
-  }
-  return business;
-}
-
 export async function getMyBusiness(userId: string) {
-  const business = await getOrCreateOwnedBusiness(userId);
+  const business = await BusinessModel.findOne({ ownerUserId: userId });
+  if (!business) {
+    throw new AppError("Business profile not found", 404);
+  }
   return toBusinessProfile(business);
 }
 

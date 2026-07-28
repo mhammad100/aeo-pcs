@@ -1,4 +1,4 @@
-import type { AuthUser, LoginResponse, MeResponse } from "@aeo-pcs/shared";
+import type { AuthUser, LoginRequest, LoginResponse, MeResponse } from "@aeo-pcs/shared";
 import { store } from "@/store";
 import { logout } from "@/store/authSlice";
 
@@ -52,7 +52,7 @@ export type AdminBusinessRow = {
 };
 
 export const api = {
-  login: (body: { email: string; password: string }) =>
+  login: (body: LoginRequest) =>
     request<LoginResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   me: () => request<MeResponse>("/auth/me"),
   listUsers: () => request<{ users: AdminUserRow[] }>("/admin/users"),

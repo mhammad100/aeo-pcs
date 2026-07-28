@@ -21,6 +21,10 @@ export default function LoginPage() {
     setError(null);
     try {
       const res = await api.login(values);
+      if (res.user.role !== "business") {
+        setError("Business access only. Use the admin portal to log in as an admin.");
+        return;
+      }
       dispatch(setCredentials(res));
       if (res.user.business?.profileCompletedAt) {
         router.replace("/app");

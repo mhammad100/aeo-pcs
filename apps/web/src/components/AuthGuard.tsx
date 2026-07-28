@@ -24,6 +24,11 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       try {
         const { user } = await api.me();
         if (!cancelled) {
+          if (user.role !== "business" || user.status !== "active") {
+            dispatch(logout());
+            router.replace("/login");
+            return;
+          }
           dispatch(setUser(user));
           setReady(true);
         }

@@ -19,7 +19,7 @@ async function main() {
   const app = express();
   app.use(
     cors({
-      origin: env.corsOrigin.split(",").map((s) => s.trim()),
+      origin: [env.publicSiteUrl, env.adminSiteUrl],
     })
   );
   app.use(express.json({ limit: "1mb" }));

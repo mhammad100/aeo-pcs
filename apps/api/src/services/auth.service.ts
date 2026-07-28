@@ -1,3 +1,4 @@
+import type { UserRole } from "@aeo-pcs/shared";
 import { env } from "../config/env";
 import { BusinessModel } from "../models/Business";
 import { UserModel } from "../models/User";
@@ -5,7 +6,25 @@ import { AppError } from "../utils/AppError";
 import { hashPassword, signAccessToken, verifyPassword } from "../utils/auth";
 import { toAuthUser } from "../utils/serialize";
 
-export async function loginUser(emailRaw: string, password: string) {
+function normalizeOrigin(value: string): string {
+  return value.trim().replace(/\/$/, "");
+}
+
+export function expectedRoleForOrigin(originRaw: string | undefined): UserRole {
+  const origin = originRaw ? normalizeOrigin(originRaw) : "";
+  if (!origin) {
+    throw new AppError("Missing request origin", 403);
+  }
+  if (origin === env.adminSiteUrl) return "admin";
+  if (origin === env.publicSiteUrl) return "business";
+  throw new AppError("Unknown login origin", 403);
+}
+
+export async function loginUser(
+  emailRaw: string,
+  password: string,
+  expectedRole: UserRole
+) {
   const email = emailRaw.toLowerCase();
   const user = await UserModel.findOne({ email });
   if (!user || user.status !== "active") {
@@ -15,11 +34,19 @@ export async function loginUser(emailRaw: string, password: string) {
   if (!ok) {
     throw new AppError("Invalid email or password", 401);
   }
+  if (user.role !== expectedRole) {
+    throw new AppError(
+      expectedRole === "admin"
+        ? "Admin access only. Use the business app to log in as a business user."
+        : "Business access only. Use the admin portal to log in as an admin.",
+      403
+    );
+  }
 
   const business = await BusinessModel.findOne({ ownerUserId: user._id });
   const token = signAccessToken({
     sub: String(user._id),
-    role: user.role as "admin" | "business",
+    role: user.role as UserRole,
   });
   return { token, user: toAuthUser(user, business) };
 }

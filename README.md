@@ -24,8 +24,9 @@ npm run dev:web      # :3000
 npm run dev:admin    # :5173
 ```
 
-CORS must allow both web and admin origins, e.g.  
-`CORS_ORIGIN=http://localhost:3000,http://localhost:5173`
+Set frontend origins for CORS + login role checks, e.g.  
+`PUBLIC_SITE_URL=http://localhost:3000`  
+`ADMIN_SITE_URL=http://localhost:5173`
 
 ## Seed
 
