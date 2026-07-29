@@ -5,21 +5,18 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
   Button,
-  Col,
   Input,
   Progress,
-  Row,
-  Select,
   Space,
   Spin,
   Typography,
 } from "antd";
-import { CATEGORIES, type AeoRuntimeSettings } from "@aeo-pcs/shared";
+import { type AeoRuntimeSettings } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import VisibilityStepNav from "@/components/VisibilityStepNav";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { hydrateFromProfile, setCategory } from "@/store/businessSlice";
+import { hydrateFromProfile } from "@/store/businessSlice";
 import { setPrompts, updatePrompt } from "@/store/promptsSlice";
 import {
   resetVisibility,
@@ -71,7 +68,6 @@ export default function VisibilityWizard() {
   const [runsLimit, setRunsLimit] = useState(0);
   const [canRunVisibility, setCanRunVisibility] = useState(false);
 
-  const promptsPerRun = runtime.promptsPerRun;
   const visibilityModelCount = runtime.visibilityModelCount;
   const modelLabels = runtime.visibilityModels.map((m) => m.label);
 
@@ -111,10 +107,7 @@ export default function VisibilityWizard() {
       setProfileLoading(true);
       dispatch(setError(null));
       try {
-        const [{ business: profile }, runtimeRes] = await Promise.all([
-          api.getMyBusiness(),
-          api.getRuntimeSettings().catch(() => null),
-        ]);
+        const { business: profile } = await api.getMyBusiness();
         if (cancelled) return;
         dispatch(
           hydrateFromProfile({
@@ -126,12 +119,17 @@ export default function VisibilityWizard() {
             websiteUrl: profile.websiteUrl,
           })
         );
-        if (runtimeRes?.settings) {
-          setRuntime(runtimeRes.settings);
+        try {
+          const runtimeRes = await api.getRuntimeSettings();
+          if (!cancelled && runtimeRes.settings) {
+            setRuntime(runtimeRes.settings);
+          }
+        } catch {
+          /* keep default runtime settings */
         }
       } catch (err) {
         if (!cancelled) {
-          dispatch(setError(err instanceof Error ? err.message : "Failed to load profile"));
+          dispatch(setError(err instanceof ApiError ? err.message : "Failed to load profile"));
         }
       } finally {
         if (!cancelled) setProfileLoading(false);
@@ -141,6 +139,24 @@ export default function VisibilityWizard() {
       cancelled = true;
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (currentStep !== 1) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const runtimeRes = await api.getRuntimeSettings();
+        if (!cancelled && runtimeRes.settings) {
+          setRuntime(runtimeRes.settings);
+        }
+      } catch {
+        /* keep last known runtime settings */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [currentStep]);
 
   useEffect(() => {
     let cancelled = false;
@@ -335,7 +351,7 @@ export default function VisibilityWizard() {
 
   const stepHints = [
     "Review the profile used for this check.",
-    "Generate buyer-intent prompts, edit if needed, then run.",
+    "Generate buyer-intent prompts from your profile, edit if needed, then run.",
     "See mention rate across each model and prompt.",
     "Generate content and track manual tasks.",
   ];
@@ -511,34 +527,34 @@ export default function VisibilityWizard() {
                     disabled={!canRunVisibility || subscriptionLoading}
                     onClick={onRunCheck}
                   >
-                    Run check ({prompts.length} × {visibilityModelCount} models)
+                    Run check ({visibilityModelCount} models)
                   </Button>
                 ) : undefined
               }
             >
-              <Row gutter={[12, 12]} style={{ marginBottom: prompts.length ? 20 : 0 }}>
-                <Col xs={24} md={16}>
-                  <Text type="secondary" style={{ display: "block", marginBottom: 6, fontSize: 12 }}>
-                    Category
-                  </Text>
-                  <Select
-                    style={{ width: "100%" }}
-                    value={business.category || undefined}
-                    onChange={(v) => dispatch(setCategory(v))}
-                    options={CATEGORIES.map((c) => ({ value: c, label: c }))}
-                  />
-                </Col>
-                <Col xs={24} md={8} style={{ display: "flex", alignItems: "flex-end" }}>
-                  <Button
-                    type="primary"
-                    block
-                    loading={visibility.uiBusy && localBusyLabel === "Generating prompts"}
-                    onClick={onGeneratePrompts}
-                  >
-                    Generate {promptsPerRun}
-                  </Button>
-                </Col>
-              </Row>
+              <div className="vis-prompts-intro">
+                <p>
+                  Using <strong>{business.category || "your category"}</strong> from your profile
+                  {business.city || business.country
+                    ? ` · ${[business.city, business.country].filter(Boolean).join(", ")}`
+                    : ""}
+                  .
+                </p>
+                <Link href="/app/settings" className="vis-prompts-settings-link">
+                  Edit profile
+                </Link>
+              </div>
+
+              <Button
+                type="primary"
+                size="large"
+                block
+                loading={visibility.uiBusy && localBusyLabel === "Generating prompts"}
+                onClick={onGeneratePrompts}
+                style={{ marginBottom: prompts.length ? 20 : 0 }}
+              >
+                {prompts.length > 0 ? "Regenerate prompts" : "Generate prompts"}
+              </Button>
 
               {prompts.length > 0 && (
                 <Space direction="vertical" style={{ width: "100%" }} size={12}>

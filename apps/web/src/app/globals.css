@@ -1190,6 +1190,42 @@ a {
   align-items: flex-start;
 }
 
+.vis-prompts-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ma-line);
+  background: rgba(11, 20, 17, 0.45);
+}
+
+.vis-prompts-intro p {
+  margin: 0;
+  color: var(--ma-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.vis-prompts-intro strong {
+  color: var(--ma-ink);
+  font-weight: 600;
+}
+
+.vis-prompts-settings-link {
+  color: var(--ma-accent-soft);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.vis-prompts-settings-link:hover {
+  text-decoration: underline;
+}
+
 .vis-prompt-index {
   flex-shrink: 0;
   width: 28px;
