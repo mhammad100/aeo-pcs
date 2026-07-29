@@ -38,7 +38,7 @@ export default function BillingPage() {
         Billing
       </Title>
       <Paragraph type="secondary">
-        Invoice history (manually assigned for now — Stripe comes later).
+        Invoice history
       </Paragraph>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
       <Card>
