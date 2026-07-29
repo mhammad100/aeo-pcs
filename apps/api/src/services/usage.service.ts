@@ -3,7 +3,6 @@ import { CostRateModel } from "../models/CostRate";
 import { InvoiceModel } from "../models/Invoice";
 import { UsageEventModel } from "../models/UsageEvent";
 import { AppError } from "../utils/AppError";
-import { env } from "../config/env";
 
 function serializeRate(doc: {
   _id: { toString(): string };
@@ -21,15 +20,9 @@ function serializeRate(doc: {
   };
 }
 
+/** Cost rates are seeded from AeoSettings (ensureAeoSettings). No env model fallback. */
 export async function ensureDefaultCostRates() {
-  const count = await CostRateModel.countDocuments();
-  if (count > 0) return;
-  await CostRateModel.create({
-    model: env.anthropicModel,
-    inputPer1MTokens: 3,
-    outputPer1MTokens: 15,
-    currency: "USD",
-  });
+  // no-op — rates come from Admin → Settings via ensureAeoSettings / migrations
 }
 
 export async function listCostRates() {
@@ -96,12 +89,24 @@ export async function logUsageEvent(input: {
   model: string;
   inputTokens: number;
   outputTokens: number;
+  /** When set (from AeoSettings), used instead of CostRate lookup. */
+  pricing?: {
+    inputPer1MTokens: number;
+    outputPer1MTokens: number;
+    currency?: string;
+  };
   refs?: Record<string, unknown>;
 }) {
   try {
     const inputTokens = Math.max(0, Math.round(input.inputTokens || 0));
     const outputTokens = Math.max(0, Math.round(input.outputTokens || 0));
-    const rate = await rateForModel(input.model);
+    const rate = input.pricing
+      ? {
+          inputPer1MTokens: input.pricing.inputPer1MTokens,
+          outputPer1MTokens: input.pricing.outputPer1MTokens,
+          currency: (input.pricing.currency || "USD").toUpperCase(),
+        }
+      : await rateForModel(input.model);
     const estimatedCost = estimateCost(inputTokens, outputTokens, rate);
 
     await UsageEventModel.create({

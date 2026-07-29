@@ -18,11 +18,17 @@ function requiredBool(name: string): boolean {
   throw new Error(`${name} must be true or false`);
 }
 
+function optional(name: string): string {
+  return process.env[name]?.trim() || "";
+}
+
 export const env = {
   port: Number(required("PORT")),
   mongoUri: required("MONGODB_URI"),
   anthropicApiKey: required("ANTHROPIC_API_KEY"),
-  anthropicModel: required("ANTHROPIC_MODEL"),
+  openaiApiKey: optional("OPENAI_API_KEY"),
+  googleAiApiKey: optional("GOOGLE_AI_API_KEY"),
+  perplexityApiKey: optional("PERPLEXITY_API_KEY"),
   publicSiteUrl: required("PUBLIC_SITE_URL").replace(/\/$/, ""),
   adminSiteUrl: required("ADMIN_SITE_URL").replace(/\/$/, ""),
   jwtSecret: required("JWT_SECRET"),

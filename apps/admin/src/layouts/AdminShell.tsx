@@ -12,6 +12,7 @@ const items = [
   { key: "/businesses", label: <Link to="/businesses">Businesses</Link> },
   { key: "/plans", label: <Link to="/plans">Plans</Link> },
   { key: "/usage", label: <Link to="/usage">Usage</Link> },
+  { key: "/settings", label: <Link to="/settings">Settings</Link> },
 ];
 
 export default function AdminShell() {

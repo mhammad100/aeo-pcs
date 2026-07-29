@@ -1,5 +1,5 @@
 import { body, param } from "express-validator";
-import { CATEGORIES } from "@aeo-pcs/shared";
+import { CATEGORIES, MAX_PROMPTS_PER_RUN } from "@aeo-pcs/shared";
 import { isValidHttpUrl } from "../services/businesses.service";
 
 export const loginValidators = [
@@ -77,7 +77,7 @@ export const createVisibilityJobValidators = [
     .isString()
     .trim()
     .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
-  body("prompts").isArray({ min: 1, max: 5 }),
+  body("prompts").isArray({ min: 1, max: MAX_PROMPTS_PER_RUN }),
   body("prompts.*").isString().trim().isLength({ min: 3, max: 300 }),
 ];
 
@@ -154,4 +154,39 @@ export const upsertCostRateValidators = [
   body("inputPer1MTokens").isFloat({ min: 0 }),
   body("outputPer1MTokens").isFloat({ min: 0 }),
   body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+];
+
+export const updateAeoSettingsValidators = [
+  body("visibilityModels").optional().isArray({ min: 1, max: 10 }),
+  body("visibilityModels.*.id").optional().isString().trim().isLength({ min: 1, max: 80 }),
+  body("visibilityModels.*.label").optional().isString().trim().isLength({ min: 1, max: 80 }),
+  body("visibilityModels.*.provider")
+    .optional()
+    .isIn(["google", "openai", "perplexity", "anthropic"]),
+  body("visibilityModels.*.modelId").optional().isString().trim().isLength({ min: 1, max: 120 }),
+  body("visibilityModels.*.enabled").optional().isBoolean(),
+  body("visibilityModels.*.inputPer1MTokens").optional().isFloat({ min: 0 }),
+  body("visibilityModels.*.outputPer1MTokens").optional().isFloat({ min: 0 }),
+  body("visibilityModels.*.currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+  body("promptGenerationModel").optional().isObject(),
+  body("promptGenerationModel.provider")
+    .optional()
+    .isIn(["google", "openai", "perplexity", "anthropic"]),
+  body("promptGenerationModel.modelId").optional().isString().trim().isLength({ min: 1, max: 120 }),
+  body("promptGenerationModel.inputPer1MTokens").optional().isFloat({ min: 0 }),
+  body("promptGenerationModel.outputPer1MTokens").optional().isFloat({ min: 0 }),
+  body("promptGenerationModel.currency")
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ min: 3, max: 3 }),
+  body("actionPlanModel").optional().isObject(),
+  body("actionPlanModel.provider")
+    .optional()
+    .isIn(["google", "openai", "perplexity", "anthropic"]),
+  body("actionPlanModel.modelId").optional().isString().trim().isLength({ min: 1, max: 120 }),
+  body("actionPlanModel.inputPer1MTokens").optional().isFloat({ min: 0 }),
+  body("actionPlanModel.outputPer1MTokens").optional().isFloat({ min: 0 }),
+  body("actionPlanModel.currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
+  body("promptsPerRun").optional().isInt({ min: 1, max: MAX_PROMPTS_PER_RUN }),
 ];

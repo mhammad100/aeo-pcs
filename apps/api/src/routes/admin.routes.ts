@@ -1,8 +1,13 @@
 import { Router } from "express";
 import * as adminController from "../controllers/admin.controller";
+import * as aeoSettingsController from "../controllers/aeoSettings.controller";
 import { requireAuth, requireRole } from "../middleware/auth";
 import { asyncHandler, validate } from "../middleware/validate";
-import { createAdminUserValidators, setUserStatusValidators } from "../validators";
+import {
+  createAdminUserValidators,
+  setUserStatusValidators,
+  updateAeoSettingsValidators,
+} from "../validators";
 import { mountAdminBillingRoutes } from "./billing.routes";
 
 export const adminRouter = Router();
@@ -20,6 +25,13 @@ adminRouter.patch(
   "/users/:userId/status",
   validate(setUserStatusValidators),
   asyncHandler(adminController.setUserStatus)
+);
+
+adminRouter.get("/settings", asyncHandler(aeoSettingsController.getAdminAeoSettings));
+adminRouter.put(
+  "/settings",
+  validate(updateAeoSettingsValidators),
+  asyncHandler(aeoSettingsController.updateAdminAeoSettings)
 );
 
 mountAdminBillingRoutes(adminRouter);

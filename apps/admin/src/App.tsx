@@ -6,6 +6,7 @@ import UsersPage from "./pages/UsersPage";
 import BusinessesPage from "./pages/BusinessesPage";
 import PlansPage from "./pages/PlansPage";
 import UsagePage from "./pages/UsagePage";
+import SettingsPage from "./pages/SettingsPage";
 import RequireAdmin from "./components/RequireAdmin";
 
 export default function App() {
@@ -25,6 +26,7 @@ export default function App() {
         <Route path="businesses" element={<BusinessesPage />} />
         <Route path="plans" element={<PlansPage />} />
         <Route path="usage" element={<UsagePage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

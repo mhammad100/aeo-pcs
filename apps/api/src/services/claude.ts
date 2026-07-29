@@ -1,5 +1,6 @@
 import type { Source } from "@aeo-pcs/shared";
 import { env } from "../config/env";
+import { getAeoSettings } from "./aeoSettings.service";
 import { logUsageEvent } from "./usage.service";
 
 export type ClaudeCallResult = {
@@ -29,8 +30,14 @@ export async function callClaude(options: {
   maxTokens?: number;
   usage?: ClaudeUsageContext;
 }): Promise<ClaudeCallResult> {
+  const { actionPlanModel } = await getAeoSettings();
+  if (actionPlanModel.enabled === false) {
+    throw new Error("Action plan generation is disabled in admin settings");
+  }
+  const modelId = actionPlanModel.modelId;
+
   const body: Record<string, unknown> = {
-    model: env.anthropicModel,
+    model: modelId,
     max_tokens: options.maxTokens ?? 1200,
     system: options.system,
     messages: [{ role: "user", content: options.prompt }],
@@ -92,9 +99,14 @@ export async function callClaude(options: {
       userId: options.usage.userId,
       businessId: options.usage.businessId,
       feature: options.usage.feature,
-      model: env.anthropicModel,
+      model: modelId,
       inputTokens,
       outputTokens,
+      pricing: {
+        inputPer1MTokens: actionPlanModel.inputPer1MTokens,
+        outputPer1MTokens: actionPlanModel.outputPer1MTokens,
+        currency: actionPlanModel.currency,
+      },
       refs: options.usage.refs,
     });
   }

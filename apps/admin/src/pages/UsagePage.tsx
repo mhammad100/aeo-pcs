@@ -68,7 +68,8 @@ export default function UsagePage() {
         Usage & profit
       </Title>
       <Paragraph type="secondary">
-        Token usage from Claude calls over the last 30 days, estimated cost vs paid invoice revenue.
+        Token usage from LLM calls over the last 30 days, estimated cost vs paid invoice revenue.
+        Model pricing is managed under Settings and snapshotted onto each usage event.
       </Paragraph>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 

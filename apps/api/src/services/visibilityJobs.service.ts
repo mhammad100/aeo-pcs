@@ -2,6 +2,7 @@ import type { BusinessCandidate, UserRole } from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
+import { getAeoSettings, getEnabledVisibilityModels } from "./aeoSettings.service";
 import { enqueueVisibilityJob } from "./jobRunner";
 import { buildActionPlan, generateItemContent } from "./plan";
 import { buildReportHtml, wrapReportDocument } from "./report";
@@ -70,6 +71,16 @@ export async function createVisibilityJob(input: {
     throw new AppError("Business profile is incomplete", 400);
   }
 
+  const settings = await getAeoSettings();
+  if (input.prompts.length < 1 || input.prompts.length > settings.promptsPerRun) {
+    throw new AppError(
+      `Provide between 1 and ${settings.promptsPerRun} prompts for a visibility run`,
+      400
+    );
+  }
+
+  const models = await getEnabledVisibilityModels();
+
   const business: BusinessCandidate = {
     name: owned.name.trim(),
     category: input.category || owned.category || "Other",
@@ -83,7 +94,7 @@ export async function createVisibilityJob(input: {
     status: "queued",
     progress: {
       completed: 0,
-      total: input.prompts.length * 3,
+      total: input.prompts.length * models.length,
     },
     business,
     category: input.category || owned.category || "Other",

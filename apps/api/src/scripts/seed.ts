@@ -56,7 +56,7 @@ async function upsertUser(input: {
   }
 }
 
-async function main() {
+  async function main() {
   const adminEmail = process.env.SEED_ADMIN_EMAIL?.trim();
   const adminPassword = process.env.SEED_ADMIN_PASSWORD?.trim();
   if (!adminEmail || !adminPassword) {
@@ -69,8 +69,10 @@ async function main() {
   await connectMongo();
   const { ensureDefaultPlans } = await import("../services/productPlans.service");
   const { ensureDefaultCostRates } = await import("../services/usage.service");
+  const { ensureAeoSettings } = await import("../services/aeoSettings.service");
   await ensureDefaultPlans();
   await ensureDefaultCostRates();
+  await ensureAeoSettings();
   await upsertUser({ email: adminEmail, password: adminPassword, role: "admin" });
 
   const bizEmail = process.env.SEED_BUSINESS_EMAIL?.trim();

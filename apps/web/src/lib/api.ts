@@ -101,6 +101,9 @@ export const api = {
   getInsights: () =>
     request<{ insights: import("@aeo-pcs/shared").BusinessInsights }>("/visibility/insights"),
 
+  getRuntimeSettings: () =>
+    request<{ settings: import("@aeo-pcs/shared").AeoRuntimeSettings }>("/settings/runtime"),
+
   getChecklist: () =>
     request<{
       items: import("@aeo-pcs/shared").ChecklistItem[];

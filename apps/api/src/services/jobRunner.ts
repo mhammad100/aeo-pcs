@@ -1,5 +1,5 @@
-import { MODELS } from "@aeo-pcs/shared";
 import { VisibilityJobModel } from "../models/VisibilityJob";
+import { getEnabledVisibilityModels } from "./aeoSettings.service";
 import { runVisibilityCheck } from "./visibility";
 
 const running = new Set<string>();
@@ -50,12 +50,15 @@ async function processVisibilityJob(jobId: string) {
   if (job.status === "completed" || job.status === "failed") return;
 
   try {
+    const models = await getEnabledVisibilityModels();
+    const total = (job.prompts?.length || 0) * models.length;
+
     await VisibilityJobModel.findByIdAndUpdate(jobId, {
       $set: {
         status: "running",
         progress: {
           completed: 0,
-          total: (job.prompts?.length || 0) * MODELS.length,
+          total,
           currentPrompt: "",
           currentModel: "",
         },
@@ -69,15 +72,16 @@ async function processVisibilityJob(jobId: string) {
     const { results, score } = await runVisibilityCheck({
       businessName: job.business?.name || "",
       prompts: job.prompts || [],
+      models,
       usage: {
         userId: job.userId ? String(job.userId) : null,
         businessId: job.businessId ? String(job.businessId) : null,
         refs: { jobId },
       },
-      onProgress: async ({ completed, total, currentPrompt, currentModel }) => {
+      onProgress: async ({ completed, total: t, currentPrompt, currentModel }) => {
         await VisibilityJobModel.findByIdAndUpdate(jobId, {
           $set: {
-            progress: { completed, total, currentPrompt, currentModel },
+            progress: { completed, total: t, currentPrompt, currentModel },
           },
         });
       },

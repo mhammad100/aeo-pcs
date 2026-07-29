@@ -16,7 +16,8 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
-/** Display labels — backend simulates each style via Claude system prompts. */
-export const MODELS = ["ChatGPT-style", "Gemini-style", "Perplexity-style"] as const;
+export const LLM_PROVIDERS = ["google", "openai", "perplexity", "anthropic"] as const;
+export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
-export type ModelLabel = (typeof MODELS)[number];
+export const DEFAULT_PROMPTS_PER_RUN = 5;
+export const MAX_PROMPTS_PER_RUN = 20;

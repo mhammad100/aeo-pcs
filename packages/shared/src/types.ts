@@ -1,4 +1,4 @@
-import type { Category, ModelLabel } from "./constants";
+import type { Category, LlmProvider } from "./constants";
 
 export type BusinessCandidate = {
   name: string;
@@ -13,8 +13,48 @@ export type Source = {
   title: string;
 };
 
+export type ModelPricing = {
+  inputPer1MTokens: number;
+  outputPer1MTokens: number;
+  currency: string;
+};
+
+export type VisibilityModelConfig = {
+  id: string;
+  label: string;
+  provider: LlmProvider;
+  modelId: string;
+  enabled: boolean;
+  inputPer1MTokens: number;
+  outputPer1MTokens: number;
+  currency: string;
+};
+
+export type TaskModelConfig = {
+  provider: LlmProvider;
+  modelId: string;
+  enabled: boolean;
+  inputPer1MTokens: number;
+  outputPer1MTokens: number;
+  currency: string;
+};
+
+export type AeoSettings = {
+  visibilityModels: VisibilityModelConfig[];
+  promptGenerationModel: TaskModelConfig;
+  actionPlanModel: TaskModelConfig;
+  promptsPerRun: number;
+  updatedAt?: string;
+};
+
+export type AeoRuntimeSettings = {
+  promptsPerRun: number;
+  visibilityModelCount: number;
+  visibilityModels: Array<{ id: string; label: string; provider: LlmProvider }>;
+};
+
 export type ModelResult = {
-  model: ModelLabel | string;
+  model: string;
   answer: string;
   mentioned: boolean;
   sources: Source[];

@@ -59,6 +59,7 @@ export default function VisibilityWizard() {
   const [localBusyLabel, setLocalBusyLabel] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
   const [stepOverride, setStepOverride] = useState<number | null>(null);
+  const [visibilityModelCount, setVisibilityModelCount] = useState(3);
 
   const hasResults = Boolean(visibility.results?.length && visibility.score);
   const hasPlan = hasPlanContent(visibility.plan);
@@ -96,7 +97,10 @@ export default function VisibilityWizard() {
       setProfileLoading(true);
       dispatch(setError(null));
       try {
-        const { business: profile } = await api.getMyBusiness();
+        const [{ business: profile }, runtime] = await Promise.all([
+          api.getMyBusiness(),
+          api.getRuntimeSettings().catch(() => null),
+        ]);
         if (cancelled) return;
         dispatch(
           hydrateFromProfile({
@@ -108,6 +112,9 @@ export default function VisibilityWizard() {
             websiteUrl: profile.websiteUrl,
           })
         );
+        if (runtime?.settings?.visibilityModelCount) {
+          setVisibilityModelCount(runtime.settings.visibilityModelCount);
+        }
       } catch (err) {
         if (!cancelled) {
           dispatch(setError(err instanceof Error ? err.message : "Failed to load business profile"));
@@ -212,7 +219,7 @@ export default function VisibilityWizard() {
       dispatch(
         setJobSnapshot({
           status: "queued",
-          progress: { completed: 0, total: prompts.length * 3 },
+          progress: { completed: 0, total: prompts.length * visibilityModelCount },
           results: null,
           score: null,
           plan: null,

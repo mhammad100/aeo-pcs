@@ -10,6 +10,7 @@ import { visibilityRouter } from "./visibility.routes";
 import { plansRouter } from "./plans.routes";
 import { reportsRouter } from "./reports.routes";
 import { actionPlanRouter } from "./actionPlan.routes";
+import { settingsRouter } from "./settings.routes";
 import {
   billingRouter,
   catalogRouter,
@@ -32,4 +33,5 @@ apiRouter.use("/catalog", catalogRouter);
 apiRouter.use("/billing", billingRouter);
 apiRouter.use("/subscriptions", subscriptionsRouter);
 apiRouter.use("/usage", usageRouter);
+apiRouter.use("/settings", settingsRouter);
 apiRouter.use("/reports", reportsRouter);

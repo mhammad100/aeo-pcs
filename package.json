@@ -14,6 +14,7 @@
     "build:api": "npm run build -w @aeo-pcs/api",
     "build:web": "npm run build -w @aeo-pcs/web",
     "build:admin": "npm run build -w @aeo-pcs/admin",
-    "seed": "npm run seed -w @aeo-pcs/api"
+    "seed": "npm run seed -w @aeo-pcs/api",
+    "migrate": "npm run migrate -w @aeo-pcs/api"
   }
 }

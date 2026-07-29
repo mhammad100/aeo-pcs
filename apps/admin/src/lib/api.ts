@@ -114,6 +114,13 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+  getAeoSettings: () =>
+    request<{ settings: import("@aeo-pcs/shared").AeoSettings }>("/admin/settings"),
+  updateAeoSettings: (body: Partial<import("@aeo-pcs/shared").AeoSettings>) =>
+    request<{ settings: import("@aeo-pcs/shared").AeoSettings }>("/admin/settings", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
 };
 
 export type AdminPlan = {
