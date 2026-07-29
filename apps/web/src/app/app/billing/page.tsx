@@ -47,7 +47,7 @@ export default function BillingPage() {
             <Spin />
           </div>
         ) : invoices.length === 0 ? (
-          <Empty description="No billing records yet" />
+          <Empty description="No invoices yet" />
         ) : (
           <Table
             rowKey="id"

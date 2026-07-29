@@ -9,11 +9,7 @@ export default function PricingPage() {
     <PublicShell>
       <div className="ma-page" style={{ maxWidth: 1120 }}>
         <div className="ma-section-label">Pricing</div>
-        <h1 className="ma-section-title">Plans built for AI visibility</h1>
-        <p className="ma-section-copy">
-          Create an account, pick a plan, and start measuring how assistants talk about your business.
-          Plan details below come from the live catalog.
-        </p>
+        <h1 className="ma-section-title">Pricing</h1>
         <CatalogPricingGrid />
         <div className="ma-cta-row" style={{ marginTop: 40 }}>
           <Link href="/signup" className="ma-btn ma-btn-primary">

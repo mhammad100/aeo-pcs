@@ -124,8 +124,8 @@ export async function subscribeUserToPlan(userId: string, planId: string) {
   if (!business) throw new AppError("Business not found", 404);
 
   const existing = await getActiveSubscriptionForBusiness(String(business._id));
-  if (existing) {
-    throw new AppError("You already have an active subscription.", 400);
+  if (existing && String(existing.planId) === planId) {
+    throw new AppError("You are already on this plan.", 400);
   }
 
   const plan = await ProductPlanModel.findById(planId);
@@ -140,8 +140,9 @@ export async function subscribeUserToPlan(userId: string, planId: string) {
     businessId: String(business._id),
     planId: String(plan._id),
     status: "active",
-    note: "Self-serve subscription",
-    createInvoice: false,
+    note: existing ? "Plan change" : "Subscription",
+    createInvoice: true,
+    invoiceNote: plan.name,
   });
 }
 
@@ -151,6 +152,7 @@ export async function assignSubscription(input: {
   status?: SubscriptionInfo["status"];
   note?: string;
   createInvoice?: boolean;
+  invoiceNote?: string;
 }) {
   const business = await BusinessModel.findById(input.businessId);
   if (!business) throw new AppError("Business not found", 404);
@@ -185,7 +187,7 @@ export async function assignSubscription(input: {
       currency: plan.currency,
       status: "paid",
       periodLabel: `${start.toISOString().slice(0, 7)}`,
-      note: `Assigned ${plan.name}`,
+      note: input.invoiceNote || plan.name,
     });
     invoice = serializeInvoice(inv);
   }

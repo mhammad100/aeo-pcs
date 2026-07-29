@@ -9,7 +9,7 @@ import { resolvePostAuthPath } from "@/lib/authRouting";
 import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/authSlice";
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
 
 export default function SignupPage() {
   const dispatch = useAppDispatch();
@@ -46,9 +46,6 @@ export default function SignupPage() {
         <Title level={2} style={{ marginTop: 8 }}>
           Create your account
         </Title>
-        <Paragraph type="secondary">
-          Sign up, choose a plan, then complete your business profile to start visibility checks.
-        </Paragraph>
         {error && <Alert type="error" showIcon message={error} style={{ margin: "16px 0" }} />}
         <Form layout="vertical" onFinish={onFinish} requiredMark={false} style={{ marginTop: 16 }}>
           <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}>

@@ -92,8 +92,7 @@ export default function OnboardingProfilePage() {
           </Title>
           <OnboardingSteps current={1} />
           <Paragraph type="secondary">
-            Tell us your business basics before you run visibility checks. Website, Google Business,
-            and social links are optional but help AI assistants find you.
+            Tell us your business basics. Website, Google Business, and social links are optional.
           </Paragraph>
           <Card>
             {loading ? (

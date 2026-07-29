@@ -5,12 +5,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { Spin } from "antd";
 import { api } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
+import { useAppSelector } from "@/store/hooks";
 
 const PLAN_ONBOARDING_PATH = "/app/onboarding/plan";
 
 export default function SubscriptionGate({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
+  const user = useAppSelector((s) => s.auth.user);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -29,7 +31,9 @@ export default function SubscriptionGate({ children }: { children: React.ReactNo
           return;
         }
         if (subscribed && onPlanOnboarding) {
-          router.replace("/app/onboarding/profile");
+          router.replace(
+            user?.business?.profileCompletedAt ? "/app" : "/app/onboarding/profile"
+          );
           return;
         }
         setReady(true);
@@ -43,7 +47,7 @@ export default function SubscriptionGate({ children }: { children: React.ReactNo
     return () => {
       cancelled = true;
     };
-  }, [pathname, router]);
+  }, [pathname, router, user]);
 
   if (!ready) {
     return (

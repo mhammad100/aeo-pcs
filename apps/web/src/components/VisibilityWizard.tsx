@@ -375,15 +375,13 @@ export default function VisibilityWizard() {
             style={{ marginBottom: 20 }}
             message={
               runsLimit > 0 && runsUsed >= runsLimit
-                ? "Visibility run limit reached for this billing period."
-                : "An active subscription is required to run visibility checks."
+                ? "Monthly visibility run limit reached."
+                : "Select a plan to run visibility checks."
             }
             description={
-              runsLimit > 0 && runsUsed >= runsLimit ? (
-                <Link href="/app/subscription">View subscription usage</Link>
-              ) : (
-                <Link href="/app/onboarding/plan">Choose a plan</Link>
-              )
+              <Link href={runsLimit > 0 && runsUsed >= runsLimit ? "/app/subscription" : "/app/onboarding/plan"}>
+                {runsLimit > 0 && runsUsed >= runsLimit ? "View subscription" : "Choose a plan"}
+              </Link>
             }
           />
         )}

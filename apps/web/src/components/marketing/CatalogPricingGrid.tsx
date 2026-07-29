@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { api } from "@/lib/api";
 import type { ProductPlan } from "@aeo-pcs/shared";
 
@@ -31,12 +30,7 @@ export default function CatalogPricingGrid() {
   }
 
   if (plans.length === 0) {
-    return (
-      <p style={{ color: "var(--ma-muted)" }}>
-        Plans are configured by your administrator.{" "}
-        <Link href="/pricing">View the pricing page</Link> when they are published.
-      </p>
-    );
+    return <p style={{ color: "var(--ma-muted)" }}>No plans available yet.</p>;
   }
 
   return (

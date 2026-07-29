@@ -147,7 +147,10 @@ export const api = {
     request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/me"),
 
   subscribeToPlan: (planId: string) =>
-    request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/subscribe", {
+    request<{
+      subscription: import("@aeo-pcs/shared").SubscriptionInfo;
+      invoice: import("@aeo-pcs/shared").InvoiceRecord | null;
+    }>("/subscriptions/subscribe", {
       method: "POST",
       body: JSON.stringify({ planId }),
     }),

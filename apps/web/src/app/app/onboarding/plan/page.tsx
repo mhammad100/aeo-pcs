@@ -1,16 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, Col, Row, Spin, Typography, message } from "antd";
+import { Alert, Card, Spin, Typography, message } from "antd";
 import AuthGuard from "@/components/AuthGuard";
 import OnboardingSteps from "@/components/OnboardingSteps";
+import PlanCatalog from "@/components/PlanCatalog";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import type { ProductPlan } from "@aeo-pcs/shared";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text } = Typography;
 
 export default function OnboardingPlanPage() {
   const router = useRouter();
@@ -51,10 +51,10 @@ export default function OnboardingPlanPage() {
     setError(null);
     try {
       await api.subscribeToPlan(planId);
-      message.success("Plan selected");
+      message.success("Plan updated");
       router.replace("/app/onboarding/profile");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not subscribe to plan");
+      setError(err instanceof ApiError ? err.message : "Could not update plan");
     } finally {
       setSubscribingId(null);
     }
@@ -68,12 +68,9 @@ export default function OnboardingPlanPage() {
             Master AEO
           </Text>
           <Title level={2} style={{ color: "#EDEAE1", marginTop: 8 }}>
-            Choose your plan
+            Choose a plan
           </Title>
           <OnboardingSteps current={0} />
-          <Paragraph type="secondary">
-            Pick a plan to unlock visibility checks. You will complete your business profile next.
-          </Paragraph>
 
           {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 
@@ -82,55 +79,13 @@ export default function OnboardingPlanPage() {
               <Spin />
             </div>
           ) : plans.length === 0 ? (
-            <Card>
-              <Paragraph style={{ marginBottom: 8 }}>
-                No plans are available yet. An administrator needs to publish plans before you can
-                continue.
-              </Paragraph>
-              <Link href="/pricing">
-                <Button type="link" style={{ padding: 0 }}>
-                  View pricing page
-                </Button>
-              </Link>
-            </Card>
+            <Card>No plans are available right now. Check back soon.</Card>
           ) : (
-            <Row gutter={[16, 16]}>
-              {plans.map((plan) => (
-                <Col xs={24} md={12} lg={8} key={plan.id}>
-                  <Card
-                    title={plan.name}
-                    style={{ height: "100%" }}
-                    actions={[
-                      <Button
-                        key="select"
-                        type="primary"
-                        block
-                        loading={subscribingId === plan.id}
-                        disabled={Boolean(subscribingId && subscribingId !== plan.id)}
-                        onClick={() => onSelectPlan(plan.id)}
-                      >
-                        Select plan
-                      </Button>,
-                    ]}
-                  >
-                    <Paragraph strong style={{ fontSize: 20, marginBottom: 8 }}>
-                      {plan.priceLabel || `${plan.currency} ${plan.price}`}
-                    </Paragraph>
-                    {plan.blurb ? (
-                      <Paragraph type="secondary" style={{ minHeight: 48 }}>
-                        {plan.blurb}
-                      </Paragraph>
-                    ) : null}
-                    <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
-                      {plan.features.map((feature) => (
-                        <li key={feature}>{feature}</li>
-                      ))}
-                      <li>{plan.limits.visibilityRunsPerMonth} visibility runs / month</li>
-                    </ul>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
+            <PlanCatalog
+              plans={plans}
+              subscribingId={subscribingId}
+              onSelect={onSelectPlan}
+            />
           )}
         </div>
       </div>
