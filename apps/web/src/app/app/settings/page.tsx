@@ -1,17 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Card, Spin, Typography, message } from "antd";
+import { Spin, message } from "antd";
 import AppShell from "@/components/AppShell";
-import BusinessProfileForm, {
-  type BusinessProfileFormValues,
-} from "@/components/BusinessProfileForm";
+import BusinessProfileSettings from "@/components/BusinessProfileSettings";
+import { type BusinessProfileFormValues } from "@/components/BusinessProfileForm";
 import { api, ApiError } from "@/lib/api";
 import { useAppDispatch } from "@/store/hooks";
 import { setUser } from "@/store/authSlice";
 import type { BusinessProfile } from "@aeo-pcs/shared";
 
-const { Title, Paragraph } = Typography;
+function mergeProfileValues(
+  business: BusinessProfile | null,
+  partial: BusinessProfileFormValues,
+): BusinessProfileFormValues {
+  return {
+    name: partial.name ?? business?.name ?? "",
+    category: partial.category ?? business?.category ?? "",
+    city: partial.city ?? business?.city ?? "",
+    country: partial.country ?? business?.country ?? "India",
+    description: partial.description ?? business?.description ?? "",
+    websiteUrl: partial.websiteUrl ?? business?.websiteUrl ?? "",
+    googleBusinessUrl: partial.googleBusinessUrl ?? business?.googleBusinessUrl ?? "",
+    socialLinks: partial.socialLinks ?? business?.socialLinks ?? [],
+  };
+}
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch();
@@ -39,10 +52,11 @@ export default function SettingsPage() {
     };
   }, []);
 
-  async function onSubmit(values: BusinessProfileFormValues) {
+  async function onSave(partial: BusinessProfileFormValues) {
     setSaving(true);
     setError(null);
     try {
+      const values = mergeProfileValues(business, partial);
       const { business: saved } = await api.updateMyBusiness({
         ...values,
         socialLinks: (values.socialLinks || []).filter((s) => s.label && s.url),
@@ -53,6 +67,7 @@ export default function SettingsPage() {
       message.success("Profile updated");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not save profile");
+      throw err;
     } finally {
       setSaving(false);
     }
@@ -60,30 +75,19 @@ export default function SettingsPage() {
 
   return (
     <AppShell>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
-        Settings
-      </Title>
-      <Paragraph type="secondary">
-        Update your business identity. Visibility checks and action plans use this profile.
-      </Paragraph>
-      <Card style={{ maxWidth: 640 }}>
-        {loading ? (
-          <div style={{ display: "grid", placeItems: "center", padding: 40 }}>
-            <Spin />
-          </div>
-        ) : (
-          <>
-            {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
-            <BusinessProfileForm
-              key={business?.id || "settings"}
-              initial={business}
-              loading={saving}
-              submitLabel="Save changes"
-              onSubmit={onSubmit}
-            />
-          </>
-        )}
-      </Card>
+      {loading ? (
+        <div className="settings-loading">
+          <Spin size="large" />
+        </div>
+      ) : (
+        <BusinessProfileSettings
+          business={business}
+          saving={saving}
+          error={error}
+          onClearError={() => setError(null)}
+          onSave={onSave}
+        />
+      )}
     </AppShell>
   );
 }
