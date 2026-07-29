@@ -4,6 +4,7 @@ import { BusinessModel } from "../models/Business";
 import { InvoiceModel } from "../models/Invoice";
 import { ProductPlanModel } from "../models/ProductPlan";
 import { SubscriptionModel } from "../models/Subscription";
+import { UserModel } from "../models/User";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
 import { serializePlan } from "./productPlans.service";
@@ -83,12 +84,28 @@ async function getEntitledSubscriptionContext(userId: string) {
   return { business, plan };
 }
 
+export async function assertUserAccountActive(userId: string) {
+  const user = await UserModel.findById(userId).lean();
+  if (!user || user.status !== "active") {
+    throw new AppError("Invalid or disabled account", 403);
+  }
+}
+
+/** Active user account + entitled subscription (no run-limit check). */
+export async function assertAiFeaturesAllowed(userId: string) {
+  await assertUserAccountActive(userId);
+  await getEntitledSubscriptionContext(userId);
+}
+
 export async function assertActiveSubscription(userId: string) {
-  const { business } = await getEntitledSubscriptionContext(userId);
+  await assertAiFeaturesAllowed(userId);
+  const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
+  if (!business) throw new AppError("Business not found", 404);
   return business;
 }
 
 export async function assertVisibilityRunAllowed(userId: string) {
+  await assertUserAccountActive(userId);
   const { business, plan } = await getEntitledSubscriptionContext(userId);
   const runsLimit = plan.limits?.visibilityRunsPerMonth ?? 0;
   const runsUsed = await runsUsedThisMonth(String(business._id));

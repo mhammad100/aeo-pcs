@@ -8,7 +8,7 @@ import { buildActionPlan, generateItemContent } from "./plan";
 import { buildReportHtml, wrapReportDocument } from "./report";
 import { syncChecklistFromPlan } from "./checklist.service";
 import { getBusinessInsights, listVisibilityJobs } from "./insights.service";
-import { assertVisibilityRunAllowed } from "./subscriptions.service";
+import { assertVisibilityRunAllowed, assertAiFeaturesAllowed } from "./subscriptions.service";
 
 export { getBusinessInsights, listVisibilityJobs };
 
@@ -154,6 +154,10 @@ export async function buildPlanForJob(input: {
   userId: string;
   userRole?: UserRole;
 }) {
+  if (input.userRole !== "admin") {
+    await assertAiFeaturesAllowed(input.userId);
+  }
+
   const job = await VisibilityJobModel.findById(input.jobId);
   if (!job) {
     throw new AppError("Job not found", 404);
@@ -204,6 +208,10 @@ export async function generatePlanItem(input: {
   title: string;
   description: string;
 }) {
+  if (input.userRole !== "admin") {
+    await assertAiFeaturesAllowed(input.userId);
+  }
+
   const job = await VisibilityJobModel.findById(input.jobId);
   if (!job) {
     throw new AppError("Job not found", 404);

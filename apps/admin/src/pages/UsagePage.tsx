@@ -4,18 +4,13 @@ import {
   Button,
   Card,
   Col,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
   Row,
   Space,
   Table,
   Typography,
-  message,
 } from "antd";
 import { api, ApiError } from "@/lib/api";
-import type { CostRate, UsageProfitSummary } from "@aeo-pcs/shared";
+import type { UsageProfitSummary } from "@aeo-pcs/shared";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -23,8 +18,6 @@ export default function UsagePage() {
   const [summary, setSummary] = useState<UsageProfitSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [rateModal, setRateModal] = useState(false);
-  const [form] = Form.useForm();
 
   async function load() {
     setLoading(true);
@@ -42,23 +35,6 @@ export default function UsagePage() {
   useEffect(() => {
     load();
   }, []);
-
-  async function saveRate(values: {
-    model: string;
-    inputPer1MTokens: number;
-    outputPer1MTokens: number;
-    currency?: string;
-  }) {
-    try {
-      await api.upsertCostRate(values);
-      message.success("Cost rate saved");
-      setRateModal(false);
-      form.resetFields();
-      await load();
-    } catch (err) {
-      message.error(err instanceof ApiError ? err.message : "Save failed");
-    }
-  }
 
   const t = summary?.totals;
 
@@ -110,16 +86,6 @@ export default function UsagePage() {
 
       <Space style={{ marginBottom: 16 }}>
         <Button onClick={load}>Refresh</Button>
-        <Button
-          type="primary"
-          onClick={() => {
-            form.resetFields();
-            form.setFieldsValue({ currency: "USD", inputPer1MTokens: 3, outputPer1MTokens: 15 });
-            setRateModal(true);
-          }}
-        >
-          Upsert cost rate
-        </Button>
       </Space>
 
       <Title level={4} style={{ color: "#EDEAE1" }}>
@@ -179,49 +145,8 @@ export default function UsagePage() {
           { title: "Input / 1M", dataIndex: "inputPer1MTokens" },
           { title: "Output / 1M", dataIndex: "outputPer1MTokens" },
           { title: "Currency", dataIndex: "currency" },
-          {
-            title: "",
-            render: (_: unknown, r: CostRate) => (
-              <Button
-                type="link"
-                onClick={() => {
-                  form.setFieldsValue(r);
-                  setRateModal(true);
-                }}
-              >
-                Edit
-              </Button>
-            ),
-          },
         ]}
       />
-
-      <Modal
-        title="Cost rate"
-        open={rateModal}
-        onCancel={() => setRateModal(false)}
-        onOk={() => form.submit()}
-        destroyOnClose
-      >
-        <Form form={form} layout="vertical" onFinish={saveRate}>
-          <Form.Item name="model" label="Model" rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="inputPer1MTokens" label="Input $ / 1M tokens" rules={[{ required: true }]}>
-            <InputNumber min={0} step={0.1} style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item
-            name="outputPer1MTokens"
-            label="Output $ / 1M tokens"
-            rules={[{ required: true }]}
-          >
-            <InputNumber min={0} step={0.1} style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item name="currency" label="Currency">
-            <Input maxLength={3} />
-          </Form.Item>
-        </Form>
-      </Modal>
     </div>
   );
 }

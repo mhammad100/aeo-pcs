@@ -96,16 +96,6 @@ export const api = {
     request<{ summary: import("@aeo-pcs/shared").UsageProfitSummary }>(
       `/admin/usage/summary?days=${days}`
     ),
-  upsertCostRate: (body: {
-    model: string;
-    inputPer1MTokens: number;
-    outputPer1MTokens: number;
-    currency?: string;
-  }) =>
-    request<{ rate: import("@aeo-pcs/shared").CostRate }>("/admin/cost-rates", {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
   getAeoSettings: () =>
     request<{ settings: import("@aeo-pcs/shared").AeoSettings }>("/admin/settings"),
   updateAeoSettings: (body: Partial<import("@aeo-pcs/shared").AeoSettings>) =>

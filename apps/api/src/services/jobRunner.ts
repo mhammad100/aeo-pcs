@@ -1,5 +1,7 @@
 import { VisibilityJobModel } from "../models/VisibilityJob";
+import { AppError } from "../utils/AppError";
 import { getEnabledVisibilityModels } from "./aeoSettings.service";
+import { assertAiFeaturesAllowed } from "./subscriptions.service";
 import { runVisibilityCheck } from "./visibility";
 
 const running = new Set<string>();
@@ -50,6 +52,10 @@ async function processVisibilityJob(jobId: string) {
   if (job.status === "completed" || job.status === "failed") return;
 
   try {
+    if (job.userId) {
+      await assertAiFeaturesAllowed(String(job.userId));
+    }
+
     const models = await getEnabledVisibilityModels();
     const total = (job.prompts?.length || 0) * models.length;
 
@@ -111,7 +117,12 @@ async function processVisibilityJob(jobId: string) {
       console.error(`Visibility job ${jobId} completed but results were not persisted`);
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Visibility check failed";
+    const message =
+      err instanceof AppError
+        ? err.message
+        : err instanceof Error
+          ? err.message
+          : "Visibility check failed";
     console.error(`Visibility job ${jobId} failed:`, message);
     await VisibilityJobModel.findByIdAndUpdate(jobId, {
       $set: {

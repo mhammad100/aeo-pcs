@@ -1,10 +1,10 @@
 import type { Response } from "express";
 import type { AuthedRequest } from "../middleware/auth";
 import { generatePrompts } from "../services/prompts";
-import { assertActiveSubscription } from "../services/subscriptions.service";
+import { assertAiFeaturesAllowed } from "../services/subscriptions.service";
 
 export async function generate(req: AuthedRequest, res: Response) {
-  await assertActiveSubscription(req.userId!);
+  await assertAiFeaturesAllowed(req.userId!);
   const prompts = await generatePrompts({
     business: req.body.business,
     category: req.body.category,
