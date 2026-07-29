@@ -57,7 +57,10 @@ export const api = {
     category: string;
     city: string;
     country: string;
-    description?: string;
+    description: string;
+    nameAliases?: string[];
+    targetLocations?: string[];
+    targetItems?: string[];
     websiteUrl?: string;
     googleBusinessUrl?: string;
     socialLinks?: { label: string; url: string }[];

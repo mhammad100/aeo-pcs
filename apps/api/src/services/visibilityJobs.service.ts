@@ -86,6 +86,9 @@ export async function createVisibilityJob(input: {
     category: input.category || owned.category || "Other",
     address: [owned.city, owned.country].filter(Boolean).join(", "),
     description: owned.description || "",
+    nameAliases: (owned.nameAliases || []).map(String),
+    targetLocations: (owned.targetLocations?.length ? owned.targetLocations : [owned.city]).map(String),
+    targetItems: (owned.targetItems || []).map(String),
   };
 
   const job = await VisibilityJobModel.create({
@@ -100,6 +103,11 @@ export async function createVisibilityJob(input: {
     category: input.category || owned.category || "Other",
     city: owned.city,
     country: owned.country,
+    websiteUrl: owned.websiteUrl || "",
+    googleBusinessUrl: owned.googleBusinessUrl || "",
+    targetLocations: business.targetLocations,
+    targetItems: business.targetItems,
+    nameAliases: business.nameAliases,
     prompts: input.prompts,
     itemOutputs: {},
   });

@@ -11,6 +11,9 @@ export function toBusinessProfile(business: BusinessDoc | null): BusinessProfile
     city: business.city || "",
     country: business.country || "",
     description: business.description || "",
+    nameAliases: (business.nameAliases || []).map(String),
+    targetLocations: (business.targetLocations || []).map(String),
+    targetItems: (business.targetItems || []).map(String),
     websiteUrl: business.websiteUrl || "",
     googleBusinessUrl: business.googleBusinessUrl || undefined,
     socialLinks: (business.socialLinks || []).map((s) => ({

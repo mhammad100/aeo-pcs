@@ -3,28 +3,27 @@ import type {
   VisibilityModelConfig,
   VisibilityScore,
 } from "@aeo-pcs/shared";
-import { dedupeSources, extractMentioned, NO_MARKDOWN_RULE } from "../utils/llm";
+import { dedupeSources, NO_MARKDOWN_RULE } from "../utils/llm";
+import {
+  buildVisibilityUserPrompt,
+  computeScore,
+  isBrandMentioned,
+  isSourceMentioned,
+  type VisibilityBusinessContext,
+} from "../utils/visibilityAnalysis";
 import type { LlmUsageContext } from "./llmTypes";
+import { analyzeVisibilityAnswer } from "./visibilityAnswerAnalysis";
 import { callVisibilityModel } from "./visibilityModelRunner";
 
-export function computeScore(
-  results: PromptResult[],
-  modelCount: number
-): VisibilityScore {
-  const totalChecks = results.length * modelCount;
-  const totalMentions = results.reduce(
-    (sum, r) => sum + r.perModel.filter((m) => m.mentioned).length,
-    0
-  );
-  return {
-    totalChecks,
-    totalMentions,
-    visibilityPct: totalChecks ? Math.round((totalMentions / totalChecks) * 100) : 0,
-  };
-}
+export { computeScore };
 
 export async function runVisibilityCheck(input: {
-  businessName: string;
+  business: VisibilityBusinessContext;
+  category: string;
+  city: string;
+  country: string;
+  targetLocations?: string[];
+  targetItems?: string[];
   prompts: string[];
   models: VisibilityModelConfig[];
   usage?: Omit<LlmUsageContext, "feature">;
@@ -43,9 +42,25 @@ export async function runVisibilityCheck(input: {
   let completed = 0;
   const allResults: PromptResult[] = [];
 
-  const system = `You are an AI assistant answering a real user's question, grounded in actual current web search results. Search the web, then answer naturally, naming specific real businesses relevant to the query and location. Keep it to 4-6 sentences and name at least 2-3 businesses if the search results support it. ${NO_MARKDOWN_RULE}`;
+  const system = `You are an AI assistant answering a real user's question, grounded in actual current web search results. Search the web, then answer naturally, naming specific real businesses relevant to the query and the location context provided. Keep it to 4-6 sentences and name at least 2-3 businesses if the search results support it. ${NO_MARKDOWN_RULE}`;
+
+  const bizCtx: VisibilityBusinessContext = {
+    name: input.business.name,
+    nameAliases: input.business.nameAliases,
+    websiteUrl: input.business.websiteUrl,
+    googleBusinessUrl: input.business.googleBusinessUrl,
+  };
 
   for (const prompt of input.prompts) {
+    const userPrompt = buildVisibilityUserPrompt({
+      prompt,
+      category: input.category,
+      city: input.city,
+      country: input.country,
+      targetLocations: input.targetLocations,
+      targetItems: input.targetItems,
+    });
+
     const perModel = [];
     for (const model of input.models) {
       if (input.onProgress) {
@@ -57,29 +72,62 @@ export async function runVisibilityCheck(input: {
         });
       }
 
+      const usageCtx: LlmUsageContext | undefined = input.usage
+        ? {
+            ...input.usage,
+            feature: "visibility",
+            refs: {
+              ...(input.usage.refs || {}),
+              visibilityModelId: model.id,
+              visibilityModelLabel: model.label,
+            },
+          }
+        : undefined;
+
       const { text, sources } = await callVisibilityModel({
         model,
-        prompt,
+        prompt: userPrompt,
         system,
-        usage: input.usage
-          ? {
-              ...input.usage,
-              feature: "visibility",
-              refs: {
-                ...(input.usage.refs || {}),
-                visibilityModelId: model.id,
-                visibilityModelLabel: model.label,
-              },
-            }
-          : undefined,
+        usage: usageCtx,
       });
 
-      const mentioned = extractMentioned(text, input.businessName);
+      const dedupedSources = dedupeSources(sources);
+      const mentioned = isBrandMentioned(text, bizCtx);
+      const sourceMentioned = isSourceMentioned(dedupedSources, bizCtx);
+
+      let position: number | null = null;
+      let sentiment = null as PromptResult["perModel"][0]["sentiment"];
+      let brandsMentioned: string[] = [];
+
+      if (text.trim()) {
+        const analysis = await analyzeVisibilityAnswer({
+          answer: text,
+          business: bizCtx,
+          usage: input.usage
+            ? {
+                userId: input.usage.userId,
+                businessId: input.usage.businessId,
+                refs: {
+                  ...(input.usage.refs || {}),
+                  visibilityModelId: model.id,
+                },
+              }
+            : undefined,
+        });
+        position = analysis.position;
+        sentiment = analysis.sentiment;
+        brandsMentioned = analysis.brandsMentioned;
+      }
+
       perModel.push({
         model: model.label,
         answer: text,
         mentioned,
-        sources: dedupeSources(sources),
+        sourceMentioned,
+        position,
+        sentiment,
+        brandsMentioned,
+        sources: dedupedSources,
       });
       completed += 1;
     }

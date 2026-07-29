@@ -20,6 +20,9 @@ function mergeProfileValues(
     city: partial.city ?? business?.city ?? "",
     country: partial.country ?? business?.country ?? "India",
     description: partial.description ?? business?.description ?? "",
+    nameAliases: partial.nameAliases ?? business?.nameAliases ?? [],
+    targetLocations: partial.targetLocations ?? business?.targetLocations ?? [],
+    targetItems: partial.targetItems ?? business?.targetItems ?? [],
     websiteUrl: partial.websiteUrl ?? business?.websiteUrl ?? "",
     googleBusinessUrl: partial.googleBusinessUrl ?? business?.googleBusinessUrl ?? "",
     socialLinks: partial.socialLinks ?? business?.socialLinks ?? [],
@@ -59,6 +62,9 @@ export default function SettingsPage() {
       const values = mergeProfileValues(business, partial);
       const { business: saved } = await api.updateMyBusiness({
         ...values,
+        nameAliases: (values.nameAliases || []).map((s) => s.trim()).filter(Boolean),
+        targetLocations: (values.targetLocations || []).map((s) => s.trim()).filter(Boolean),
+        targetItems: (values.targetItems || []).map((s) => String(s).trim()).filter(Boolean),
         socialLinks: (values.socialLinks || []).filter((s) => s.label && s.url),
       });
       setBusiness(saved);

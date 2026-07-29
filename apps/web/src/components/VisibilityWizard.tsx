@@ -116,6 +116,9 @@ export default function VisibilityWizard() {
             city: profile.city,
             country: profile.country,
             description: profile.description,
+            nameAliases: profile.nameAliases,
+            targetLocations: profile.targetLocations,
+            targetItems: profile.targetItems,
             websiteUrl: profile.websiteUrl,
           })
         );
@@ -509,6 +512,18 @@ export default function VisibilityWizard() {
                     <span>{business.selected.description}</span>
                   </div>
                 )}
+                {(business.selected.targetItems?.length ?? 0) > 0 && (
+                  <div className="vis-detail-item vis-detail-full">
+                    <label>Target services</label>
+                    <span>{business.selected.targetItems?.join(" · ")}</span>
+                  </div>
+                )}
+                {(business.selected.targetLocations?.length ?? 0) > 0 && (
+                  <div className="vis-detail-item vis-detail-full">
+                    <label>Service areas</label>
+                    <span>{business.selected.targetLocations?.join(" · ")}</span>
+                  </div>
+                )}
               </div>
             </StepShell>
           )}
@@ -648,16 +663,29 @@ export default function VisibilityWizard() {
                   <div className="vis-score-block">
                     <div
                       className={`vis-score-value ${
-                        visibility.score.visibilityPct >= 50 ? "is-good" : "is-low"
+                        (visibility.score.brandVisibilityPct ??
+                          visibility.score.visibilityPct) >= 50
+                          ? "is-good"
+                          : "is-low"
                       }`}
                     >
-                      {visibility.score.visibilityPct}%
+                      {visibility.score.brandVisibilityPct ?? visibility.score.visibilityPct}%
                     </div>
                     <div>
-                      <Text style={{ color: "#EDEAE1" }}>Visibility score</Text>
-                      <Paragraph type="secondary" style={{ marginBottom: 0, maxWidth: 360 }}>
+                      <Text style={{ color: "#EDEAE1" }}>Brand visibility</Text>
+                      <Paragraph type="secondary" style={{ marginBottom: 0, maxWidth: 420 }}>
                         {business.selected?.name} mentioned in {visibility.score.totalMentions} of{" "}
                         {visibility.score.totalChecks} responses.
+                        {typeof visibility.score.sourceVisibilityPct === "number" && (
+                          <>
+                            {" "}
+                            Source cited in {visibility.score.totalSourceMentions} (
+                            {visibility.score.sourceVisibilityPct}%).
+                          </>
+                        )}
+                        {visibility.score.avgPosition != null && (
+                          <> Avg position when mentioned: #{visibility.score.avgPosition}.</>
+                        )}
                       </Paragraph>
                     </div>
                   </div>
@@ -684,6 +712,15 @@ export default function VisibilityWizard() {
                               <span className={`vis-tag ${m.mentioned ? "ok" : "no"}`}>
                                 {m.mentioned ? "Mentioned" : "Not mentioned"}
                               </span>
+                              {m.sourceMentioned && (
+                                <span className="vis-tag ok">Source cited</span>
+                              )}
+                              {m.mentioned && m.position != null && (
+                                <span className="vis-tag">#{m.position}</span>
+                              )}
+                              {m.sentiment && (
+                                <span className="vis-tag">{m.sentiment}</span>
+                              )}
                             </div>
                             <Paragraph
                               style={{ marginBottom: 4, color: "rgba(237, 234, 225, 0.85)" }}

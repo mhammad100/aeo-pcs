@@ -5,7 +5,12 @@ export type BusinessCandidate = {
   category: string;
   address: string;
   description: string;
+  nameAliases?: string[];
+  targetLocations?: string[];
+  targetItems?: string[];
 };
+
+export type MentionSentiment = "positive" | "neutral" | "negative";
 
 export type Source = {
   domain: string;
@@ -56,7 +61,14 @@ export type AeoRuntimeSettings = {
 export type ModelResult = {
   model: string;
   answer: string;
+  /** Brand name explicitly appears in answer text. */
   mentioned: boolean;
+  /** Business website or GBP domain appears in citations. */
+  sourceMentioned?: boolean;
+  /** 1-based rank among brands named in the answer (lower is better). */
+  position?: number | null;
+  sentiment?: MentionSentiment | null;
+  brandsMentioned?: string[];
   sources: Source[];
 };
 
@@ -66,9 +78,15 @@ export type PromptResult = {
 };
 
 export type VisibilityScore = {
+  /** Same as brandVisibilityPct — kept for backward compatibility. */
   visibilityPct: number;
+  brandVisibilityPct: number;
+  sourceVisibilityPct: number;
   totalMentions: number;
+  totalSourceMentions: number;
   totalChecks: number;
+  avgPosition: number | null;
+  sentimentScore: number | null;
 };
 
 export type AutomatableItem = {

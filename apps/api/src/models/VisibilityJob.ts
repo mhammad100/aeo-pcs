@@ -14,6 +14,10 @@ const ModelResultSchema = new Schema(
     model: String,
     answer: String,
     mentioned: Boolean,
+    sourceMentioned: Boolean,
+    position: Number,
+    sentiment: { type: String, enum: ["positive", "neutral", "negative", null], default: null },
+    brandsMentioned: [String],
     sources: [SourceSchema],
   },
   { _id: false }
@@ -33,6 +37,9 @@ const BusinessSchema = new Schema(
     category: String,
     address: String,
     description: String,
+    nameAliases: [String],
+    targetLocations: [String],
+    targetItems: [String],
   },
   { _id: false }
 );
@@ -77,9 +84,19 @@ const VisibilityJobSchema = new Schema(
     results: [PromptResultSchema],
     score: {
       visibilityPct: Number,
+      brandVisibilityPct: Number,
+      sourceVisibilityPct: Number,
       totalMentions: Number,
+      totalSourceMentions: Number,
       totalChecks: Number,
+      avgPosition: Number,
+      sentimentScore: Number,
     },
+    websiteUrl: String,
+    googleBusinessUrl: String,
+    targetLocations: [String],
+    targetItems: [String],
+    nameAliases: [String],
     plan: {
       type: new Schema(
         {

@@ -14,6 +14,12 @@ export type BusinessProfile = {
   city: string;
   country: string;
   description: string;
+  /** Alternate names for visibility mention matching (e.g. abbreviations). */
+  nameAliases: string[];
+  /** Service areas / neighborhoods beyond primary city. */
+  targetLocations: string[];
+  /** Products or services to target in buyer-intent prompts. */
+  targetItems: string[];
   websiteUrl: string;
   googleBusinessUrl?: string;
   socialLinks: SocialLink[];

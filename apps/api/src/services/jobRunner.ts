@@ -76,7 +76,23 @@ async function processVisibilityJob(jobId: string) {
     });
 
     const { results, score } = await runVisibilityCheck({
-      businessName: job.business?.name || "",
+      business: {
+        name: job.business?.name || "",
+        nameAliases: (job.nameAliases?.length ? job.nameAliases : job.business?.nameAliases) as
+          | string[]
+          | undefined,
+        websiteUrl: job.websiteUrl || undefined,
+        googleBusinessUrl: job.googleBusinessUrl || undefined,
+      },
+      category: job.category || "",
+      city: job.city || "",
+      country: job.country || "",
+      targetLocations: (job.targetLocations?.length
+        ? job.targetLocations
+        : job.business?.targetLocations) as string[] | undefined,
+      targetItems: (job.targetItems?.length ? job.targetItems : job.business?.targetItems) as
+        | string[]
+        | undefined,
       prompts: job.prompts || [],
       models,
       usage: {

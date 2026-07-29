@@ -2,6 +2,7 @@ import type { BusinessInsights, VisibilityJobSummary, VisibilityScore } from "@a
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
+import { normalizeVisibilityScore } from "../utils/visibilityAnalysis";
 import { checklistProgress } from "./checklist.service";
 
 function monthBounds(d: Date) {
@@ -12,26 +13,14 @@ function monthBounds(d: Date) {
 
 function latestCompletedScore(jobs: Array<{ score?: unknown }>): VisibilityScore | null {
   for (const job of jobs) {
-    const score = job.score as Partial<VisibilityScore> | null | undefined;
-    if (score && typeof score.visibilityPct === "number") {
-      return {
-        visibilityPct: score.visibilityPct,
-        totalMentions: score.totalMentions ?? 0,
-        totalChecks: score.totalChecks ?? 0,
-      };
-    }
+    const score = normalizeVisibilityScore(job.score as Partial<VisibilityScore>);
+    if (score) return score;
   }
   return null;
 }
 
 function asScore(score: unknown): VisibilityScore | undefined {
-  const s = score as Partial<VisibilityScore> | null | undefined;
-  if (!s || typeof s.visibilityPct !== "number") return undefined;
-  return {
-    visibilityPct: s.visibilityPct,
-    totalMentions: s.totalMentions ?? 0,
-    totalChecks: s.totalChecks ?? 0,
-  };
+  return normalizeVisibilityScore(score as Partial<VisibilityScore>) ?? undefined;
 }
 
 export async function listVisibilityJobs(input: {

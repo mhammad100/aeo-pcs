@@ -37,8 +37,15 @@ export function buildReportHtml(state: {
   if (results && score) {
     html += `<div class="rpt-section">`;
     html += `<div class="rpt-h2">Visibility score</div>`;
-    html += `<div class="rpt-score">${score.visibilityPct}%</div>`;
-    html += `<div class="rpt-text">Mentioned in ${score.totalMentions} of ${score.totalChecks} model responses across ${results.length} prompts.</div>`;
+    html += `<div class="rpt-score">${score.brandVisibilityPct ?? score.visibilityPct}%</div>`;
+    html += `<div class="rpt-text">Brand mentioned in ${score.totalMentions} of ${score.totalChecks} model responses across ${results.length} prompts.`;
+    if (typeof score.sourceVisibilityPct === "number") {
+      html += ` Source cited in ${score.totalSourceMentions ?? 0} (${score.sourceVisibilityPct}%).`;
+    }
+    if (score.avgPosition != null) {
+      html += ` Average position when mentioned: #${score.avgPosition}.`;
+    }
+    html += `</div>`;
     html += `</div>`;
 
     html += `<div class="rpt-section">`;
@@ -46,7 +53,7 @@ export function buildReportHtml(state: {
     results.forEach((r) => {
       html += `<div class="rpt-prompt">${esc(r.prompt)}</div>`;
       r.perModel.forEach((m) => {
-        html += `<div class="rpt-model">${esc(m.model)}, ${m.mentioned ? "mentioned" : "not mentioned"}</div>`;
+        html += `<div class="rpt-model">${esc(m.model)}, ${m.mentioned ? "mentioned" : "not mentioned"}${m.sourceMentioned ? ", source cited" : ""}${m.position != null ? `, #${m.position}` : ""}${m.sentiment ? `, ${m.sentiment}` : ""}</div>`;
         html += `<div class="rpt-text">${esc(m.answer)}</div>`;
         if (m.sources.length) {
           html += `<div class="rpt-sources">Sources cited: ${esc(m.sources.map((s) => s.domain).join(", "))}</div>`;

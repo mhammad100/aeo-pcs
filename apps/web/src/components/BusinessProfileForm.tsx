@@ -9,7 +9,10 @@ export type BusinessProfileFormValues = {
   category: string;
   city: string;
   country: string;
-  description?: string;
+  description: string;
+  nameAliases?: string[];
+  targetLocations?: string[];
+  targetItems?: string[];
   websiteUrl?: string;
   googleBusinessUrl?: string;
   socialLinks?: { label: string; url: string }[];
@@ -78,31 +81,108 @@ export default function BusinessProfileForm({
           />
         </Form.Item>
       </div>
-      <Form.Item name="description" label="Short description">
-        <Input.TextArea rows={3} maxLength={2000} showCount placeholder="What you do, who you serve…" />
+      <Form.Item
+        name="description"
+        label="Short description"
+        rules={[
+          { required: true, message: "Required" },
+          { min: 10, message: "At least 10 characters" },
+        ]}
+      >
+        <Input.TextArea
+          rows={3}
+          maxLength={2000}
+          showCount
+          placeholder="What you do, who you serve, and what makes you distinct…"
+        />
       </Form.Item>
+      <Form.Item
+        name="nameAliases"
+        label="Also known as (optional)"
+        tooltip="Alternate names, abbreviations, or spellings we should count as a mention"
+      >
+        <Select
+          mode="tags"
+          tokenSeparators={[","]}
+          placeholder="e.g. PCS, Pal Consultancy"
+          open={false}
+        />
+      </Form.Item>
+      <Form.List
+        name="targetItems"
+        rules={[
+          {
+            validator: async (_, items) => {
+              if (!items || items.length < 1) {
+                throw new Error("Add at least one service or product");
+              }
+            },
+          },
+        ]}
+      >
+        {(fields, { add, remove }, { errors }) => (
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 8, fontWeight: 600 }}>
+              Target services / products <span style={{ color: "#c9773d" }}>*</span>
+            </div>
+            <p className="app-form-hint" style={{ marginBottom: 8 }}>
+              What buyers search for — used to generate local AI visibility prompts.
+            </p>
+            {fields.map((field) => (
+              <Space key={field.key} align="baseline" style={{ display: "flex", marginBottom: 8 }}>
+                <Form.Item
+                  {...field}
+                  rules={[{ required: true, message: "Required" }]}
+                  style={{ flex: 1, marginBottom: 0 }}
+                >
+                  <Input placeholder="e.g. dental implants, wedding catering" />
+                </Form.Item>
+                <MinusCircleOutlined onClick={() => remove(field.name)} />
+              </Space>
+            ))}
+            <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} block>
+              Add service or product
+            </Button>
+            <Form.ErrorList errors={errors} />
+          </div>
+        )}
+      </Form.List>
     </>
   );
 
   const locationFields = (
-    <div className="app-form-row">
+    <>
+      <div className="app-form-row">
+        <Form.Item
+          name="city"
+          label="City"
+          rules={[{ required: true, message: "Required" }]}
+          className="app-form-row-item"
+        >
+          <Input placeholder="City" />
+        </Form.Item>
+        <Form.Item
+          name="country"
+          label="Country"
+          rules={[{ required: true, message: "Required" }]}
+          className="app-form-row-item"
+        >
+          <Input placeholder="Country" />
+        </Form.Item>
+      </div>
       <Form.Item
-        name="city"
-        label="City"
-        rules={[{ required: true, message: "Required" }]}
-        className="app-form-row-item"
+        name="targetLocations"
+        label="Target locations (optional)"
+        tooltip="Neighborhoods or areas you serve beyond your primary city"
       >
-        <Input placeholder="City" />
+        <Select
+          mode="tags"
+          tokenSeparators={[","]}
+          placeholder="e.g. Satellite, SG Highway, Gandhinagar"
+          open={false}
+        />
       </Form.Item>
-      <Form.Item
-        name="country"
-        label="Country"
-        rules={[{ required: true, message: "Required" }]}
-        className="app-form-row-item"
-      >
-        <Input placeholder="Country" />
-      </Form.Item>
-    </div>
+    </>
   );
 
   const onlineFields = (
@@ -178,6 +258,9 @@ export default function BusinessProfileForm({
         city: initial?.city || "",
         country: initial?.country || "India",
         description: initial?.description || "",
+        nameAliases: initial?.nameAliases?.length ? initial.nameAliases : [],
+        targetLocations: initial?.targetLocations?.length ? initial.targetLocations : [],
+        targetItems: initial?.targetItems?.length ? initial.targetItems : [""],
         websiteUrl: initial?.websiteUrl || "",
         googleBusinessUrl: initial?.googleBusinessUrl || "",
         socialLinks: initial?.socialLinks?.length ? initial.socialLinks : [],

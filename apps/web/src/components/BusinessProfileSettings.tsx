@@ -56,7 +56,12 @@ function sectionFilled(id: SectionId, profile: BusinessProfile | null): boolean 
   if (!profile) return false;
   switch (id) {
     case "identity":
-      return Boolean(profile.name && profile.category);
+      return Boolean(
+        profile.name &&
+          profile.category &&
+          (profile.description?.trim().length ?? 0) >= 10 &&
+          (profile.targetItems?.length ?? 0) > 0
+      );
     case "location":
       return Boolean(profile.city && profile.country);
     case "online":
@@ -79,7 +84,10 @@ function sectionSummary(id: SectionId, profile: BusinessProfile | null): string 
       return profile.category || "Add category and description";
     case "location": {
       const loc = [profile.city, profile.country].filter(Boolean).join(", ");
-      return loc || "Add city and country";
+      const areas = profile.targetLocations?.length
+        ? ` · ${profile.targetLocations.slice(0, 2).join(", ")}`
+        : "";
+      return loc ? `${loc}${areas}` : "Add city and country";
     }
     case "online": {
       const parts = [profile.websiteUrl, profile.googleBusinessUrl].filter(Boolean);

@@ -28,7 +28,13 @@ export const businessProfileValidators = [
     .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
   body("city").isString().trim().isLength({ min: 1, max: 100 }),
   body("country").isString().trim().isLength({ min: 1, max: 100 }),
-  body("description").optional().isString().trim().isLength({ max: 2000 }),
+  body("description").isString().trim().isLength({ min: 10, max: 2000 }),
+  body("nameAliases").optional().isArray({ max: 10 }),
+  body("nameAliases.*").optional().isString().trim().isLength({ min: 1, max: 120 }),
+  body("targetLocations").optional().isArray({ max: 15 }),
+  body("targetLocations.*").optional().isString().trim().isLength({ min: 1, max: 100 }),
+  body("targetItems").isArray({ min: 1, max: 20 }),
+  body("targetItems.*").isString().trim().isLength({ min: 1, max: 120 }),
   body("websiteUrl")
     .optional({ values: "falsy" })
     .isString()

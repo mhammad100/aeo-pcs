@@ -8,6 +8,8 @@ export async function generatePrompts(input: {
   category: string;
   city: string;
   country: string;
+  targetLocations?: string[];
+  targetItems?: string[];
   usage?: { userId?: string | null; businessId?: string | null };
 }): Promise<string[]> {
   const settings = await getAeoSettings();
@@ -18,8 +20,28 @@ export async function generatePrompts(input: {
     throw new Error("Prompt generation is disabled in admin settings");
   }
 
-  const system = `You generate realistic buyer-intent questions that potential customers would type into an AI assistant when looking for a business like this, not naming the business itself. Return ONLY a JSON array of exactly ${count} short question strings, no markdown, no prose.`;
-  const userMsg = `Business: ${input.business.name}\nCategory: ${input.category}\nCity: ${input.city}\nCountry: ${input.country}\nDescription: ${input.business.description || ""}`;
+  const locations = [...new Set([input.city, ...(input.targetLocations || [])].filter(Boolean))];
+  const items = (input.targetItems || []).filter(Boolean);
+  const locationHint = locations.join(", ");
+
+  const system = `You generate realistic buyer-intent questions that potential customers would type into an AI assistant when looking for a business like this — never naming the business itself.
+
+Rules:
+- Return ONLY a JSON array of exactly ${count} short question strings
+- Every question MUST mention a location (${locationHint}, ${input.country})
+- At least ${Math.min(count, Math.max(1, items.length))} questions MUST relate to these services/products: ${items.join(", ") || input.category}
+- Mix intents: discovery ("best X in…"), comparison ("who should I hire for…"), and recommendation ("where can I get…")
+- No markdown, no prose outside the JSON array`;
+
+  const userMsg = [
+    `Business: ${input.business.name}`,
+    `Category: ${input.category}`,
+    `Primary city: ${input.city}`,
+    `Country: ${input.country}`,
+    `Service areas: ${locationHint}`,
+    `Target services/products: ${items.join(", ") || "general " + input.category}`,
+    `Description: ${input.business.description || ""}`,
+  ].join("\n");
 
   const { text } = await callTaskModel({
     model,

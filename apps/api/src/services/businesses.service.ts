@@ -16,10 +16,17 @@ export function profileIsComplete(b: {
   category?: string | null;
   city?: string | null;
   country?: string | null;
-  websiteUrl?: string | null;
+  description?: string | null;
+  targetItems?: string[] | null;
 }): boolean {
+  const hasTargetItem = (b.targetItems || []).some((t) => String(t).trim().length > 0);
   return Boolean(
-    b.name?.trim() && b.category?.trim() && b.city?.trim() && b.country?.trim()
+    b.name?.trim() &&
+      b.category?.trim() &&
+      b.city?.trim() &&
+      b.country?.trim() &&
+      (b.description?.trim().length ?? 0) >= 10 &&
+      hasTargetItem
   );
 }
 
@@ -38,11 +45,22 @@ export type UpdateBusinessProfileInput = {
   category: string;
   city: string;
   country: string;
-  description?: string;
+  description: string;
+  nameAliases?: string[];
+  targetLocations?: string[];
+  targetItems?: string[];
   websiteUrl?: string;
   googleBusinessUrl?: string;
   socialLinks?: { label?: string; url?: string }[];
 };
+
+function normalizeStringList(values: string[] | undefined, max = 20): string[] {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((v) => String(v).trim())
+    .filter(Boolean)
+    .slice(0, max);
+}
 
 export async function updateMyBusiness(userId: string, input: UpdateBusinessProfileInput) {
   let business = await BusinessModel.findOne({ ownerUserId: userId });
@@ -63,7 +81,11 @@ export async function updateMyBusiness(userId: string, input: UpdateBusinessProf
   business.category = input.category;
   business.city = input.city;
   business.country = input.country;
-  business.description = input.description || "";
+  business.description = input.description.trim();
+  business.nameAliases = normalizeStringList(input.nameAliases, 10);
+  const targetLocations = normalizeStringList(input.targetLocations, 15);
+  business.targetLocations = targetLocations.length ? targetLocations : [input.city.trim()];
+  business.targetItems = normalizeStringList(input.targetItems, 20);
   business.websiteUrl = input.websiteUrl?.trim() || "";
   business.googleBusinessUrl = input.googleBusinessUrl || "";
   business.set("socialLinks", socialLinks);
