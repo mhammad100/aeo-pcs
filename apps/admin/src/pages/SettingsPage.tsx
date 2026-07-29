@@ -24,7 +24,6 @@ import {
   EditOutlined,
   PlusOutlined,
   ReloadOutlined,
-  SaveOutlined,
 } from "@ant-design/icons";
 import { api, ApiError } from "@/lib/api";
 import type {
@@ -111,7 +110,7 @@ function ModelEditModal({
   const vis = showIdFields ? (draft as VisibilityModelConfig) : null;
 
   return (
-    <Modal title={title} open={open} onCancel={onCancel} onOk={onSave} okText="Apply" width={480}>
+    <Modal title={title} open={open} onCancel={onCancel} onOk={onSave} okText="Save" width={480}>
       <Space direction="vertical" size={10} style={{ width: "100%" }}>
         {showIdFields && vis ? (
           <Row gutter={8}>
@@ -267,72 +266,72 @@ export default function SettingsPage() {
     load();
   }, []);
 
-  async function onSave() {
-    if (!settings) return;
+  async function persistSettings(next: AeoSettings, successMessage = "Settings saved") {
     setSaving(true);
+    setError(null);
     try {
-      const res = await api.updateAeoSettings(settings);
+      const res = await api.updateAeoSettings(next);
       setSettings(res.settings);
-      message.success("Settings saved");
+      message.success(successMessage);
+      return res.settings;
     } catch (err) {
-      message.error(err instanceof ApiError ? err.message : "Save failed");
+      const msg = err instanceof ApiError ? err.message : "Save failed";
+      setError(msg);
+      message.error(msg);
+      throw err;
     } finally {
       setSaving(false);
     }
   }
 
-  function toggleVisibility(index: number, enabled: boolean) {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const list = [...prev.visibilityModels];
-      list[index] = { ...list[index], enabled };
-      return { ...prev, visibilityModels: list };
-    });
+  async function toggleVisibility(index: number, enabled: boolean) {
+    if (!settings) return;
+    const list = [...settings.visibilityModels];
+    list[index] = { ...list[index], enabled };
+    await persistSettings({ ...settings, visibilityModels: list });
   }
 
-  function removeVisibility(index: number) {
-    setSettings((prev) => {
-      if (!prev || prev.visibilityModels.length <= 1) {
-        message.warning("At least one visibility model is required");
-        return prev;
-      }
-      const list = [...prev.visibilityModels];
-      list.splice(index, 1);
-      return { ...prev, visibilityModels: list };
-    });
+  async function removeVisibility(index: number) {
+    if (!settings) return;
+    if (settings.visibilityModels.length <= 1) {
+      message.warning("At least one visibility model is required");
+      return;
+    }
+    const list = [...settings.visibilityModels];
+    list.splice(index, 1);
+    await persistSettings({ ...settings, visibilityModels: list });
   }
 
-  function saveVisibilityModal() {
+  async function saveVisibilityModal() {
+    if (!settings || !visModal.open) return;
     if (!visDraft.id.trim() || !visDraft.label.trim() || !visDraft.modelId.trim()) {
       message.warning("ID, label, and model ID are required");
       return;
     }
-    setSettings((prev) => {
-      if (!prev) return prev;
-      const list = [...prev.visibilityModels];
-      if (visModal.open && visModal.mode === "add") {
-        if (list.some((m) => m.id === visDraft.id)) {
-          message.warning("Internal ID must be unique");
-          return prev;
-        }
-        list.push(visDraft);
-      } else if (visModal.open && visModal.mode === "edit") {
-        const dup = list.findIndex((m, i) => m.id === visDraft.id && i !== visModal.index);
-        if (dup >= 0) {
-          message.warning("Internal ID must be unique");
-          return prev;
-        }
-        list[visModal.index] = visDraft;
+    const list = [...settings.visibilityModels];
+    if (visModal.mode === "add") {
+      if (list.some((m) => m.id === visDraft.id)) {
+        message.warning("Internal ID must be unique");
+        return;
       }
-      return { ...prev, visibilityModels: list };
-    });
+      list.push(visDraft);
+    } else {
+      const dup = list.findIndex((m, i) => m.id === visDraft.id && i !== visModal.index);
+      if (dup >= 0) {
+        message.warning("Internal ID must be unique");
+        return;
+      }
+      list[visModal.index] = visDraft;
+    }
+    await persistSettings({ ...settings, visibilityModels: list });
     setVisModal({ open: false });
   }
 
-  function toggleTask(field: TaskModelField, enabled: boolean) {
-    setSettings((prev) => {
-      if (!prev) return prev;
-      return { ...prev, [field]: { ...prev[field], enabled } };
+  async function toggleTask(field: TaskModelField, enabled: boolean) {
+    if (!settings) return;
+    await persistSettings({
+      ...settings,
+      [field]: { ...settings[field], enabled },
     });
   }
 
@@ -342,18 +341,22 @@ export default function SettingsPage() {
     setTaskModal({ open: true, field });
   }
 
-  function saveTaskModal() {
+  async function saveTaskModal() {
+    if (!settings || !taskModal.open) return;
     if (!taskDraft.modelId.trim()) {
       message.warning("Model ID is required");
       return;
     }
-    if (taskModal.open) {
-      setSettings((prev) => {
-        if (!prev) return prev;
-        return { ...prev, [taskModal.field]: taskDraft };
-      });
-    }
+    await persistSettings({
+      ...settings,
+      [taskModal.field]: taskDraft,
+    });
     setTaskModal({ open: false });
+  }
+
+  async function updatePromptsPerRun(value: number | null) {
+    if (!settings) return;
+    await persistSettings({ ...settings, promptsPerRun: Number(value) || 1 });
   }
 
   type VisRow = VisibilityModelConfig & { key: number; index: number };
@@ -521,9 +524,6 @@ export default function SettingsPage() {
           <Button icon={<ReloadOutlined />} onClick={load} disabled={loading || saving}>
             Reload
           </Button>
-          <Button type="primary" icon={<SaveOutlined />} loading={saving} onClick={onSave} disabled={loading || !settings}>
-            Save changes
-          </Button>
         </Space>
       </div>
 
@@ -649,14 +649,11 @@ export default function SettingsPage() {
                           size="small"
                           style={{ width: 80 }}
                           value={promptsPerRun}
-                          onChange={(v) =>
-                            setSettings((prev) =>
-                              prev ? { ...prev, promptsPerRun: Number(v) || 1 } : prev
-                            )
-                          }
+                          disabled={saving}
+                          onChange={(v) => void updatePromptsPerRun(v)}
                         />
                         <Text type="secondary" style={{ fontSize: 12 }}>
-                          OpenAI generates buyer-intent questions before each check
+                          LLM generates buyer-intent questions before each check
                         </Text>
                       </div>
                       <Table<TaskRow>
@@ -736,17 +733,12 @@ export default function SettingsPage() {
           }}
         >
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {enabledVisibility} visibility models active · {callsPerRun} calls per check · pricing
-            snapshotted on each LLM call
+            {enabledVisibility} visibility models active · {callsPerRun} calls per check · changes
+            save automatically
           </Text>
-          <Space size={8}>
-            <Button size="small" onClick={load} disabled={saving}>
-              Reset
-            </Button>
-            <Button type="primary" size="small" icon={<SaveOutlined />} loading={saving} onClick={onSave}>
-              Save settings
-            </Button>
-          </Space>
+          <Button size="small" onClick={load} disabled={saving}>
+            Reset
+          </Button>
         </div>
       )}
     </div>

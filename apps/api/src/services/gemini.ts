@@ -9,14 +9,17 @@ function requireGoogleKey() {
   return env.googleAiApiKey;
 }
 
-export async function callGeminiWithWebSearch(options: {
-  modelId: string;
-  prompt: string;
-  system: string;
-  maxTokens?: number;
-  usage?: LlmUsageContext;
-  pricing?: LlmPricing;
-}): Promise<LlmCallResult> {
+async function callGeminiGenerateContent(
+  options: {
+    modelId: string;
+    prompt: string;
+    system: string;
+    maxTokens?: number;
+    usage?: LlmUsageContext;
+    pricing?: LlmPricing;
+  },
+  withWebSearch: boolean
+): Promise<LlmCallResult> {
   const apiKey = requireGoogleKey();
   const modelPath = encodeURIComponent(options.modelId);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelPath}:generateContent?key=${apiKey}`;
@@ -27,7 +30,7 @@ export async function callGeminiWithWebSearch(options: {
     body: JSON.stringify({
       system_instruction: { parts: [{ text: options.system }] },
       contents: [{ role: "user", parts: [{ text: options.prompt }] }],
-      tools: [{ google_search: {} }],
+      ...(withWebSearch ? { tools: [{ google_search: {} }] } : {}),
       generationConfig: {
         maxOutputTokens: options.maxTokens ?? 1200,
       },
@@ -86,4 +89,27 @@ export async function callGeminiWithWebSearch(options: {
   }
 
   return { text, sources, inputTokens, outputTokens, model: options.modelId };
+}
+
+/** Plain chat completion (no web search). */
+export async function callGemini(options: {
+  modelId: string;
+  prompt: string;
+  system: string;
+  maxTokens?: number;
+  usage?: LlmUsageContext;
+  pricing?: LlmPricing;
+}): Promise<LlmCallResult> {
+  return callGeminiGenerateContent(options, false);
+}
+
+export async function callGeminiWithWebSearch(options: {
+  modelId: string;
+  prompt: string;
+  system: string;
+  maxTokens?: number;
+  usage?: LlmUsageContext;
+  pricing?: LlmPricing;
+}): Promise<LlmCallResult> {
+  return callGeminiGenerateContent(options, true);
 }

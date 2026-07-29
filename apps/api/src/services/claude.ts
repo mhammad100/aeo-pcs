@@ -2,6 +2,7 @@ import type { Source } from "@aeo-pcs/shared";
 import { env } from "../config/env";
 import { getAeoSettings } from "./aeoSettings.service";
 import { logUsageEvent } from "./usage.service";
+import type { LlmCallResult, LlmPricing, LlmUsageContext } from "./llmTypes";
 
 export type ClaudeCallResult = {
   text: string;
@@ -22,6 +23,71 @@ type ClaudeContentBlock = {
   text?: string;
   content?: Array<{ url?: string; title?: string }>;
 };
+
+function requireAnthropicKey() {
+  if (!env.anthropicApiKey) {
+    throw new Error("ANTHROPIC_API_KEY is not configured");
+  }
+  return env.anthropicApiKey;
+}
+
+/** Plain chat completion (no web search). */
+export async function callAnthropic(options: {
+  modelId: string;
+  prompt: string;
+  system: string;
+  maxTokens?: number;
+  usage?: LlmUsageContext;
+  pricing?: LlmPricing;
+}): Promise<LlmCallResult> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": requireAnthropicKey(),
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: options.modelId,
+      max_tokens: options.maxTokens ?? 1200,
+      system: options.system,
+      messages: [{ role: "user", content: options.prompt }],
+    }),
+  });
+
+  const data = (await res.json()) as {
+    content?: ClaudeContentBlock[];
+    usage?: { input_tokens?: number; output_tokens?: number };
+    error?: { message?: string };
+  };
+
+  if (!res.ok) {
+    throw new Error(data.error?.message || `Anthropic API error (${res.status})`);
+  }
+
+  const text = (data.content || [])
+    .filter((b) => b.type === "text")
+    .map((b) => b.text || "")
+    .join("\n");
+
+  const inputTokens = data.usage?.input_tokens ?? 0;
+  const outputTokens = data.usage?.output_tokens ?? 0;
+
+  if (options.usage?.feature) {
+    await logUsageEvent({
+      userId: options.usage.userId,
+      businessId: options.usage.businessId,
+      feature: options.usage.feature,
+      model: options.modelId,
+      inputTokens,
+      outputTokens,
+      pricing: options.pricing,
+      refs: options.usage.refs,
+    });
+  }
+
+  return { text, sources: [], inputTokens, outputTokens, model: options.modelId };
+}
 
 export async function callClaude(options: {
   prompt: string;
@@ -51,7 +117,7 @@ export async function callClaude(options: {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-api-key": env.anthropicApiKey,
+      "x-api-key": requireAnthropicKey(),
       "anthropic-version": "2023-06-01",
       "anthropic-beta": "web-search-2025-03-05",
     },

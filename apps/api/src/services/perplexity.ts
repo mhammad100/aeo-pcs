@@ -9,6 +9,17 @@ function requirePerplexityKey() {
   return env.perplexityApiKey;
 }
 
+export async function callPerplexity(options: {
+  modelId: string;
+  prompt: string;
+  system: string;
+  maxTokens?: number;
+  usage?: LlmUsageContext;
+  pricing?: LlmPricing;
+}): Promise<LlmCallResult> {
+  return callPerplexityWithWebSearch(options);
+}
+
 export async function callPerplexityWithWebSearch(options: {
   modelId: string;
   prompt: string;

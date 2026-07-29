@@ -527,7 +527,7 @@ export default function VisibilityWizard() {
                     disabled={!canRunVisibility || subscriptionLoading}
                     onClick={onRunCheck}
                   >
-                    Run check ({visibilityModelCount} models)
+                    Run check
                   </Button>
                 ) : undefined
               }

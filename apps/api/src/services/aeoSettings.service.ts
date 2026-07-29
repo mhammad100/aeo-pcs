@@ -29,10 +29,10 @@ export function defaultAeoSettings(): Omit<AeoSettings, "updatedAt"> {
         id: "openai",
         label: "ChatGPT",
         provider: "openai",
-        modelId: "gpt-5o-mini",
+        modelId: "gpt-5-mini",
         enabled: true,
-        inputPer1MTokens: 0.15,
-        outputPer1MTokens: 0.6,
+        inputPer1MTokens: 0.25,
+        outputPer1MTokens: 2,
         currency: "USD",
       },
       {
