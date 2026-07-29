@@ -83,15 +83,6 @@ export async function createBusinessUser(input: {
     profileCompletedAt: null,
   });
 
-  try {
-    const { ensureDefaultPlans } = await import("./productPlans.service");
-    const { assignDefaultStarterPlan } = await import("./subscriptions.service");
-    await ensureDefaultPlans();
-    await assignDefaultStarterPlan(String(business._id));
-  } catch {
-    // non-fatal if plans not seeded yet
-  }
-
   return { user: toAuthUser(user, business) };
 }
 

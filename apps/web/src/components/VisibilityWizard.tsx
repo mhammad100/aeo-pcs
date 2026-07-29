@@ -17,7 +17,8 @@ import {
   Typography,
 } from "antd";
 import { CATEGORIES } from "@aeo-pcs/shared";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
+import { hasActiveSubscription } from "@/lib/authRouting";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hydrateFromProfile, setCategory } from "@/store/businessSlice";
 import { setPrompts, updatePrompt } from "@/store/promptsSlice";
@@ -60,6 +61,10 @@ export default function VisibilityWizard() {
   const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
   const [stepOverride, setStepOverride] = useState<number | null>(null);
   const [visibilityModelCount, setVisibilityModelCount] = useState(3);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const [runsUsed, setRunsUsed] = useState(0);
+  const [runsLimit, setRunsLimit] = useState(0);
+  const [canRunVisibility, setCanRunVisibility] = useState(false);
 
   const hasResults = Boolean(visibility.results?.length && visibility.score);
   const hasPlan = hasPlanContent(visibility.plan);
@@ -121,6 +126,32 @@ export default function VisibilityWizard() {
         }
       } finally {
         if (!cancelled) setProfileLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { subscription } = await api.getMySubscription();
+        if (cancelled) return;
+        const subscribed = hasActiveSubscription(subscription);
+        const used = subscription.runsUsedThisPeriod ?? 0;
+        const limit = subscription.runsLimit ?? 0;
+        setRunsUsed(used);
+        setRunsLimit(limit);
+        setCanRunVisibility(subscribed && used < limit);
+      } catch (err) {
+        if (!cancelled) {
+          setCanRunVisibility(false);
+          dispatch(setError(err instanceof ApiError ? err.message : "Failed to load subscription"));
+        }
+      } finally {
+        if (!cancelled) setSubscriptionLoading(false);
       }
     })();
     return () => {
@@ -337,6 +368,26 @@ export default function VisibilityWizard() {
           />
         )}
 
+        {!subscriptionLoading && !canRunVisibility && (
+          <Alert
+            type="warning"
+            showIcon
+            style={{ marginBottom: 20 }}
+            message={
+              runsLimit > 0 && runsUsed >= runsLimit
+                ? "Visibility run limit reached for this billing period."
+                : "An active subscription is required to run visibility checks."
+            }
+            description={
+              runsLimit > 0 && runsUsed >= runsLimit ? (
+                <Link href="/app/subscription">View subscription usage</Link>
+              ) : (
+                <Link href="/app/onboarding/plan">Choose a plan</Link>
+              )
+            }
+          />
+        )}
+
         {currentStep === 0 && business.selected && (
           <Card title="Confirm your business">
             <Paragraph style={{ marginBottom: 4 }}>
@@ -411,6 +462,7 @@ export default function VisibilityWizard() {
                   loading={
                     jobRunning || (visibility.uiBusy && localBusyLabel === "Starting visibility check")
                   }
+                  disabled={!canRunVisibility || subscriptionLoading}
                   onClick={onRunCheck}
                 >
                   Run visibility check

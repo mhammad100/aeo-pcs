@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button, Layout, Menu, Typography } from "antd";
 import AuthGuard from "@/components/AuthGuard";
 import ProfileGate from "@/components/ProfileGate";
+import SubscriptionGate from "@/components/SubscriptionGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logout } from "@/store/authSlice";
 
@@ -43,7 +44,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGuard>
-      <ProfileGate>
+      <SubscriptionGate>
+        <ProfileGate>
         <Layout style={{ minHeight: "100vh", background: "#0F1A17" }}>
           <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#152420" }}>
             <div style={{ padding: 20 }}>
@@ -76,7 +78,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <Content style={{ padding: 24 }}>{children}</Content>
           </Layout>
         </Layout>
-      </ProfileGate>
+        </ProfileGate>
+      </SubscriptionGate>
     </AuthGuard>
   );
 }

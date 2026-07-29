@@ -19,12 +19,7 @@ export function profileIsComplete(b: {
   websiteUrl?: string | null;
 }): boolean {
   return Boolean(
-    b.name?.trim() &&
-      b.category?.trim() &&
-      b.city?.trim() &&
-      b.country?.trim() &&
-      b.websiteUrl?.trim() &&
-      isValidHttpUrl(b.websiteUrl.trim())
+    b.name?.trim() && b.category?.trim() && b.city?.trim() && b.country?.trim()
   );
 }
 
@@ -44,7 +39,7 @@ export type UpdateBusinessProfileInput = {
   city: string;
   country: string;
   description?: string;
-  websiteUrl: string;
+  websiteUrl?: string;
   googleBusinessUrl?: string;
   socialLinks?: { label?: string; url?: string }[];
 };
@@ -69,7 +64,7 @@ export async function updateMyBusiness(userId: string, input: UpdateBusinessProf
   business.city = input.city;
   business.country = input.country;
   business.description = input.description || "";
-  business.websiteUrl = input.websiteUrl;
+  business.websiteUrl = input.websiteUrl?.trim() || "";
   business.googleBusinessUrl = input.googleBusinessUrl || "";
   business.set("socialLinks", socialLinks);
 

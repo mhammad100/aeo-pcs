@@ -6,7 +6,7 @@ import {
   Input,
   InputNumber,
   Modal,
-  Select,
+  Popconfirm,
   Space,
   Switch,
   Table,
@@ -16,11 +16,10 @@ import {
 } from "antd";
 import { api, type AdminPlan, ApiError } from "@/lib/api";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 export default function PlansPage() {
   const [plans, setPlans] = useState<AdminPlan[]>([]);
-  const [businesses, setBusinesses] = useState<{ id: string; name: string }[]>([]);
   const [subs, setSubs] = useState<
     Array<{
       id: string;
@@ -32,22 +31,15 @@ export default function PlansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [planModal, setPlanModal] = useState(false);
-  const [assignModal, setAssignModal] = useState(false);
   const [editing, setEditing] = useState<AdminPlan | null>(null);
   const [planForm] = Form.useForm();
-  const [assignForm] = Form.useForm();
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const [p, b, s] = await Promise.all([
-        api.listAdminPlans(),
-        api.listBusinesses(),
-        api.listAdminSubscriptions(),
-      ]);
+      const [p, s] = await Promise.all([api.listAdminPlans(), api.listAdminSubscriptions()]);
       setPlans(p.plans);
-      setBusinesses(b.businesses.map((x) => ({ id: x.id, name: x.name || x.id })));
       setSubs(s.subscriptions);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to load plans");
@@ -106,23 +98,13 @@ export default function PlansPage() {
     }
   }
 
-  async function assignPlan(values: {
-    businessId: string;
-    planId: string;
-    createInvoice?: boolean;
-  }) {
+  async function deletePlan(plan: AdminPlan) {
     try {
-      await api.assignSubscription({
-        businessId: values.businessId,
-        planId: values.planId,
-        createInvoice: values.createInvoice,
-      });
-      message.success("Subscription assigned");
-      setAssignModal(false);
-      assignForm.resetFields();
+      await api.deleteAdminPlan(plan.id);
+      message.success("Plan deleted");
       await load();
     } catch (err) {
-      message.error(err instanceof ApiError ? err.message : "Assign failed");
+      message.error(err instanceof ApiError ? err.message : "Delete failed");
     }
   }
 
@@ -132,7 +114,7 @@ export default function PlansPage() {
         Plans
       </Title>
       <Paragraph type="secondary">
-        Product plan catalog, limits, and subscription assignment for businesses.
+        Product plan catalog and limits. Businesses choose a plan during onboarding.
       </Paragraph>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
       <Space style={{ marginBottom: 16 }}>
@@ -147,7 +129,6 @@ export default function PlansPage() {
         >
           New plan
         </Button>
-        <Button onClick={() => setAssignModal(true)}>Assign subscription</Button>
       </Space>
 
       <Table
@@ -175,20 +156,33 @@ export default function PlansPage() {
           {
             title: "",
             render: (_, r) => (
-              <Button
-                type="link"
-                onClick={() => {
-                  setEditing(r);
-                  planForm.setFieldsValue({
-                    ...r,
-                    featuresText: (r.features || []).join("\n"),
-                    visibilityRunsPerMonth: r.limits.visibilityRunsPerMonth,
-                  });
-                  setPlanModal(true);
-                }}
-              >
-                Edit
-              </Button>
+              <Space>
+                <Button
+                  type="link"
+                  onClick={() => {
+                    setEditing(r);
+                    planForm.setFieldsValue({
+                      ...r,
+                      featuresText: (r.features || []).join("\n"),
+                      visibilityRunsPerMonth: r.limits.visibilityRunsPerMonth,
+                    });
+                    setPlanModal(true);
+                  }}
+                >
+                  Edit
+                </Button>
+                <Popconfirm
+                  title="Delete this plan?"
+                  description="Active subscriptions block deletion. Deactivate the plan if you only want to hide it from signup."
+                  okText="Delete"
+                  okButtonProps={{ danger: true }}
+                  onConfirm={() => deletePlan(r)}
+                >
+                  <Button type="link" danger>
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </Space>
             ),
           },
         ]}
@@ -223,14 +217,18 @@ export default function PlansPage() {
           <Form.Item name="slug" label="Slug">
             <Input placeholder="auto from name if empty" />
           </Form.Item>
-          <Form.Item name="price" label="Price" rules={[{ required: true }]}>
-            <InputNumber min={0} style={{ width: "100%" }} />
+          <Form.Item
+            name="price"
+            label="Price"
+            rules={[{ required: true }, { type: "number", min: 0.01, message: "Price must be greater than zero" }]}
+          >
+            <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="currency" label="Currency">
             <Input maxLength={3} />
           </Form.Item>
           <Form.Item name="priceLabel" label="Display label">
-            <Input placeholder="$99/mo or Invite" />
+            <Input placeholder="$99/mo" />
           </Form.Item>
           <Form.Item name="blurb" label="Blurb">
             <Input.TextArea rows={2} />
@@ -247,36 +245,6 @@ export default function PlansPage() {
           <Form.Item name="active" label="Active" valuePropName="checked">
             <Switch />
           </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title="Assign subscription"
-        open={assignModal}
-        onCancel={() => setAssignModal(false)}
-        onOk={() => assignForm.submit()}
-        destroyOnClose
-      >
-        <Form
-          form={assignForm}
-          layout="vertical"
-          onFinish={assignPlan}
-          initialValues={{ createInvoice: true }}
-        >
-          <Form.Item name="businessId" label="Business" rules={[{ required: true }]}>
-            <Select
-              options={businesses.map((b) => ({ value: b.id, label: b.name || b.id }))}
-              showSearch
-              optionFilterProp="label"
-            />
-          </Form.Item>
-          <Form.Item name="planId" label="Plan" rules={[{ required: true }]}>
-            <Select options={plans.map((p) => ({ value: p.id, label: p.name }))} />
-          </Form.Item>
-          <Form.Item name="createInvoice" label="Create invoice if price > 0" valuePropName="checked">
-            <Switch />
-          </Form.Item>
-          <Text type="secondary">Cancels any existing active subscription for that business.</Text>
         </Form>
       </Modal>
     </div>

@@ -52,9 +52,6 @@ export async function loginUser(
 }
 
 export async function signupUser(emailRaw: string, password: string) {
-  if (!env.signupEnabled) {
-    throw new AppError("Signup is disabled. Contact Master AEO for an invite.", 403);
-  }
 
   const email = emailRaw.toLowerCase();
   const existing = await UserModel.findOne({ email });

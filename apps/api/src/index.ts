@@ -9,11 +9,7 @@ import { requestLogger } from "./middleware/requestLogger";
 
 async function main() {
   await connectMongo();
-  const { ensureDefaultPlans } = await import("./services/productPlans.service");
-  const { ensureDefaultCostRates } = await import("./services/usage.service");
   const { ensureAeoSettings } = await import("./services/aeoSettings.service");
-  await ensureDefaultPlans();
-  await ensureDefaultCostRates();
   await ensureAeoSettings();
   const { resumeInterruptedVisibilityJobs } = await import("./services/jobRunner");
   await resumeInterruptedVisibilityJobs();

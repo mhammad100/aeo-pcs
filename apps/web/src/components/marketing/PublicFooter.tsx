@@ -43,7 +43,7 @@ export default function PublicFooter() {
         <div>
           <h4>Get started</h4>
           <p>
-            <Link href="/signup">Request access</Link>
+            <Link href="/signup">Sign up</Link>
           </p>
           <p style={{ marginTop: 16 }}>© {new Date().getFullYear()} Master AEO</p>
         </div>

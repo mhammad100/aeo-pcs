@@ -1,5 +1,7 @@
 import type { ProductPlan } from "@aeo-pcs/shared";
+import { ENTITLED_SUBSCRIPTION_STATUSES } from "@aeo-pcs/shared";
 import { ProductPlanModel } from "../models/ProductPlan";
+import { SubscriptionModel } from "../models/Subscription";
 import { AppError } from "../utils/AppError";
 
 function serializePlan(doc: {
@@ -63,6 +65,9 @@ export async function createProductPlan(input: {
   active?: boolean;
   sortOrder?: number;
 }) {
+  if (input.price <= 0) {
+    throw new AppError("Price must be greater than zero", 400);
+  }
   const slug = (input.slug || slugify(input.name)).toLowerCase();
   const existing = await ProductPlanModel.findOne({ slug });
   if (existing) throw new AppError("Plan slug already exists", 409);
@@ -100,6 +105,9 @@ export async function updateProductPlan(
   const plan = await ProductPlanModel.findById(planId);
   if (!plan) throw new AppError("Plan not found", 404);
 
+  if (input.price !== undefined && input.price <= 0) {
+    throw new AppError("Price must be greater than zero", 400);
+  }
   if (input.name !== undefined) plan.name = input.name;
   if (input.slug !== undefined) {
     const slug = input.slug.toLowerCase();
@@ -122,48 +130,22 @@ export async function updateProductPlan(
   return serializePlan(plan);
 }
 
-export async function ensureDefaultPlans() {
-  const count = await ProductPlanModel.countDocuments();
-  if (count > 0) return;
+export async function deleteProductPlan(planId: string) {
+  const plan = await ProductPlanModel.findById(planId);
+  if (!plan) throw new AppError("Plan not found", 404);
 
-  await ProductPlanModel.insertMany([
-    {
-      name: "Starter",
-      slug: "starter",
-      price: 0,
-      currency: "USD",
-      priceLabel: "Invite",
-      blurb: "For single-location businesses getting their first AI visibility baseline.",
-      features: ["Business profile & onboarding", "Visibility checks", "Action plan & report"],
-      limits: { visibilityRunsPerMonth: 5 },
-      active: true,
-      sortOrder: 1,
-    },
-    {
-      name: "Growth",
-      slug: "growth",
-      price: 99,
-      currency: "USD",
-      priceLabel: "$99/mo",
-      blurb: "For teams that need recurring runs, history, and checklist tracking.",
-      features: ["Month-over-month insights", "Action checklist", "Priority support"],
-      limits: { visibilityRunsPerMonth: 30 },
-      active: true,
-      sortOrder: 2,
-    },
-    {
-      name: "Agency",
-      slug: "agency",
-      price: 0,
-      currency: "USD",
-      priceLabel: "Custom",
-      blurb: "For operators managing multiple brands under one roof.",
-      features: ["Multi-business workflows", "Usage visibility", "Onboarding help"],
-      limits: { visibilityRunsPerMonth: 100 },
-      active: true,
-      sortOrder: 3,
-    },
-  ]);
+  const activeCount = await SubscriptionModel.countDocuments({
+    planId: plan._id,
+    status: { $in: ENTITLED_SUBSCRIPTION_STATUSES },
+  });
+  if (activeCount > 0) {
+    throw new AppError(
+      "Cannot delete a plan with active subscriptions. Deactivate the plan or reassign those businesses first.",
+      409
+    );
+  }
+
+  await ProductPlanModel.findByIdAndDelete(planId);
 }
 
 export { serializePlan };

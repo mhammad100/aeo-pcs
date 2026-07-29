@@ -80,6 +80,8 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
+  deleteAdminPlan: (planId: string) =>
+    request<{ ok: boolean }>(`/admin/plans/${planId}`, { method: "DELETE" }),
   listAdminSubscriptions: () =>
     request<{
       subscriptions: Array<{
@@ -90,16 +92,6 @@ export const api = {
         plan: AdminPlan | null;
       }>;
     }>("/admin/subscriptions"),
-  assignSubscription: (body: {
-    businessId: string;
-    planId: string;
-    createInvoice?: boolean;
-    note?: string;
-  }) =>
-    request<{ subscription: unknown }>("/admin/subscriptions", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
   getUsageSummary: (days = 30) =>
     request<{ summary: import("@aeo-pcs/shared").UsageProfitSummary }>(
       `/admin/usage/summary?days=${days}`

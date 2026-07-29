@@ -1,4 +1,5 @@
 import type { InvoiceRecord, SubscriptionInfo } from "@aeo-pcs/shared";
+import { ENTITLED_SUBSCRIPTION_STATUSES } from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
 import { InvoiceModel } from "../models/Invoice";
 import { ProductPlanModel } from "../models/ProductPlan";
@@ -6,8 +7,6 @@ import { SubscriptionModel } from "../models/Subscription";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
 import { serializePlan } from "./productPlans.service";
-
-const DEFAULT_RUNS_PER_MONTH = 3;
 
 function monthBounds(d = new Date()) {
   const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1));
@@ -27,7 +26,7 @@ async function runsUsedThisMonth(businessId: string) {
 export async function getActiveSubscriptionForBusiness(businessId: string) {
   return SubscriptionModel.findOne({
     businessId,
-    status: { $in: ["active", "trialing"] },
+    status: { $in: ENTITLED_SUBSCRIPTION_STATUSES },
   })
     .sort({ createdAt: -1 })
     .lean();
@@ -38,22 +37,22 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
   if (!business) throw new AppError("Business not found", 404);
 
   const sub = await getActiveSubscriptionForBusiness(String(business._id));
-  const plan = sub ? await ProductPlanModel.findById(sub.planId).lean() : null;
   const runsUsed = await runsUsedThisMonth(String(business._id));
-  const runsLimit = plan?.limits?.visibilityRunsPerMonth ?? DEFAULT_RUNS_PER_MONTH;
 
   if (!sub) {
     return {
       id: "",
-      status: "active",
+      status: "canceled",
       currentPeriodStart: monthBounds().start.toISOString(),
       currentPeriodEnd: monthBounds().end.toISOString(),
-      note: "No assigned plan — using default invite limits",
       plan: null,
       runsUsedThisPeriod: runsUsed,
-      runsLimit,
+      runsLimit: 0,
     };
   }
+
+  const plan = await ProductPlanModel.findById(sub.planId).lean();
+  const runsLimit = plan?.limits?.visibilityRunsPerMonth ?? 0;
 
   return {
     id: String(sub._id),
@@ -67,18 +66,66 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
   };
 }
 
-export async function assertVisibilityRunAllowed(userId: string) {
+async function getEntitledSubscriptionContext(userId: string) {
   const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
   if (!business) throw new AppError("Business not found", 404);
 
-  const info = await getSubscriptionInfoForUser(userId);
-  if (info.runsUsedThisPeriod >= info.runsLimit) {
+  const sub = await getActiveSubscriptionForBusiness(String(business._id));
+  if (!sub) {
+    throw new AppError("Subscribe to a plan before using this feature.", 403);
+  }
+
+  const plan = await ProductPlanModel.findById(sub.planId).lean();
+  if (!plan || !plan.active) {
+    throw new AppError("Your subscription plan is no longer active. Choose a new plan.", 403);
+  }
+
+  return { business, plan };
+}
+
+export async function assertActiveSubscription(userId: string) {
+  const { business } = await getEntitledSubscriptionContext(userId);
+  return business;
+}
+
+export async function assertVisibilityRunAllowed(userId: string) {
+  const { business, plan } = await getEntitledSubscriptionContext(userId);
+  const runsLimit = plan.limits?.visibilityRunsPerMonth ?? 0;
+  const runsUsed = await runsUsedThisMonth(String(business._id));
+  if (runsUsed >= runsLimit) {
     throw new AppError(
-      `Visibility run limit reached (${info.runsLimit}/month on your current plan).`,
+      `Visibility run limit reached (${runsLimit}/month on your current plan).`,
       403
     );
   }
+
   return business;
+}
+
+export async function subscribeUserToPlan(userId: string, planId: string) {
+  const business = await BusinessModel.findOne({ ownerUserId: userId });
+  if (!business) throw new AppError("Business not found", 404);
+
+  const existing = await getActiveSubscriptionForBusiness(String(business._id));
+  if (existing) {
+    throw new AppError("You already have an active subscription.", 400);
+  }
+
+  const plan = await ProductPlanModel.findById(planId);
+  if (!plan || !plan.active) {
+    throw new AppError("Plan not found or unavailable", 404);
+  }
+  if (plan.price <= 0) {
+    throw new AppError("Plan not available for subscription", 400);
+  }
+
+  return assignSubscription({
+    businessId: String(business._id),
+    planId: String(plan._id),
+    status: "active",
+    note: "Self-serve subscription",
+    createInvoice: false,
+  });
 }
 
 export async function assignSubscription(input: {
@@ -92,11 +139,14 @@ export async function assignSubscription(input: {
   if (!business) throw new AppError("Business not found", 404);
   const plan = await ProductPlanModel.findById(input.planId);
   if (!plan) throw new AppError("Plan not found", 404);
+  if (plan.price <= 0) {
+    throw new AppError("Plan price must be greater than zero", 400);
+  }
 
   const { start, end } = monthBounds();
 
   await SubscriptionModel.updateMany(
-    { businessId: business._id, status: { $in: ["active", "trialing"] } },
+    { businessId: business._id, status: { $in: ENTITLED_SUBSCRIPTION_STATUSES } },
     { $set: { status: "canceled" } }
   );
 
@@ -132,7 +182,7 @@ export async function assignSubscription(input: {
       note: sub.note || undefined,
       plan: serializePlan(plan),
       runsUsedThisPeriod: await runsUsedThisMonth(String(business._id)),
-      runsLimit: plan.limits?.visibilityRunsPerMonth ?? DEFAULT_RUNS_PER_MONTH,
+      runsLimit: plan.limits?.visibilityRunsPerMonth ?? 0,
     } satisfies SubscriptionInfo,
     invoice,
   };
@@ -229,18 +279,4 @@ export async function listInvoicesAdmin() {
     businessId: String(inv.businessId),
     businessName: bizById.get(String(inv.businessId))?.name || "",
   }));
-}
-
-export async function assignDefaultStarterPlan(businessId: string) {
-  const starter = await ProductPlanModel.findOne({ slug: "starter", active: true });
-  if (!starter) return null;
-  const existing = await getActiveSubscriptionForBusiness(businessId);
-  if (existing) return null;
-  return assignSubscription({
-    businessId,
-    planId: String(starter._id),
-    status: "active",
-    note: "Auto-assigned Starter on account create",
-    createInvoice: false,
-  });
 }

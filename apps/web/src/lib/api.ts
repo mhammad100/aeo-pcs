@@ -58,7 +58,7 @@ export const api = {
     city: string;
     country: string;
     description?: string;
-    websiteUrl: string;
+    websiteUrl?: string;
     googleBusinessUrl?: string;
     socialLinks?: { label: string; url: string }[];
   }) =>
@@ -145,6 +145,12 @@ export const api = {
 
   getMySubscription: () =>
     request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/me"),
+
+  subscribeToPlan: (planId: string) =>
+    request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/subscribe", {
+      method: "POST",
+      body: JSON.stringify({ planId }),
+    }),
 
   getMyInvoices: () =>
     request<{ invoices: import("@aeo-pcs/shared").InvoiceRecord[] }>("/billing/invoices"),

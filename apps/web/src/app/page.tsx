@@ -1,6 +1,7 @@
 import Link from "next/link";
 import PublicFooter from "@/components/marketing/PublicFooter";
 import PublicHeader from "@/components/marketing/PublicHeader";
+import CatalogPricingGrid from "@/components/marketing/CatalogPricingGrid";
 
 export default function HomePage() {
   return (
@@ -257,52 +258,14 @@ export default function HomePage() {
 
       <section className="ma-section" id="pricing">
         <div className="ma-section-label">Pricing</div>
-        <h2 className="ma-section-title">Start with access. Scale when plans unlock.</h2>
+        <h2 className="ma-section-title">Plans that match how you run visibility</h2>
         <p className="ma-section-copy">
-          Self-serve signup is invite-only while we onboard early businesses. Final plan pricing
-          publishes as subscriptions go live.
+          Sign up, choose a plan, and start measuring how AI assistants talk about your business.
         </p>
-        <div className="ma-price-grid">
-          <div className="ma-price">
-            <h3>Starter</h3>
-            <p className="amount">Invite</p>
-            <p style={{ color: "var(--ma-muted)", marginTop: 0, marginBottom: 16 }}>
-              For single-location businesses getting their first AI visibility baseline.
-            </p>
-            <ul>
-              <li>Business profile & onboarding</li>
-              <li>Visibility checks</li>
-              <li>Action plan & report</li>
-            </ul>
-          </div>
-          <div className="ma-price">
-            <h3>Growth</h3>
-            <p className="amount">Soon</p>
-            <p style={{ color: "var(--ma-muted)", marginTop: 0, marginBottom: 16 }}>
-              For teams that need recurring runs, history, and checklist tracking.
-            </p>
-            <ul>
-              <li>Month-over-month insights</li>
-              <li>Action checklist</li>
-              <li>Priority support</li>
-            </ul>
-          </div>
-          <div className="ma-price">
-            <h3>Agency</h3>
-            <p className="amount">Custom</p>
-            <p style={{ color: "var(--ma-muted)", marginTop: 0, marginBottom: 16 }}>
-              For operators managing multiple brands under one roof.
-            </p>
-            <ul>
-              <li>Multi-business workflows</li>
-              <li>Usage visibility</li>
-              <li>Onboarding help</li>
-            </ul>
-          </div>
-        </div>
+        <CatalogPricingGrid />
         <div className="ma-cta-row" style={{ marginTop: 36 }}>
           <Link href="/signup" className="ma-btn ma-btn-primary">
-            Request an invite
+            Get started
           </Link>
           <Link href="/pricing" className="ma-btn ma-btn-ghost">
             Full pricing page
@@ -357,22 +320,23 @@ export default function HomePage() {
           <details>
             <summary>Do I need a finished website?</summary>
             <p>
-              A website URL is required in your profile because it is a core signal. You can still
-              improve listings and reviews in parallel; the product helps prioritize both.
+              No. A website URL is optional but recommended — it helps AI assistants verify your
+              business. You can still improve listings and reviews in parallel; the product helps
+              prioritize both.
             </p>
           </details>
           <details>
-            <summary>How do I get access?</summary>
+            <summary>How do I get started?</summary>
             <p>
-              Signup is invite-only while we onboard early businesses. Request access from Get
-              started, or log in if you already have an account.
+              Create an account, choose a plan, complete your business profile, then run visibility
+              checks from your dashboard.
             </p>
           </details>
           <details>
-            <summary>What happens after I log in?</summary>
+            <summary>What happens after I sign up?</summary>
             <p>
-              You complete your business profile, then enter the dashboard to run visibility checks,
-              review findings, and work the action plan.
+              You choose a plan, complete your business profile, then enter the dashboard to run
+              visibility checks, review findings, and work the action plan.
             </p>
           </details>
         </div>

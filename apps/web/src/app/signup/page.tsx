@@ -1,39 +1,76 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { Alert, Button, Card, Typography } from "antd";
+import { useRouter } from "next/navigation";
+import { Alert, Button, Card, Form, Input, Typography } from "antd";
+import { api, ApiError } from "@/lib/api";
+import { resolvePostAuthPath } from "@/lib/authRouting";
+import { useAppDispatch } from "@/store/hooks";
+import { setCredentials } from "@/store/authSlice";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 
 export default function SignupPage() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function onFinish(values: { email: string; password: string; confirmPassword: string }) {
+    if (values.password !== values.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.signup({ email: values.email, password: values.password });
+      dispatch(setCredentials(res));
+      const nextPath = await resolvePostAuthPath(res.user);
+      router.replace(nextPath);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Signup failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
-      <Card style={{ width: "100%", maxWidth: 480 }}>
+      <Card style={{ width: "100%", maxWidth: 420 }}>
         <Link href="/" style={{ color: "var(--ma-accent-soft)", fontFamily: "var(--ma-font-display)" }}>
           Master AEO
         </Link>
         <Title level={2} style={{ marginTop: 8 }}>
-          Get started
+          Create your account
         </Title>
-        <Alert
-          type="info"
-          showIcon
-          message="Signup is invite-only for now"
-          description="Self-serve signup is disabled while we onboard early businesses. Contact us for an account, or log in if you already have access."
-          style={{ marginBottom: 20, marginTop: 12 }}
-        />
         <Paragraph type="secondary">
-          After access is granted, you will complete your business profile (website, optional Google
-          Business and social links), then land in your dashboard.
+          Sign up, choose a plan, then complete your business profile to start visibility checks.
         </Paragraph>
-        <Link href="/login">
-          <Button type="primary" block>
-            Go to log in
+        {error && <Alert type="error" showIcon message={error} style={{ margin: "16px 0" }} />}
+        <Form layout="vertical" onFinish={onFinish} requiredMark={false} style={{ marginTop: 16 }}>
+          <Form.Item name="email" label="Email" rules={[{ required: true, type: "email" }]}>
+            <Input autoComplete="email" />
+          </Form.Item>
+          <Form.Item name="password" label="Password" rules={[{ required: true, min: 8 }]}>
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Form.Item
+            name="confirmPassword"
+            label="Confirm password"
+            rules={[{ required: true, min: 8 }]}
+          >
+            <Input.Password autoComplete="new-password" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit" block loading={loading}>
+            Create account
           </Button>
-        </Link>
+        </Form>
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">
-            Or email <a href="mailto:hello@masteraeo.com">hello@masteraeo.com</a>
+            Already have an account? <Link href="/login">Log in</Link>
           </Text>
         </div>
       </Card>

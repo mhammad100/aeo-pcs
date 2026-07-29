@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Alert, Card, Progress, Spin, Typography } from "antd";
 import Link from "next/link";
+import { Alert, Card, Progress, Spin, Typography } from "antd";
 import AppShell from "@/components/AppShell";
 import { api, ApiError } from "@/lib/api";
+import { hasActiveSubscription } from "@/lib/authRouting";
 import type { SubscriptionInfo } from "@aeo-pcs/shared";
 
 const { Title, Paragraph, Text } = Typography;
@@ -33,6 +34,7 @@ export default function SubscriptionPage() {
     };
   }, []);
 
+  const subscribed = subscription ? hasActiveSubscription(subscription) : false;
   const used = subscription?.runsUsedThisPeriod ?? 0;
   const limit = subscription?.runsLimit ?? 0;
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
@@ -48,17 +50,22 @@ export default function SubscriptionPage() {
         <div style={{ display: "grid", placeItems: "center", padding: 48 }}>
           <Spin />
         </div>
+      ) : !subscribed ? (
+        <Card>
+          <Paragraph style={{ marginBottom: 12 }}>
+            You do not have an active plan yet. Choose one to unlock visibility checks.
+          </Paragraph>
+          <Link href="/app/onboarding/plan">Choose a plan</Link>
+        </Card>
       ) : (
         <Card>
           <Paragraph style={{ marginBottom: 8 }}>
             <Text strong>Plan: </Text>
-            {subscription?.plan?.name || "Default invite limits"}
+            {subscription?.plan?.name}
             {subscription?.plan?.priceLabel ? ` · ${subscription.plan.priceLabel}` : ""}
           </Paragraph>
           <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-            {subscription?.plan?.blurb ||
-              subscription?.note ||
-              "Ask Master AEO to change your plan."}
+            {subscription?.plan?.blurb || subscription?.note || "Your current subscription."}
           </Paragraph>
           <Text>
             Visibility runs this month: {used} / {limit}

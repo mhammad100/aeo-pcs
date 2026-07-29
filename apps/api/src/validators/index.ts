@@ -30,10 +30,11 @@ export const businessProfileValidators = [
   body("country").isString().trim().isLength({ min: 1, max: 100 }),
   body("description").optional().isString().trim().isLength({ max: 2000 }),
   body("websiteUrl")
+    .optional({ values: "falsy" })
     .isString()
     .trim()
-    .isLength({ min: 1, max: 500 })
-    .custom((v) => isValidHttpUrl(v)),
+    .isLength({ max: 500 })
+    .custom((v) => !v || isValidHttpUrl(v)),
   body("googleBusinessUrl")
     .optional({ values: "falsy" })
     .isString()
@@ -106,7 +107,7 @@ export const planIdParamValidators = [param("planId").isMongoId()];
 export const createProductPlanValidators = [
   body("name").isString().trim().isLength({ min: 1, max: 120 }),
   body("slug").optional().isString().trim().isLength({ min: 1, max: 80 }),
-  body("price").isFloat({ min: 0 }),
+  body("price").isFloat({ min: 0.01 }),
   body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
   body("priceLabel").optional().isString().trim().isLength({ max: 40 }),
   body("blurb").optional().isString().trim().isLength({ max: 500 }),
@@ -120,7 +121,7 @@ export const createProductPlanValidators = [
 export const updateProductPlanValidators = [
   body("name").optional().isString().trim().isLength({ min: 1, max: 120 }),
   body("slug").optional().isString().trim().isLength({ min: 1, max: 80 }),
-  body("price").optional().isFloat({ min: 0 }),
+  body("price").optional().isFloat({ min: 0.01 }),
   body("currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
   body("priceLabel").optional().isString().trim().isLength({ max: 40 }),
   body("blurb").optional().isString().trim().isLength({ max: 500 }),
@@ -129,14 +130,6 @@ export const updateProductPlanValidators = [
   body("visibilityRunsPerMonth").optional().isInt({ min: 0, max: 10000 }),
   body("active").optional().isBoolean(),
   body("sortOrder").optional().isInt({ min: 0, max: 1000 }),
-];
-
-export const assignSubscriptionValidators = [
-  body("businessId").isMongoId(),
-  body("planId").isMongoId(),
-  body("status").optional().isIn(["active", "canceled", "past_due", "trialing"]),
-  body("note").optional().isString().trim().isLength({ max: 500 }),
-  body("createInvoice").optional().isBoolean(),
 ];
 
 export const createInvoiceValidators = [
@@ -190,3 +183,5 @@ export const updateAeoSettingsValidators = [
   body("actionPlanModel.currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
   body("promptsPerRun").optional().isInt({ min: 1, max: MAX_PROMPTS_PER_RUN }),
 ];
+
+export const subscribeValidators = [body("planId").isMongoId()];

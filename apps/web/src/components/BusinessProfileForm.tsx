@@ -10,7 +10,7 @@ export type BusinessProfileFormValues = {
   city: string;
   country: string;
   description?: string;
-  websiteUrl: string;
+  websiteUrl?: string;
   googleBusinessUrl?: string;
   socialLinks?: { label: string; url: string }[];
 };
@@ -92,12 +92,8 @@ export default function BusinessProfileForm({
       <Form.Item name="description" label="Short description">
         <Input.TextArea rows={3} maxLength={2000} showCount />
       </Form.Item>
-      <Form.Item
-        name="websiteUrl"
-        label="Website"
-        rules={[{ required: true, message: "Website is required" }, urlRule()]}
-      >
-        <Input placeholder="https://example.com" />
+      <Form.Item name="websiteUrl" label="Website (optional)" rules={[urlRule()]}>
+        <Input placeholder="https://example.com (optional)" />
       </Form.Item>
       <Form.Item name="googleBusinessUrl" label="Google Business Profile link" rules={[urlRule()]}>
         <Input placeholder="https://maps.google.com/... (optional)" />

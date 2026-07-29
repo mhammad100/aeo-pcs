@@ -5,13 +5,11 @@ import * as subscriptionsService from "../services/subscriptions.service";
 import * as usageService from "../services/usage.service";
 
 export async function listCatalogPlans(_req: AuthedRequest, res: Response) {
-  await productPlansService.ensureDefaultPlans();
   const plans = await productPlansService.listActiveCatalogPlans();
   res.json({ plans });
 }
 
 export async function adminListPlans(_req: AuthedRequest, res: Response) {
-  await productPlansService.ensureDefaultPlans();
   const plans = await productPlansService.listAllProductPlans();
   res.json({ plans });
 }
@@ -26,20 +24,14 @@ export async function adminUpdatePlan(req: AuthedRequest, res: Response) {
   res.json({ plan });
 }
 
+export async function adminDeletePlan(req: AuthedRequest, res: Response) {
+  await productPlansService.deleteProductPlan(req.params.planId);
+  res.json({ ok: true });
+}
+
 export async function adminListSubscriptions(_req: AuthedRequest, res: Response) {
   const subscriptions = await subscriptionsService.listSubscriptionsAdmin();
   res.json({ subscriptions });
-}
-
-export async function adminAssignSubscription(req: AuthedRequest, res: Response) {
-  const result = await subscriptionsService.assignSubscription({
-    businessId: req.body.businessId,
-    planId: req.body.planId,
-    status: req.body.status,
-    note: req.body.note,
-    createInvoice: req.body.createInvoice !== false,
-  });
-  res.status(201).json(result);
 }
 
 export async function adminListInvoices(_req: AuthedRequest, res: Response) {
@@ -69,9 +61,13 @@ export async function adminUpsertCostRate(req: AuthedRequest, res: Response) {
 }
 
 export async function mySubscription(req: AuthedRequest, res: Response) {
-  await productPlansService.ensureDefaultPlans();
   const subscription = await subscriptionsService.getSubscriptionInfoForUser(req.userId!);
   res.json({ subscription });
+}
+
+export async function subscribeToPlan(req: AuthedRequest, res: Response) {
+  const result = await subscriptionsService.subscribeUserToPlan(req.userId!, req.body.planId);
+  res.status(201).json(result);
 }
 
 export async function myInvoices(req: AuthedRequest, res: Response) {

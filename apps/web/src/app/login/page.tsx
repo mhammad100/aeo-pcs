@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { api, ApiError } from "@/lib/api";
+import { resolvePostAuthPath } from "@/lib/authRouting";
 import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/authSlice";
 
@@ -26,11 +27,8 @@ export default function LoginPage() {
         return;
       }
       dispatch(setCredentials(res));
-      if (res.user.business?.profileCompletedAt) {
-        router.replace("/app");
-      } else {
-        router.replace("/app/onboarding/profile");
-      }
+      const nextPath = await resolvePostAuthPath(res.user);
+      router.replace(nextPath);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {
@@ -62,7 +60,7 @@ export default function LoginPage() {
         </Form>
         <div style={{ marginTop: 16 }}>
           <Text type="secondary">
-            No account? <Link href="/signup">Request access</Link>
+            No account? <Link href="/signup">Sign up</Link>
           </Text>
         </div>
       </Card>

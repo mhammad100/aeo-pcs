@@ -67,11 +67,7 @@ async function upsertUser(input: {
   }
 
   await connectMongo();
-  const { ensureDefaultPlans } = await import("../services/productPlans.service");
-  const { ensureDefaultCostRates } = await import("../services/usage.service");
   const { ensureAeoSettings } = await import("../services/aeoSettings.service");
-  await ensureDefaultPlans();
-  await ensureDefaultCostRates();
   await ensureAeoSettings();
   await upsertUser({ email: adminEmail, password: adminPassword, role: "admin" });
 

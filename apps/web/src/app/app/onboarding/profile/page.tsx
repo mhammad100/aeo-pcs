@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Card, Spin, Typography, message } from "antd";
 import AuthGuard from "@/components/AuthGuard";
+import OnboardingSteps from "@/components/OnboardingSteps";
 import BusinessProfileForm, {
   type BusinessProfileFormValues,
 } from "@/components/BusinessProfileForm";
 import { api, ApiError } from "@/lib/api";
+import { hasActiveSubscription } from "@/lib/authRouting";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setUser } from "@/store/authSlice";
 import type { BusinessProfile } from "@aeo-pcs/shared";
@@ -33,6 +35,12 @@ export default function OnboardingProfilePage() {
     let cancelled = false;
     (async () => {
       try {
+        const subRes = await api.getMySubscription();
+        if (!cancelled && !hasActiveSubscription(subRes.subscription)) {
+          router.replace("/app/onboarding/plan");
+          return;
+        }
+
         const res = await api.getMyBusiness();
         if (!cancelled) setBusiness(res.business);
       } catch (err) {
@@ -46,7 +54,7 @@ export default function OnboardingProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   async function onSubmit(values: BusinessProfileFormValues) {
     setSaving(true);
@@ -82,9 +90,10 @@ export default function OnboardingProfilePage() {
           <Title level={2} style={{ color: "#EDEAE1", marginTop: 8 }}>
             Complete your business profile
           </Title>
+          <OnboardingSteps current={1} />
           <Paragraph type="secondary">
-            We need your basics and website before you can run visibility checks. Google Business and
-            social links are optional but help AI assistants find you.
+            Tell us your business basics before you run visibility checks. Website, Google Business,
+            and social links are optional but help AI assistants find you.
           </Paragraph>
           <Card>
             {loading ? (

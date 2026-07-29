@@ -67,7 +67,7 @@ export default function FeaturesPage() {
 
         <div className="ma-cta-row" style={{ marginTop: 48 }}>
           <Link href="/signup" className="ma-btn ma-btn-primary">
-            Request access
+            Get started
           </Link>
           <Link href="/pricing" className="ma-btn ma-btn-ghost">
             See pricing
