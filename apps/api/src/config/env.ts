@@ -33,4 +33,5 @@ export const env = {
   adminSiteUrl: required("ADMIN_SITE_URL").replace(/\/$/, ""),
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: required("JWT_EXPIRES_IN"),
+  SIGNUP_ENABLED: requiredBool("SIGNUP_ENABLED"),
 };
