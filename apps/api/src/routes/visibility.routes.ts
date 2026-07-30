@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as visibilityController from "../controllers/visibility.controller";
+import * as visibilityStreamController from "../controllers/visibilityStream.controller";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler, validate } from "../middleware/validate";
 import { createVisibilityJobValidators, jobIdParamValidators } from "../validators";
@@ -16,6 +17,13 @@ visibilityRouter.post(
 visibilityRouter.get("/jobs", requireAuth, asyncHandler(visibilityController.listJobs));
 
 visibilityRouter.get("/insights", requireAuth, asyncHandler(visibilityController.getInsights));
+
+visibilityRouter.get(
+  "/jobs/:jobId/stream",
+  requireAuth,
+  validate(jobIdParamValidators),
+  asyncHandler(visibilityStreamController.streamJob)
+);
 
 visibilityRouter.get(
   "/jobs/:jobId",

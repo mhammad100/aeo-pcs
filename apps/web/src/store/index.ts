@@ -15,23 +15,17 @@ import businessReducer from "./businessSlice";
 import promptsReducer from "./promptsSlice";
 import visibilityReducer from "./visibilitySlice";
 
-const visibilityPersistConfig = {
-  key: "visibility",
-  storage,
-  whitelist: ["jobId"] as string[],
-};
-
 const rootReducer = combineReducers({
   auth: authReducer,
   business: businessReducer,
   prompts: promptsReducer,
-  visibility: persistReducer(visibilityPersistConfig, visibilityReducer),
+  visibility: visibilityReducer,
 });
 
 const persistConfig = {
   key: "masteraeo",
   storage,
-  whitelist: ["auth", "business", "prompts", "visibility"],
+  whitelist: ["auth"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

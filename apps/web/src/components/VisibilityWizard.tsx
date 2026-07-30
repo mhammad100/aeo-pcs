@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
   Button,
-  Input,
   Progress,
   Space,
   Spin,
@@ -14,10 +13,11 @@ import {
 import { type AeoRuntimeSettings } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
+import VisibilityInsights from "@/components/VisibilityInsights";
 import VisibilityStepNav from "@/components/VisibilityStepNav";
+import { useVisibilityJobStream } from "@/hooks/useVisibilityJobStream";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hydrateFromProfile } from "@/store/businessSlice";
-import { setPrompts, updatePrompt } from "@/store/promptsSlice";
 import {
   resetVisibility,
   setError,
@@ -57,7 +57,6 @@ function hasPlanContent(plan: { automatable?: unknown[]; manual?: unknown[] } | 
 export default function VisibilityWizard() {
   const dispatch = useAppDispatch();
   const business = useAppSelector((s) => s.business);
-  const prompts = useAppSelector((s) => s.prompts.prompts);
   const visibility = useAppSelector((s) => s.visibility);
   const [localBusyLabel, setLocalBusyLabel] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
@@ -75,14 +74,19 @@ export default function VisibilityWizard() {
   const hasPlan = hasPlanContent(visibility.plan);
 
   const derivedStep = useMemo(() => {
-    if (hasPlan) return 3;
-    if (visibility.results || visibility.status === "queued" || visibility.status === "running") {
-      return 2;
+    if (hasPlan) return 1;
+    if (
+      visibility.jobId ||
+      visibility.results ||
+      visibility.status === "queued" ||
+      visibility.status === "running" ||
+      visibility.status === "failed" ||
+      visibility.status === "completed"
+    ) {
+      return 0;
     }
-    if (visibility.status === "failed") return 2;
-    if (prompts.length) return 1;
     return 0;
-  }, [hasPlan, prompts.length, visibility.results, visibility.status]);
+  }, [hasPlan, visibility.jobId, visibility.results, visibility.status]);
 
   const currentStep = stepOverride ?? derivedStep;
   const jobRunning = visibility.status === "queued" || visibility.status === "running";
@@ -92,9 +96,11 @@ export default function VisibilityWizard() {
       : 0;
   const activeModel = visibility.progress?.currentModel;
 
+  useVisibilityJobStream(visibility.jobId);
+
   function onStartNewCheck() {
     dispatch(resetVisibility());
-    setStepOverride(prompts.length ? 1 : 0);
+    setStepOverride(0);
   }
 
   useEffect(() => {
@@ -144,24 +150,6 @@ export default function VisibilityWizard() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (currentStep !== 1) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const runtimeRes = await api.getRuntimeSettings();
-        if (!cancelled && runtimeRes.settings) {
-          setRuntime(runtimeRes.settings);
-        }
-      } catch {
-        /* keep last known runtime settings */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [currentStep]);
-
-  useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
@@ -188,91 +176,49 @@ export default function VisibilityWizard() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!visibility.jobId) return;
-
+    if (!visibility.jobId || !hasResults) return;
     let cancelled = false;
-    let intervalId: number | undefined;
-
-    const applyJob = (job: Awaited<ReturnType<typeof api.getVisibilityJob>>) => {
-      dispatch(
-        setJobSnapshot({
-          status: job.status,
-          progress: job.progress ?? null,
-          results: job.results?.length ? job.results : null,
-          score: job.score ?? null,
-          plan: hasPlanContent(job.plan) ? job.plan! : null,
-          itemOutputs: job.itemOutputs ?? {},
-          error: job.error ?? null,
-        })
-      );
-      return job.status;
-    };
-
-    const poll = async () => {
+    (async () => {
       try {
         const job = await api.getVisibilityJob(visibility.jobId!);
-        if (cancelled) return null;
-        return applyJob(job);
-      } catch (err) {
-        if (!cancelled) {
-          dispatch(setError(err instanceof Error ? err.message : "Failed to poll job"));
+        if (cancelled) return;
+        if (hasPlanContent(job.plan)) {
+          dispatch(
+            setJobSnapshot({
+              status: job.status,
+              plan: job.plan!,
+              itemOutputs: job.itemOutputs ?? {},
+            })
+          );
         }
-        return null;
-      }
-    };
-
-    (async () => {
-      const status = await poll();
-      if (cancelled) return;
-      if (status === "queued" || status === "running") {
-        intervalId = window.setInterval(async () => {
-          const next = await poll();
-          if (next === "completed" || next === "failed") {
-            if (intervalId) window.clearInterval(intervalId);
-          }
-        }, 2500);
+      } catch {
+        /* plan may not exist yet */
       }
     })();
-
     return () => {
       cancelled = true;
-      if (intervalId) window.clearInterval(intervalId);
     };
-  }, [dispatch, visibility.jobId]);
+  }, [dispatch, visibility.jobId, hasResults]);
 
-  async function onGeneratePrompts() {
+  async function onRunCheck() {
     if (!business.selected) return;
     dispatch(setUiBusy(true));
-    setLocalBusyLabel("Generating prompts");
+    setLocalBusyLabel("Preparing visibility check");
     dispatch(setError(null));
+    dispatch(resetVisibility());
     try {
-      const { prompts: next } = await api.generatePrompts({
+      const { prompts } = await api.generatePrompts({
         business: business.selected,
         category: business.category,
         city: business.city,
         country: business.country,
       });
-      dispatch(setPrompts(next));
-      dispatch(resetVisibility());
-      setStepOverride(1);
-    } catch (err) {
-      dispatch(setError(err instanceof Error ? err.message : "Prompt generation failed"));
-    } finally {
-      dispatch(setUiBusy(false));
-      setLocalBusyLabel(null);
-    }
-  }
 
-  async function onRunCheck() {
-    if (!business.selected || !prompts.length) return;
-    dispatch(setUiBusy(true));
-    setLocalBusyLabel("Starting visibility check");
-    dispatch(setError(null));
-    try {
       const { jobId } = await api.createVisibilityJob({
         category: business.category,
         prompts,
       });
+
       dispatch(setJobId(jobId));
       dispatch(
         setJobSnapshot({
@@ -285,7 +231,7 @@ export default function VisibilityWizard() {
           error: null,
         })
       );
-      setStepOverride(2);
+      setStepOverride(0);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Visibility check failed"));
     } finally {
@@ -302,7 +248,7 @@ export default function VisibilityWizard() {
     try {
       const { plan } = await api.buildPlan(visibility.jobId);
       dispatch(setPlan(plan));
-      setStepOverride(3);
+      setStepOverride(1);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Action plan failed"));
     } finally {
@@ -346,17 +292,13 @@ export default function VisibilityWizard() {
   }
 
   const stepItems = [
-    { title: "Business", description: "Confirm profile" },
-    { title: "Prompts", description: "Generate & edit" },
-    { title: "Results", description: "AI mentions" },
+    { title: "Visibility check", description: "Index & insights" },
     { title: "Action plan", description: "Next steps" },
   ];
 
   const stepHints = [
-    "Review the profile used for this check.",
-    "Generate buyer-intent prompts from your profile, edit if needed, then run.",
-    "See mention rate across each model and prompt.",
-    "Generate content and track manual tasks.",
+    "We generate search prompts from your profile and check how AI assistants mention you.",
+    "Turn insights into content tasks and manual improvements.",
   ];
 
   function onStepNavClick(index: number) {
@@ -407,13 +349,15 @@ export default function VisibilityWizard() {
     );
   }
 
+  const showIdle = !visibility.jobId && !jobRunning && !hasResults && !visibility.status;
+
   return (
     <div className="vis-page">
       <header className="vis-header">
         <div className="vis-header-main">
           <div className="vis-eyebrow">Visibility</div>
           <Title level={2} className="vis-title">
-            AI mention check
+            AI visibility check
           </Title>
           <MetaPills />
         </div>
@@ -473,172 +417,87 @@ export default function VisibilityWizard() {
         />
 
         <div className="vis-main">
-          {currentStep === 0 && business.selected && (
-            <StepShell
-              foot={
-                <>
-                  <Button type="primary" onClick={() => setStepOverride(1)}>
-                    Continue
-                  </Button>
-                  <Link href="/app/settings">
-                    <Button type="link">Edit profile</Button>
-                  </Link>
-                </>
-              }
-            >
-              <h4 className="vis-business-name">{business.selected.name}</h4>
-              <div className="vis-detail-grid">
-                <div className="vis-detail-item">
-                  <label>Location</label>
-                  <span>
-                    {[business.city, business.country].filter(Boolean).join(", ") || "—"}
-                  </span>
-                </div>
-                <div className="vis-detail-item">
-                  <label>Category</label>
-                  <span>{business.category || "—"}</span>
-                </div>
-                {business.websiteUrl && (
-                  <div className="vis-detail-item vis-detail-full">
-                    <label>Website</label>
-                    <a href={business.websiteUrl} target="_blank" rel="noreferrer">
-                      {business.websiteUrl}
-                    </a>
-                  </div>
-                )}
-                {business.selected.description && (
-                  <div className="vis-detail-item vis-detail-full">
-                    <label>Description</label>
-                    <span>{business.selected.description}</span>
-                  </div>
-                )}
-                {(business.selected.targetItems?.length ?? 0) > 0 && (
-                  <div className="vis-detail-item vis-detail-full">
-                    <label>Target services</label>
-                    <span>{business.selected.targetItems?.join(" · ")}</span>
-                  </div>
-                )}
-                {(business.selected.targetLocations?.length ?? 0) > 0 && (
-                  <div className="vis-detail-item vis-detail-full">
-                    <label>Service areas</label>
-                    <span>{business.selected.targetLocations?.join(" · ")}</span>
-                  </div>
-                )}
-              </div>
-            </StepShell>
-          )}
-
-          {currentStep === 1 && business.selected && (
-            <StepShell
-              foot={
-                prompts.length > 0 ? (
-                  <Button
-                    type="primary"
-                    size="large"
-                    loading={
-                      jobRunning ||
-                      (visibility.uiBusy && localBusyLabel === "Starting visibility check")
-                    }
-                    disabled={!canRunVisibility || subscriptionLoading}
-                    onClick={onRunCheck}
-                  >
-                    Run check
-                  </Button>
-                ) : undefined
-              }
-            >
-              <div className="vis-prompts-intro">
-                <p>
-                  Using <strong>{business.category || "your category"}</strong> from your profile
-                  {business.city || business.country
-                    ? ` · ${[business.city, business.country].filter(Boolean).join(", ")}`
-                    : ""}
-                  .
-                </p>
-                <Link href="/app/settings" className="vis-prompts-settings-link">
-                  Edit profile
-                </Link>
-              </div>
-
-              <Button
-                type="primary"
-                size="large"
-                block
-                loading={visibility.uiBusy && localBusyLabel === "Generating prompts"}
-                onClick={onGeneratePrompts}
-                style={{ marginBottom: prompts.length ? 20 : 0 }}
-              >
-                {prompts.length > 0 ? "Regenerate prompts" : "Generate prompts"}
-              </Button>
-
-              {prompts.length > 0 && (
-                <Space direction="vertical" style={{ width: "100%" }} size={12}>
-                  {prompts.map((p, i) => (
-                    <div key={i} className="vis-prompt-field">
-                      <span className="vis-prompt-index">{i + 1}</span>
-                      <Input.TextArea
-                        value={p}
-                        autoSize={{ minRows: 1, maxRows: 3 }}
-                        onChange={(e) =>
-                          dispatch(updatePrompt({ index: i, value: e.target.value }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </Space>
-              )}
-            </StepShell>
-          )}
-
-          {currentStep === 2 && (
+          {currentStep === 0 && (
             <StepShell
               hint={
                 jobRunning
-                  ? "Querying models with live web search."
+                  ? "Checking how AI assistants mention your business."
                   : hasResults
-                    ? "Review mentions and cited sources."
-                    : stepHints[2]
+                    ? "Your visibility index and key insights."
+                    : stepHints[0]
               }
               foot={
-                !jobRunning && hasResults ? (
+                showIdle ? (
+                  <Button
+                    type="primary"
+                    size="large"
+                    loading={visibility.uiBusy}
+                    disabled={!canRunVisibility || subscriptionLoading || !business.selected}
+                    onClick={onRunCheck}
+                  >
+                    {localBusyLabel || "Run visibility check"}
+                  </Button>
+                ) : !jobRunning && hasResults ? (
                   <>
-                    {hasResults && (
-                      <Button
-                        loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
-                        onClick={onDownloadReport}
-                      >
-                        Download report
-                      </Button>
-                    )}
+                    <Button
+                      loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
+                      onClick={onDownloadReport}
+                    >
+                      Download report
+                    </Button>
                     {!hasPlan ? (
                       <Button
                         type="primary"
                         loading={visibility.uiBusy && localBusyLabel === "Building action plan"}
                         onClick={onBuildPlan}
                       >
-                        Build action plan
+                        Generate action plan
                       </Button>
                     ) : (
-                      <Button type="primary" onClick={() => setStepOverride(3)}>
+                      <Button type="primary" onClick={() => setStepOverride(1)}>
                         View action plan
                       </Button>
                     )}
                   </>
-                ) : !jobRunning && !hasResults ? (
-                  <Button type="primary" onClick={onStartNewCheck}>
-                    New check
+                ) : !jobRunning && visibility.status === "failed" ? (
+                  <Button type="primary" onClick={onRunCheck}>
+                    Try again
                   </Button>
                 ) : undefined
               }
             >
+              {showIdle && business.selected && (
+                <div className="vis-idle">
+                  <h4 className="vis-business-name">{business.selected.name}</h4>
+                  <Paragraph type="secondary" style={{ marginBottom: 16, maxWidth: 520 }}>
+                    We&apos;ll generate buyer-intent prompts from your profile, query{" "}
+                    {visibilityModelCount} AI assistants with live search, and summarize how often
+                    they mention you.
+                  </Paragraph>
+                  <div className="vis-detail-grid">
+                    <div className="vis-detail-item">
+                      <label>Location</label>
+                      <span>
+                        {[business.city, business.country].filter(Boolean).join(", ") || "—"}
+                      </span>
+                    </div>
+                    <div className="vis-detail-item">
+                      <label>Category</label>
+                      <span>{business.category || "—"}</span>
+                    </div>
+                  </div>
+                  <Link href="/app/settings" className="vis-prompts-settings-link">
+                    Edit profile
+                  </Link>
+                </div>
+              )}
+
               {jobRunning && (
                 <div className="vis-running">
                   <Progress percent={progressPct} strokeColor="#8FBF9F" style={{ marginBottom: 12 }} />
-                  {visibility.progress?.currentPrompt && (
-                    <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
-                      {visibility.progress.currentPrompt}
-                    </Text>
-                  )}
+                  <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
+                    Checking {business.selected?.name || "your business"} across AI assistants…
+                  </Text>
                   {modelLabels.length > 0 && (
                     <div className="vis-running-models">
                       {modelLabels.map((label) => (
@@ -659,98 +518,23 @@ export default function VisibilityWizard() {
               )}
 
               {!jobRunning && hasResults && visibility.results && visibility.score && (
-                <>
-                  <div className="vis-score-block">
-                    <div
-                      className={`vis-score-value ${
-                        (visibility.score.brandVisibilityPct ??
-                          visibility.score.visibilityPct) >= 50
-                          ? "is-good"
-                          : "is-low"
-                      }`}
-                    >
-                      {visibility.score.brandVisibilityPct ?? visibility.score.visibilityPct}%
-                    </div>
-                    <div>
-                      <Text style={{ color: "#EDEAE1" }}>Brand visibility</Text>
-                      <Paragraph type="secondary" style={{ marginBottom: 0, maxWidth: 420 }}>
-                        {business.selected?.name} mentioned in {visibility.score.totalMentions} of{" "}
-                        {visibility.score.totalChecks} responses.
-                        {typeof visibility.score.sourceVisibilityPct === "number" && (
-                          <>
-                            {" "}
-                            Source cited in {visibility.score.totalSourceMentions} (
-                            {visibility.score.sourceVisibilityPct}%).
-                          </>
-                        )}
-                        {visibility.score.avgPosition != null && (
-                          <> Avg position when mentioned: #{visibility.score.avgPosition}.</>
-                        )}
-                      </Paragraph>
-                    </div>
-                  </div>
-
-                  <Space direction="vertical" style={{ width: "100%" }} size={12}>
-                    {visibility.results.map((r, i) => (
-                      <div
-                        key={i}
-                        className="vis-panel"
-                        style={{ padding: "14px 16px", borderRadius: 10 }}
-                      >
-                        <Text strong style={{ color: "#EDEAE1", display: "block", marginBottom: 12 }}>
-                          {r.prompt}
-                        </Text>
-                        {r.perModel.map((m) => (
-                          <div
-                            key={m.model}
-                            className={`vis-model-row ${m.mentioned ? "is-mentioned" : "is-missed"}`}
-                          >
-                            <div className="vis-model-label">
-                              <Text strong style={{ color: "#EDEAE1" }}>
-                                {m.model}
-                              </Text>
-                              <span className={`vis-tag ${m.mentioned ? "ok" : "no"}`}>
-                                {m.mentioned ? "Mentioned" : "Not mentioned"}
-                              </span>
-                              {m.sourceMentioned && (
-                                <span className="vis-tag ok">Source cited</span>
-                              )}
-                              {m.mentioned && m.position != null && (
-                                <span className="vis-tag">#{m.position}</span>
-                              )}
-                              {m.sentiment && (
-                                <span className="vis-tag">{m.sentiment}</span>
-                              )}
-                            </div>
-                            <Paragraph
-                              style={{ marginBottom: 4, color: "rgba(237, 234, 225, 0.85)" }}
-                            >
-                              {m.answer}
-                            </Paragraph>
-                            {m.sources.length > 0 && (
-                              <Text type="secondary" style={{ fontSize: 12 }}>
-                                Sources: {m.sources.map((s) => s.domain).join(", ")}
-                              </Text>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ))}
-                  </Space>
-                </>
-              )}
-
-              {!jobRunning && !hasResults && visibility.status !== "failed" && (
-                <Text type="secondary">
-                  {visibility.status === "completed"
-                    ? "No results saved. Start a new check."
-                    : "Generate prompts and run a check."}
-                </Text>
+                <VisibilityInsights
+                  results={visibility.results}
+                  score={visibility.score}
+                  businessName={business.selected?.name}
+                  promptContext={{
+                    description: business.selected?.description,
+                    category: business.category,
+                    targetItems: business.selected?.targetItems,
+                    targetLocations: business.selected?.targetLocations,
+                    city: business.city,
+                  }}
+                />
               )}
             </StepShell>
           )}
 
-          {currentStep === 3 && hasPlan && visibility.plan && (
+          {currentStep === 1 && hasPlan && visibility.plan && (
             <StepShell
               foot={
                 <>
@@ -759,7 +543,7 @@ export default function VisibilityWizard() {
                       loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
                       onClick={onDownloadReport}
                     >
-                      Report
+                      Download report
                     </Button>
                   )}
                   <Link href="/app/action-plan">

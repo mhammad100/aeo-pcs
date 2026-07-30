@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
 import type { UserRole } from "@aeo-pcs/shared";
 import { UserModel } from "../models/User";
-import { verifyAccessToken } from "../utils/auth";
+import { extractBearerToken, verifyAccessToken } from "../utils/auth";
 
 export type AuthedRequest = Request & {
   userId?: string;
@@ -10,11 +10,10 @@ export type AuthedRequest = Request & {
 
 export async function requireAuth(req: AuthedRequest, res: Response, next: NextFunction) {
   try {
-    const header = req.headers.authorization;
-    if (!header?.startsWith("Bearer ")) {
+    const token = extractBearerToken(req);
+    if (!token) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    const token = header.slice("Bearer ".length).trim();
     const payload = verifyAccessToken(token);
     const user = await UserModel.findById(payload.sub);
     if (!user || user.status !== "active") {

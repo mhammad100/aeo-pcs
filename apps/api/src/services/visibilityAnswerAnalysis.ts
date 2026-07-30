@@ -1,4 +1,5 @@
 import type { MentionSentiment } from "@aeo-pcs/shared";
+import { filterBusinessBrands } from "@aeo-pcs/shared";
 import { getAeoSettings } from "./aeoSettings.service";
 import { callTaskModel } from "./taskModelRunner";
 import {
@@ -28,9 +29,11 @@ export async function analyzeVisibilityAnswer(input: {
   }
 
   const system = `You analyze AI assistant answers for brand visibility research. Return ONLY a JSON object with:
-- brandsMentioned: array of business/brand names explicitly recommended or named in order of appearance (strings)
+- brandsMentioned: array of LOCAL BUSINESS names explicitly recommended or named, in order of appearance. Include only restaurants, cafés, shops, clinics, or similar establishments a customer could visit or hire.
 - targetPosition: 1-based index of the target business in brandsMentioned, or null if not listed
 - sentiment: "positive", "neutral", or "negative" for how the target business is described (null if not mentioned)
+
+EXCLUDE from brandsMentioned: directories (Justdial, Yelp, TripAdvisor), delivery apps (Swiggy, Zomato), social platforms (Instagram, Facebook), search engines (Google), media/blog sites, and generic platforms — even if named in the answer.
 
 Target business names to find: ${targetNames.join(" | ")}
 No markdown, no prose outside JSON.`;
@@ -46,10 +49,11 @@ No markdown, no prose outside JSON.`;
         : undefined,
     });
     const parsed = parseAnswerAnalysisJson(text, targetNames);
+    const brandsMentioned = filterBusinessBrands(parsed.brandsMentioned, [], targetNames);
     return {
       position: parsed.targetPosition,
       sentiment: parsed.sentiment,
-      brandsMentioned: parsed.brandsMentioned,
+      brandsMentioned,
     };
   } catch {
     return { position: null, sentiment: null, brandsMentioned: [] };

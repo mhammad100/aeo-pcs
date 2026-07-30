@@ -1,6 +1,6 @@
 import type { AuthUser, LoginRequest, LoginResponse, MeResponse } from "@aeo-pcs/shared";
 import { store } from "@/store";
-import { logout } from "@/store/authSlice";
+import { logoutAndReset } from "@/store/session";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1";
 
@@ -26,7 +26,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && token) {
-    store.dispatch(logout());
+    void store.dispatch(logoutAndReset());
   }
   if (!res.ok) {
     throw new ApiError((data as { error?: string }).error || "Request failed", res.status);
@@ -97,6 +97,15 @@ export const api = {
         itemOutputs?: Record<string, string>;
       }
     >(`/visibility/jobs/${jobId}`),
+
+  visibilityJobStreamUrl: (jobId: string) => {
+    const token = store.getState().auth.token;
+    const base = API_URL.replace(/\/$/, "");
+    const params = new URLSearchParams();
+    if (token) params.set("token", token);
+    const qs = params.toString();
+    return `${base}/visibility/jobs/${encodeURIComponent(jobId)}/stream${qs ? `?${qs}` : ""}`;
+  },
 
   listVisibilityJobs: () =>
     request<{ jobs: import("@aeo-pcs/shared").VisibilityJobSummary[] }>("/visibility/jobs"),

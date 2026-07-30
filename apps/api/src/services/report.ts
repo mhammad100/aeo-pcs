@@ -53,9 +53,15 @@ export function buildReportHtml(state: {
     results.forEach((r) => {
       html += `<div class="rpt-prompt">${esc(r.prompt)}</div>`;
       r.perModel.forEach((m) => {
-        html += `<div class="rpt-model">${esc(m.model)}, ${m.mentioned ? "mentioned" : "not mentioned"}${m.sourceMentioned ? ", source cited" : ""}${m.position != null ? `, #${m.position}` : ""}${m.sentiment ? `, ${m.sentiment}` : ""}</div>`;
-        html += `<div class="rpt-text">${esc(m.answer)}</div>`;
-        if (m.sources.length) {
+        const answerEmpty = !m.answer?.trim();
+        const statusLabel = answerEmpty
+          ? "no answer returned"
+          : m.mentioned
+            ? "mentioned"
+            : "not mentioned";
+        html += `<div class="rpt-model">${esc(m.model)}, ${statusLabel}${!answerEmpty && m.sourceMentioned ? ", source cited" : ""}${!answerEmpty && m.position != null ? `, #${m.position}` : ""}${!answerEmpty && m.sentiment ? `, ${m.sentiment}` : ""}</div>`;
+        html += `<div class="rpt-text">${esc(answerEmpty ? "This model did not return an answer." : m.answer)}</div>`;
+        if (!answerEmpty && m.sources.length) {
           html += `<div class="rpt-sources">Sources cited: ${esc(m.sources.map((s) => s.domain).join(", "))}</div>`;
         }
       });

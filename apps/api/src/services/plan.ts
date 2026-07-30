@@ -29,6 +29,8 @@ Rules for Google Business Profile in the manual list:
 
 Then analyze why the business is or isn't appearing in AI assistant answers, given the domains currently getting cited and the model answers below.
 
+Treat directories and platforms (Justdial, Swiggy, Zomato, TripAdvisor, Instagram, etc.) as citation sources to get listed on — NOT as business competitors. Manual items should focus on real visibility gaps: GBP, reviews, editorial features, owned website, forum presence.
+
 Produce ONLY a JSON object with two arrays: automatable and manual.
 - Each automatable item is content or copy this tool can generate right now, with fields id (short slug), title (short action label, plain text, five words max), description (one plain sentence explaining what it produces). Include 3 to 5 items such as an FAQ content block, a comparison paragraph, a Google Business Profile description (only if a listing exists or should be created), a structured data snippet description, or short-form answer content for forums.
 - Each manual item is a real-world action the business owner must do themselves, with fields title (short action label, five words max) and guidance (two to three plain sentences explaining exactly what to do and why it helps AI visibility, no markdown). Include 3 to 5 items grounded in your search and the citation gaps — for example optimizing an existing Google listing, earning reviews, getting listed on relevant directories that appeared in citations, local press, or forum presence. Do not invent a "claim Google Business Profile" action when a matching listing already exists.

@@ -7,7 +7,7 @@ import AuthGuard from "@/components/AuthGuard";
 import ProfileGate from "@/components/ProfileGate";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { logout } from "@/store/authSlice";
+import { logoutAndReset } from "@/store/session";
 
 const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
@@ -38,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const user = useAppSelector((s) => s.auth.user);
 
   function onLogout() {
-    dispatch(logout());
+    void dispatch(logoutAndReset());
     router.replace("/login");
   }
 

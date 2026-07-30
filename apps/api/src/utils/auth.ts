@@ -32,3 +32,18 @@ export function verifyAccessToken(token: string): JwtPayload {
     role: (decoded as JwtPayload).role,
   };
 }
+
+export function extractBearerToken(req: {
+  headers: { authorization?: string };
+  query: Record<string, unknown>;
+}): string | null {
+  const header = req.headers.authorization;
+  if (header?.startsWith("Bearer ")) {
+    return header.slice("Bearer ".length).trim();
+  }
+  const queryToken = req.query.token;
+  if (typeof queryToken === "string" && queryToken.trim()) {
+    return queryToken.trim();
+  }
+  return null;
+}

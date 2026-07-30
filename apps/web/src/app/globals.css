@@ -1140,6 +1140,170 @@ a {
   color: var(--ma-accent);
 }
 
+.vis-score-value.is-mid {
+  color: #d4a853;
+}
+
+.vis-insights {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.vis-insights-hero {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid var(--ma-line);
+  background: rgba(143, 191, 159, 0.06);
+}
+
+.vis-insights-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.vis-insight-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ma-line);
+  background: rgba(11, 20, 17, 0.45);
+}
+
+.vis-insight-metric-label {
+  color: var(--ma-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.vis-insight-metric-value {
+  color: var(--ma-ink);
+  font-family: var(--ma-font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  line-height: 1.1;
+}
+
+.vis-insight-metric-hint {
+  color: var(--ma-muted);
+  font-size: 12px;
+}
+
+.vis-insight-section h4 {
+  margin: 0 0 10px;
+  color: var(--ma-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vis-insight-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.vis-insight-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ma-line);
+  background: rgba(11, 20, 17, 0.45);
+}
+
+.vis-insight-chip-title {
+  color: var(--ma-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vis-insight-chip-pct {
+  font-family: var(--ma-font-display);
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.vis-insight-chip-sub {
+  color: var(--ma-muted);
+  font-size: 12px;
+}
+
+.vis-insight-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vis-insight-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ma-line);
+  border-left: 3px solid #5c4a45;
+  background: rgba(11, 20, 17, 0.45);
+}
+
+.vis-insight-list.is-positive li {
+  border-left-color: var(--ma-accent-soft);
+}
+
+.vis-insight-list-main {
+  color: var(--ma-ink);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.vis-insight-list-meta {
+  color: var(--ma-muted);
+  font-size: 12px;
+}
+
+.vis-insight-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.vis-insight-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ma-line);
+  background: rgba(212, 132, 74, 0.1);
+  color: var(--ma-ink);
+  font-size: 13px;
+}
+
+.vis-insight-tag.is-muted {
+  background: rgba(11, 20, 17, 0.45);
+  color: var(--ma-muted);
+}
+
+.vis-insight-tag-count {
+  color: var(--ma-muted);
+  font-size: 11px;
+}
+
+.vis-idle {
+  max-width: 560px;
+}
+
 .vis-model-row {
   margin-bottom: 14px;
   padding: 12px 14px;
@@ -1154,6 +1318,11 @@ a {
 
 .vis-model-row.is-missed {
   border-left: 3px solid #5c4a45;
+}
+
+.vis-model-row.is-empty {
+  border-left: 3px solid #8a7a4a;
+  opacity: 0.92;
 }
 
 .vis-model-label {
@@ -1182,6 +1351,11 @@ a {
 .vis-tag.no {
   background: rgba(232, 150, 122, 0.12);
   color: #e8967a;
+}
+
+.vis-tag.warn {
+  background: rgba(212, 168, 83, 0.15);
+  color: #d4a853;
 }
 
 .vis-prompt-field {

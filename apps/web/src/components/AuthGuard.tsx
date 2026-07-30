@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { Spin } from "antd";
 import { api } from "@/lib/api";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { logout, setUser } from "@/store/authSlice";
+import { setUser } from "@/store/authSlice";
+import { logoutAndReset } from "@/store/session";
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -25,7 +26,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         const { user } = await api.me();
         if (!cancelled) {
           if (user.role !== "business" || user.status !== "active") {
-            dispatch(logout());
+            void dispatch(logoutAndReset());
             router.replace("/login");
             return;
           }
@@ -34,7 +35,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       } catch {
         if (!cancelled) {
-          dispatch(logout());
+          void dispatch(logoutAndReset());
           router.replace("/login");
         }
       }

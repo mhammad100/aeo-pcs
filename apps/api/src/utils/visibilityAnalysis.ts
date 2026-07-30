@@ -105,9 +105,9 @@ export function normalizeVisibilityScore(
 
 export function computeScore(
   results: PromptResult[],
-  modelCount: number
+  _modelCount: number
 ): VisibilityScore {
-  const totalChecks = results.length * modelCount;
+  let totalChecks = 0;
   let totalMentions = 0;
   let totalSourceMentions = 0;
   const positions: number[] = [];
@@ -115,6 +115,8 @@ export function computeScore(
 
   for (const r of results) {
     for (const m of r.perModel) {
+      if (!m.answer?.trim()) continue;
+      totalChecks += 1;
       if (m.mentioned) totalMentions += 1;
       if (m.sourceMentioned) totalSourceMentions += 1;
       if (m.mentioned && typeof m.position === "number" && m.position > 0) {

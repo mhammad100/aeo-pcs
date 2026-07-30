@@ -1,6 +1,7 @@
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
 import { getEnabledVisibilityModels } from "./aeoSettings.service";
+import { publishJobUpdate } from "./jobEvents";
 import { assertAiFeaturesAllowed } from "./subscriptions.service";
 import { runVisibilityCheck } from "./visibility";
 
@@ -75,6 +76,11 @@ async function processVisibilityJob(jobId: string) {
       $unset: { plan: 1 },
     });
 
+    publishJobUpdate(jobId, {
+      status: "running",
+      progress: { completed: 0, total, currentModel: "" },
+    });
+
     const { results, score } = await runVisibilityCheck({
       business: {
         name: job.business?.name || "",
@@ -106,6 +112,10 @@ async function processVisibilityJob(jobId: string) {
             progress: { completed, total: t, currentPrompt, currentModel },
           },
         });
+        publishJobUpdate(jobId, {
+          status: "running",
+          progress: { completed, total: t, currentModel },
+        });
       },
     });
 
@@ -132,6 +142,16 @@ async function processVisibilityJob(jobId: string) {
     if (!updated?.results?.length) {
       console.error(`Visibility job ${jobId} completed but results were not persisted`);
     }
+
+    publishJobUpdate(jobId, {
+      status: "completed",
+      progress: {
+        completed: score.totalChecks,
+        total: score.totalChecks,
+      },
+      results,
+      score,
+    });
   } catch (err) {
     const message =
       err instanceof AppError
@@ -146,6 +166,11 @@ async function processVisibilityJob(jobId: string) {
         error: message,
       },
       $unset: { plan: 1 },
+    });
+
+    publishJobUpdate(jobId, {
+      status: "failed",
+      error: message,
     });
   }
 }
