@@ -157,7 +157,7 @@ export const api = {
       },
     });
     if (res.status === 401 && token) {
-      store.dispatch(logout());
+      void store.dispatch(logoutAndReset());
     }
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
