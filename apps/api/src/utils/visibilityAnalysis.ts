@@ -165,6 +165,34 @@ export type AnswerAnalysis = {
   sentiment: MentionSentiment | null;
 };
 
+type ParsedEntity = {
+  name?: unknown;
+  type?: unknown;
+};
+
+function readLocalBusinessNames(parsed: Record<string, unknown>): string[] {
+  const fromLocal = parsed.localBusinessesMentioned;
+  if (Array.isArray(fromLocal) && fromLocal.length) {
+    return fromLocal.map(String).filter(Boolean);
+  }
+
+  const entities = parsed.entities;
+  if (Array.isArray(entities) && entities.length) {
+    return entities
+      .filter((entry): entry is ParsedEntity => Boolean(entry && typeof entry === "object"))
+      .filter((entry) => String(entry.type || "").toLowerCase() === "local_business")
+      .map((entry) => String(entry.name || "").trim())
+      .filter(Boolean);
+  }
+
+  const fromLegacy = parsed.brandsMentioned;
+  if (Array.isArray(fromLegacy)) {
+    return fromLegacy.map(String).filter(Boolean);
+  }
+
+  return [];
+}
+
 export function parseAnswerAnalysisJson(text: string, targetNames: string[]): AnswerAnalysis {
   const fallback: AnswerAnalysis = {
     brandsMentioned: [],
@@ -175,14 +203,8 @@ export function parseAnswerAnalysisJson(text: string, targetNames: string[]): An
     const cleaned = text.replace(/```json/gi, "").replace(/```/g, "").trim();
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (!match) return fallback;
-    const parsed = JSON.parse(match[0]) as {
-      brandsMentioned?: unknown;
-      targetPosition?: unknown;
-      sentiment?: unknown;
-    };
-    const brandsMentioned = Array.isArray(parsed.brandsMentioned)
-      ? parsed.brandsMentioned.map(String).filter(Boolean)
-      : [];
+    const parsed = JSON.parse(match[0]) as Record<string, unknown>;
+    const brandsMentioned = readLocalBusinessNames(parsed);
     let targetPosition: number | null = null;
     if (typeof parsed.targetPosition === "number" && parsed.targetPosition > 0) {
       targetPosition = parsed.targetPosition;

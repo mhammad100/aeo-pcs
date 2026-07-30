@@ -103,6 +103,7 @@ export async function runVisibilityCheck(input: {
         const analysis = await analyzeVisibilityAnswer({
           answer: text,
           business: bizCtx,
+          citedDomains: dedupedSources.map((s) => s.domain).filter(Boolean),
           usage: input.usage
             ? {
                 userId: input.usage.userId,

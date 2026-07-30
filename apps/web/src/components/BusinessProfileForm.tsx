@@ -126,7 +126,8 @@ export default function BusinessProfileForm({
               Target services / products <span style={{ color: "#c9773d" }}>*</span>
             </div>
             <p className="app-form-hint" style={{ marginBottom: 8 }}>
-              What buyers search for — used to generate local AI visibility prompts.
+              Key services or products customers search for. List your main offerings — the terms
+              people use when asking an AI assistant for recommendations.
             </p>
             {fields.map((field) => (
               <Space key={field.key} align="baseline" style={{ display: "flex", marginBottom: 8 }}>
@@ -173,7 +174,7 @@ export default function BusinessProfileForm({
       <Form.Item
         name="targetLocations"
         label="Target locations (optional)"
-        tooltip="Neighborhoods or areas you serve beyond your primary city"
+        tooltip="Neighborhoods and areas you serve, in addition to your primary city"
       >
         <Select
           mode="tags"
@@ -277,14 +278,14 @@ export default function BusinessProfileForm({
           <section className="app-form-section">
             <div className="app-form-section-head">
               <h4>Business identity</h4>
-              <p>Name and category used in AI visibility prompts.</p>
+              <p>How customers and AI assistants identify your business.</p>
             </div>
             {identityFields}
           </section>
           <section className="app-form-section">
             <div className="app-form-section-head">
               <h4>Location</h4>
-              <p>Helps models return locally relevant results.</p>
+              <p>Where you operate — used for local visibility checks.</p>
             </div>
             {locationFields}
           </section>

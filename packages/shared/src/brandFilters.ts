@@ -1,32 +1,3 @@
-/** Directories, platforms, and aggregators — not local business competitors. */
-const NON_COMPETITOR_NAMES = new Set([
-  "justdial",
-  "swiggy",
-  "zomato",
-  "tripadvisor",
-  "yelp",
-  "google",
-  "google maps",
-  "google business",
-  "instagram",
-  "facebook",
-  "linkedin",
-  "twitter",
-  "youtube",
-  "reddit",
-  "quora",
-  "wikipedia",
-  "eazydiner",
-  "magicpin",
-  "hungrito",
-  "fabhotels",
-  "holidify",
-  "wanderlog",
-  "whatshot",
-  "knocksense",
-  "vertexaisearch",
-]);
-
 const STOP_WORDS = new Set([
   "about",
   "after",
@@ -72,45 +43,61 @@ function normalizeKey(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
-function domainStem(domain: string): string {
+/** Keys derived from a cited domain for matching platform/source names in answer text. */
+export function citedDomainKeys(domain: string): string[] {
   const clean = domain.replace(/^www\./, "").toLowerCase();
   const parts = clean.split(".").filter(Boolean);
-  if (parts.length >= 2 && parts[parts.length - 1]!.length <= 3) {
-    return parts[parts.length - 2] || clean;
+  const keys = new Set<string>();
+
+  if (!parts.length) return [];
+
+  for (let i = 0; i < parts.length - 1; i++) {
+    const key = normalizeKey(parts[i]!);
+    if (key.length >= 3) keys.add(key);
   }
-  return parts[0] || clean;
+
+  if (parts.length >= 2) {
+    const stem = normalizeKey(parts[parts.length - 2]!);
+    if (stem.length >= 3) keys.add(stem);
+  }
+
+  return [...keys];
 }
 
-export function isNonCompetitorBrand(name: string, citedDomains: string[] = []): boolean {
+export function looksLikeUrlOrDomain(name: string): boolean {
+  const trimmed = name.trim();
+  if (!trimmed) return false;
+  if (/^https?:\/\//i.test(trimmed)) return true;
+  if (/^www\./i.test(trimmed)) return true;
+  if (/^[a-z0-9-]+\.[a-z]{2,}(?:[/:?#]|$)/i.test(trimmed)) return true;
+  return false;
+}
+
+/**
+ * True when a name likely refers to a citation source / platform, not a local business.
+ * Uses cited domains from the same answer — no hardcoded directory list.
+ */
+export function isLikelySourceOrPlatform(name: string, citedDomains: string[] = []): boolean {
   const trimmed = name.trim();
   if (!trimmed) return true;
 
   const key = normalizeKey(trimmed);
   if (!key || key.length < 2) return true;
-
-  if (NON_COMPETITOR_NAMES.has(trimmed.toLowerCase())) return true;
-  if (NON_COMPETITOR_NAMES.has(key)) return true;
-
-  for (const blocked of NON_COMPETITOR_NAMES) {
-    const blockedKey = normalizeKey(blocked);
-    if (blockedKey && (key === blockedKey || key.includes(blockedKey) || blockedKey.includes(key))) {
-      return true;
-    }
-  }
+  if (looksLikeUrlOrDomain(trimmed)) return true;
 
   for (const domain of citedDomains) {
-    const stem = domainStem(domain);
-    const stemKey = normalizeKey(stem);
-    if (!stemKey) continue;
-    if (key === stemKey || key.includes(stemKey) || stemKey.includes(key)) {
-      return true;
+    for (const domainKey of citedDomainKeys(domain)) {
+      if (key === domainKey || key.includes(domainKey) || domainKey.includes(key)) {
+        return true;
+      }
     }
   }
 
   return false;
 }
 
-export function filterBusinessBrands(
+/** Keep only names that look like local businesses, excluding own brand and citation sources. */
+export function filterLocalBusinesses(
   brands: string[],
   citedDomains: string[] = [],
   ownNames: string[] = []
@@ -124,13 +111,27 @@ export function filterBusinessBrands(
     if (!trimmed) continue;
     const key = normalizeKey(trimmed);
     if (ownKeys.has(key)) continue;
-    if (isNonCompetitorBrand(trimmed, citedDomains)) continue;
+    if (isLikelySourceOrPlatform(trimmed, citedDomains)) continue;
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(trimmed);
   }
 
   return out;
+}
+
+/** @deprecated Use filterLocalBusinesses */
+export function filterBusinessBrands(
+  brands: string[],
+  citedDomains: string[] = [],
+  ownNames: string[] = []
+): string[] {
+  return filterLocalBusinesses(brands, citedDomains, ownNames);
+}
+
+/** @deprecated Use isLikelySourceOrPlatform */
+export function isNonCompetitorBrand(name: string, citedDomains: string[] = []): boolean {
+  return isLikelySourceOrPlatform(name, citedDomains);
 }
 
 export type PromptContext = {

@@ -22,13 +22,13 @@ const SECTIONS: {
     id: "identity",
     title: "Business identity",
     description: "Name, category, pitch",
-    hint: "Used when generating visibility prompts and action plans.",
+    hint: "Powers your visibility checks and action plan.",
   },
   {
     id: "location",
     title: "Location",
     description: "City and country",
-    hint: "Helps AI models return locally relevant answers.",
+    hint: "Keeps visibility results relevant to your market.",
   },
   {
     id: "online",

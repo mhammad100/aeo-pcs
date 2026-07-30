@@ -1,8 +1,7 @@
 import type { PromptResult, VisibilityScore } from "./types";
 import {
-  filterBusinessBrands,
+  filterLocalBusinesses,
   isCoreVisibilityPrompt,
-  isNonCompetitorBrand,
   type PromptContext,
 } from "./brandFilters";
 
@@ -109,9 +108,8 @@ export function computeVisibilityRunInsights(
       }
       modelStats.set(m.model, stats);
 
-      const brands = filterBusinessBrands(m.brandsMentioned || [], citedDomains, ownNames);
+      const brands = filterLocalBusinesses(m.brandsMentioned || [], citedDomains, ownNames);
       for (const brand of brands) {
-        if (isNonCompetitorBrand(brand, citedDomains)) continue;
         competitorCounts.set(brand, (competitorCounts.get(brand) || 0) + 1);
       }
 
