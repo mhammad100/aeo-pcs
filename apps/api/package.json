@@ -11,6 +11,7 @@
     "migrate": "tsx src/migrations/run.ts"
   },
   "dependencies": {
+    "@aeo-pcs/report-pdf": "*",
     "@aeo-pcs/shared": "*",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",

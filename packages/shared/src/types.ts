@@ -1,4 +1,5 @@
 import type { Category, LlmProvider } from "./constants";
+import type { PresenceAudit } from "./presenceAudit";
 
 export type BusinessCandidate = {
   name: string;
@@ -103,6 +104,8 @@ export type ManualItem = {
 export type ActionPlan = {
   automatable: AutomatableItem[];
   manual: ManualItem[];
+  /** Online presence verification from profile + visibility results. */
+  presenceAudit?: PresenceAudit;
 };
 
 export type JobStatus = "queued" | "running" | "completed" | "failed";
@@ -185,8 +188,9 @@ export type GenerateItemResponse = {
 };
 
 export type ReportResponse = {
-  html: string;
+  html?: string;
   filename: string;
+  contentType: "text/html" | "application/pdf";
 };
 
 export type ChecklistItemKind = "automatable" | "manual";

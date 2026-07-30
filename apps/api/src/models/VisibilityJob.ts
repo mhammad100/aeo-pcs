@@ -102,6 +102,7 @@ const VisibilityJobSchema = new Schema(
         {
           automatable: { type: [AutomatableSchema], default: undefined },
           manual: { type: [ManualSchema], default: undefined },
+          presenceAudit: { type: Schema.Types.Mixed, default: undefined },
         },
         { _id: false }
       ),

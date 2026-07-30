@@ -16,6 +16,7 @@ import { hasActiveSubscription } from "@/lib/authRouting";
 import VisibilityInsights from "@/components/VisibilityInsights";
 import VisibilityStepNav from "@/components/VisibilityStepNav";
 import { useVisibilityJobStream } from "@/hooks/useVisibilityJobStream";
+import PresenceAuditPanel from "@/components/PresenceAuditPanel";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hydrateFromProfile } from "@/store/businessSlice";
 import {
@@ -37,8 +38,8 @@ const DEFAULT_RUNTIME: AeoRuntimeSettings = {
   visibilityModels: [],
 };
 
-function downloadBlob(html: string, filename: string) {
-  const blob = new Blob([html], { type: "text/html" });
+function downloadBlob(content: BlobPart, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -284,7 +285,7 @@ export default function VisibilityWizard() {
     setLocalBusyLabel("Preparing report");
     try {
       const report = await api.getReport(visibility.jobId);
-      downloadBlob(report.html, report.filename);
+      downloadBlob(report.data, report.filename, report.contentType);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Report download failed"));
     } finally {
@@ -441,12 +442,14 @@ export default function VisibilityWizard() {
                   </Button>
                 ) : !jobRunning && hasResults ? (
                   <>
-                    <Button
-                      loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
-                      onClick={onDownloadReport}
-                    >
-                      Download report
-                    </Button>
+                    {hasResults && (
+                      <Button
+                        loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
+                        onClick={onDownloadReport}
+                      >
+                        Download PDF report
+                      </Button>
+                    )}
                     {!hasPlan ? (
                       <Button
                         type="primary"
@@ -545,7 +548,7 @@ export default function VisibilityWizard() {
                       loading={visibility.uiBusy && localBusyLabel === "Preparing report"}
                       onClick={onDownloadReport}
                     >
-                      Download report
+                      PDF report
                     </Button>
                   )}
                   <Link href="/app/action-plan">
@@ -554,8 +557,12 @@ export default function VisibilityWizard() {
                 </>
               }
             >
+              {visibility.plan.presenceAudit && (
+                <PresenceAuditPanel audit={visibility.plan.presenceAudit} />
+              )}
+
               <Text className="vis-eyebrow" style={{ display: "block", marginBottom: 14 }}>
-                Generate content
+                Recommended content
               </Text>
               <Space direction="vertical" style={{ width: "100%", marginBottom: 24 }} size={12}>
                 {visibility.plan.automatable.map((item) => (
@@ -606,7 +613,7 @@ export default function VisibilityWizard() {
               </Space>
 
               <Text className="vis-eyebrow" style={{ display: "block", marginBottom: 12 }}>
-                Manual tasks
+                Action checklist
               </Text>
               <Space direction="vertical" style={{ width: "100%" }} size={10}>
                 {visibility.plan.manual.map((item, i) => (
