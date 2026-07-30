@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import * as authService from "../services/auth.service";
 import type { AuthedRequest } from "../middleware/auth";
+import { env } from "../config/env";
 
 export async function login(req: Request, res: Response) {
   const expectedRole = authService.expectedRoleForOrigin(req.headers.origin);
@@ -13,6 +14,9 @@ export async function login(req: Request, res: Response) {
 }
 
 export async function signup(req: Request, res: Response) {
+  if (!env.SIGNUP_ENABLED) {
+    return res.status(403).json({ error: "Signup is disabled" });
+  }
   const result = await authService.signupUser(req.body.email, req.body.password);
   res.status(201).json(result);
 }
