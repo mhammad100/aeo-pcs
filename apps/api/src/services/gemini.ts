@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { readFetchJson } from "../utils/httpJson";
 import { logUsageEvent } from "./usage.service";
 import { sourceFromUrl, type LlmCallResult, type LlmPricing, type LlmUsageContext } from "./llmTypes";
 
@@ -37,7 +38,7 @@ async function callGeminiGenerateContent(
     }),
   });
 
-  const data = (await res.json()) as {
+  const data = await readFetchJson<{
     candidates?: Array<{
       content?: { parts?: Array<{ text?: string }> };
       groundingMetadata?: {
@@ -51,7 +52,7 @@ async function callGeminiGenerateContent(
       totalTokenCount?: number;
     };
     error?: { message?: string };
-  };
+  }>(res);
 
   if (!res.ok) {
     throw new Error(data.error?.message || `Gemini API error (${res.status})`);

@@ -72,6 +72,8 @@ export default function VisibilityWizard() {
 
   const hasResults = Boolean(visibility.results?.length && visibility.score);
   const hasPlan = hasPlanContent(visibility.plan);
+  const isPartialCompletion =
+    visibility.status === "completed" && Boolean(visibility.error) && hasResults;
 
   const derivedStep = useMemo(() => {
     if (hasPlan) return 1;
@@ -373,7 +375,7 @@ export default function VisibilityWizard() {
         <div style={{ marginBottom: 20 }}>
           {visibility.error && (
             <Alert
-              type="error"
+              type={isPartialCompletion ? "warning" : "error"}
               showIcon
               message={visibility.error}
               style={{ marginBottom: 12 }}
@@ -513,7 +515,7 @@ export default function VisibilityWizard() {
                 </div>
               )}
 
-              {visibility.status === "failed" && !jobRunning && (
+              {visibility.status === "failed" && !jobRunning && !hasResults && (
                 <Alert type="error" showIcon message={visibility.error || "Check failed"} />
               )}
 

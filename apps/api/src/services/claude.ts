@@ -1,5 +1,6 @@
 import type { Source } from "@aeo-pcs/shared";
 import { env } from "../config/env";
+import { readFetchJson } from "../utils/httpJson";
 import { getAeoSettings } from "./aeoSettings.service";
 import { logUsageEvent } from "./usage.service";
 import type { LlmCallResult, LlmPricing, LlmUsageContext } from "./llmTypes";
@@ -55,11 +56,11 @@ export async function callAnthropic(options: {
     }),
   });
 
-  const data = (await res.json()) as {
+  const data = await readFetchJson<{
     content?: ClaudeContentBlock[];
     usage?: { input_tokens?: number; output_tokens?: number };
     error?: { message?: string };
-  };
+  }>(res);
 
   if (!res.ok) {
     throw new Error(data.error?.message || `Anthropic API error (${res.status})`);
@@ -135,11 +136,11 @@ export async function callAnthropicWithWebSearch(options: {
     }),
   });
 
-  const data = (await res.json()) as {
+  const data = await readFetchJson<{
     content?: ClaudeContentBlock[];
     usage?: { input_tokens?: number; output_tokens?: number };
     error?: { message?: string };
-  };
+  }>(res);
 
   if (!res.ok) {
     throw new Error(data.error?.message || `Anthropic API error (${res.status})`);

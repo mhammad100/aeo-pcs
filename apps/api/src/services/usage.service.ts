@@ -108,22 +108,6 @@ export async function logUsageEvent(input: {
         }
       : await rateForModel(input.model);
     const estimatedCost = estimateCost(inputTokens, outputTokens, rate);
-    console.log("Estimated cost", estimatedCost);
-    console.log("Rate", rate);
-
-    console.log({
-      userId: input.userId || null,
-      businessId: input.businessId || null,
-      feature: input.feature,
-      model: input.model,
-      inputTokens,
-      outputTokens,
-      inputPer1MTokens: rate.inputPer1MTokens,
-      outputPer1MTokens: rate.outputPer1MTokens,
-      estimatedCost,
-      currency: rate.currency,
-      refs: input.refs || {},
-    })
 
     await UsageEventModel.create({
       userId: input.userId || null,

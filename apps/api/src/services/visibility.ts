@@ -1,5 +1,6 @@
 import type {
   PromptResult,
+  Source,
   VisibilityModelConfig,
   VisibilityScore,
 } from "@aeo-pcs/shared";
@@ -33,13 +34,14 @@ export async function runVisibilityCheck(input: {
     currentPrompt: string;
     currentModel: string;
   }) => Promise<void> | void;
-}): Promise<{ results: PromptResult[]; score: VisibilityScore }> {
+}): Promise<{ results: PromptResult[]; score: VisibilityScore; partialWarning: string | null }> {
   if (!input.models.length) {
     throw new Error("No visibility models configured");
   }
 
   const total = input.prompts.length * input.models.length;
   let completed = 0;
+  let failedChecks = 0;
   const allResults: PromptResult[] = [];
 
   const system = `You are an AI assistant answering a real user's question, grounded in actual current web search results. Search the web, then answer naturally, naming specific real businesses relevant to the query and the location context provided. Keep it to 4-6 sentences and name at least 2-3 businesses if the search results support it. ${NO_MARKDOWN_RULE}`;
@@ -61,7 +63,7 @@ export async function runVisibilityCheck(input: {
       targetItems: input.targetItems,
     });
 
-    const perModel = [];
+    const perModel: PromptResult["perModel"] = [];
     for (const model of input.models) {
       if (input.onProgress) {
         await input.onProgress({
@@ -84,14 +86,36 @@ export async function runVisibilityCheck(input: {
           }
         : undefined;
 
-      const { text, sources } = await callVisibilityModel({
-        model,
-        prompt: userPrompt,
-        system,
-        usage: usageCtx,
-      });
+      let text = "";
+      let dedupedSources: Source[] = [];
 
-      const dedupedSources = dedupeSources(sources);
+      try {
+        const result = await callVisibilityModel({
+          model,
+          prompt: userPrompt,
+          system,
+          usage: usageCtx,
+        });
+        text = result.text;
+        dedupedSources = dedupeSources(result.sources);
+      } catch (err) {
+        failedChecks += 1;
+        const message = err instanceof Error ? err.message : "Model request failed";
+        console.warn(`Visibility ${model.label} failed for prompt: ${message}`);
+        perModel.push({
+          model: model.label,
+          answer: "",
+          mentioned: false,
+          sourceMentioned: false,
+          position: null,
+          sentiment: null,
+          brandsMentioned: [],
+          sources: [],
+        });
+        completed += 1;
+        continue;
+      }
+
       const mentioned = isBrandMentioned(text, bizCtx);
       const sourceMentioned = isSourceMentioned(dedupedSources, bizCtx);
 
@@ -100,24 +124,29 @@ export async function runVisibilityCheck(input: {
       let brandsMentioned: string[] = [];
 
       if (text.trim()) {
-        const analysis = await analyzeVisibilityAnswer({
-          answer: text,
-          business: bizCtx,
-          citedDomains: dedupedSources.map((s) => s.domain).filter(Boolean),
-          usage: input.usage
-            ? {
-                userId: input.usage.userId,
-                businessId: input.usage.businessId,
-                refs: {
-                  ...(input.usage.refs || {}),
-                  visibilityModelId: model.id,
-                },
-              }
-            : undefined,
-        });
-        position = analysis.position;
-        sentiment = analysis.sentiment;
-        brandsMentioned = analysis.brandsMentioned;
+        try {
+          const analysis = await analyzeVisibilityAnswer({
+            answer: text,
+            business: bizCtx,
+            citedDomains: dedupedSources.map((s) => s.domain).filter(Boolean),
+            usage: input.usage
+              ? {
+                  userId: input.usage.userId,
+                  businessId: input.usage.businessId,
+                  refs: {
+                    ...(input.usage.refs || {}),
+                    visibilityModelId: model.id,
+                  },
+                }
+              : undefined,
+          });
+          position = analysis.position;
+          sentiment = analysis.sentiment;
+          brandsMentioned = analysis.brandsMentioned;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Analysis failed";
+          console.warn(`Visibility analysis failed for ${model.label}: ${message}`);
+        }
       }
 
       perModel.push({
@@ -144,8 +173,14 @@ export async function runVisibilityCheck(input: {
     });
   }
 
+  const partialWarning =
+    failedChecks > 0
+      ? `${failedChecks} of ${total} AI responses could not be retrieved. Your score is based on the ${total - failedChecks} completed checks.`
+      : null;
+
   return {
     results: allResults,
     score: computeScore(allResults, input.models.length),
+    partialWarning,
   };
 }

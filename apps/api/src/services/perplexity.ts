@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { readFetchJson } from "../utils/httpJson";
 import { logUsageEvent } from "./usage.service";
 import { sourceFromUrl, type LlmCallResult, type LlmPricing, type LlmUsageContext } from "./llmTypes";
 
@@ -46,13 +47,13 @@ export async function callPerplexityWithWebSearch(options: {
     }),
   });
 
-  const data = (await res.json()) as {
+  const data = await readFetchJson<{
     choices?: Array<{ message?: { content?: string } }>;
     citations?: string[];
     search_results?: Array<{ url?: string; title?: string }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
     error?: { message?: string } | string;
-  };
+  }>(res);
 
   if (!res.ok) {
     const message =

@@ -81,7 +81,7 @@ async function processVisibilityJob(jobId: string) {
       progress: { completed: 0, total, currentModel: "" },
     });
 
-    const { results, score } = await runVisibilityCheck({
+    const { results, score, partialWarning } = await runVisibilityCheck({
       business: {
         name: job.business?.name || "",
         nameAliases: (job.nameAliases?.length ? job.nameAliases : job.business?.nameAliases) as
@@ -119,6 +119,13 @@ async function processVisibilityJob(jobId: string) {
       },
     });
 
+    const hasAnyAnswer = results.some((r) => r.perModel.some((m) => m.answer?.trim()));
+    if (!hasAnyAnswer) {
+      throw new Error(
+        partialWarning || "All AI model responses failed. Please try again in a few minutes."
+      );
+    }
+
     const updated = await VisibilityJobModel.findByIdAndUpdate(
       jobId,
       {
@@ -127,12 +134,12 @@ async function processVisibilityJob(jobId: string) {
           results,
           score,
           progress: {
-            completed: score.totalChecks,
-            total: score.totalChecks,
+            completed: total,
+            total,
             currentPrompt: "",
             currentModel: "",
           },
-          error: null,
+          error: partialWarning,
         },
         $unset: { plan: 1 },
       },
@@ -146,11 +153,12 @@ async function processVisibilityJob(jobId: string) {
     publishJobUpdate(jobId, {
       status: "completed",
       progress: {
-        completed: score.totalChecks,
-        total: score.totalChecks,
+        completed: total,
+        total,
       },
       results,
       score,
+      error: partialWarning,
     });
   } catch (err) {
     const message =

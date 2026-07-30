@@ -1,4 +1,5 @@
 import { env } from "../config/env";
+import { readFetchJson } from "../utils/httpJson";
 import { logUsageEvent } from "./usage.service";
 import { sourceFromUrl, type LlmCallResult, type LlmPricing, type LlmUsageContext } from "./llmTypes";
 
@@ -59,11 +60,11 @@ export async function callOpenAI(options: {
     }),
   });
 
-  const data = (await res.json()) as {
+  const data = await readFetchJson<{
     choices?: Array<{ message?: { content?: string } }>;
     usage?: { prompt_tokens?: number; completion_tokens?: number };
     error?: { message?: string };
-  };
+  }>(res);
 
   if (!res.ok) {
     throw new Error(data.error?.message || `OpenAI API error (${res.status})`);
@@ -168,12 +169,12 @@ export async function callOpenAIWithWebSearch(options: {
     body: JSON.stringify(body),
   });
 
-  const data = (await res.json()) as {
+  const data = await readFetchJson<{
     output_text?: string;
     output?: ResponsesOutputItem[];
     usage?: { input_tokens?: number; output_tokens?: number };
     error?: { message?: string };
-  };
+  }>(res);
 
   if (!res.ok) {
     throw new Error(data.error?.message || `OpenAI Responses API error (${res.status})`);
