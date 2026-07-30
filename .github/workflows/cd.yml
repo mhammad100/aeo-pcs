@@ -50,8 +50,11 @@ jobs:
       - name: Build shared
         run: npm run build:shared
 
+      - name: Build report-pdf
+        run: npm run build:report-pdf
+
       - name: Build API
-        run: npm run build:api
+        run: npm run build -w @aeo-pcs/api
 
       - name: Build web
         run: npm run build:web
@@ -73,10 +76,11 @@ jobs:
       - name: Ensure remote deploy directories
         run: |
           ssh -i ~/.ssh/deploy_key "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "mkdir -p '${{ env.DEPLOY_PATH }}/apps/web/out' \
+            "          mkdir -p '${{ env.DEPLOY_PATH }}/apps/web/out' \
                       '${{ env.DEPLOY_PATH }}/apps/admin/dist' \
                       '${{ env.DEPLOY_PATH }}/apps/api' \
-                      '${{ env.DEPLOY_PATH }}/packages/shared'"
+                      '${{ env.DEPLOY_PATH }}/packages/shared' \
+                      '${{ env.DEPLOY_PATH }}/packages/report-pdf'"
 
       - name: Rsync root manifests
         run: |
@@ -93,6 +97,14 @@ jobs:
             --exclude .env \
             packages/shared/ \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/packages/shared/"
+
+      - name: Rsync packages/report-pdf
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            --exclude node_modules \
+            packages/report-pdf/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ env.DEPLOY_PATH }}/packages/report-pdf/"
 
       - name: Rsync web out
         run: |

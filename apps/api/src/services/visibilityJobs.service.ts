@@ -31,11 +31,19 @@ function assertJobAccess(
 
 function normalizePlan(plan: unknown) {
   if (!plan || typeof plan !== "object") return null;
-  const p = plan as { automatable?: unknown[]; manual?: unknown[] };
+  const p = plan as {
+    automatable?: unknown[];
+    manual?: unknown[];
+    presenceAudit?: unknown;
+  };
   const automatable = Array.isArray(p.automatable) ? p.automatable : [];
   const manual = Array.isArray(p.manual) ? p.manual : [];
   if (!automatable.length && !manual.length) return null;
-  return { automatable, manual };
+  return {
+    automatable,
+    manual,
+    presenceAudit: p.presenceAudit || undefined,
+  };
 }
 
 function serializeJob(job: Record<string, unknown>) {
@@ -176,7 +184,9 @@ export async function buildPlanForJob(input: {
   }
 
   const profile = job.businessId
-    ? await BusinessModel.findById(job.businessId).select("websiteUrl").lean()
+    ? await BusinessModel.findById(job.businessId)
+        .select("websiteUrl googleBusinessUrl socialLinks")
+        .lean()
     : null;
 
   const plan = await buildActionPlan({
@@ -184,8 +194,13 @@ export async function buildPlanForJob(input: {
     category: job.category || "Other",
     city: job.city || "",
     country: job.country || "",
-    websiteUrl: profile?.websiteUrl || undefined,
+    websiteUrl: profile?.websiteUrl || job.websiteUrl || undefined,
+    googleBusinessUrl: profile?.googleBusinessUrl || job.googleBusinessUrl || undefined,
+    socialLinks: (profile?.socialLinks?.length
+      ? profile.socialLinks
+      : []) as { label: string; url: string }[],
     results: job.results as never,
+    score: job.score as never,
     usage: {
       userId: input.userId,
       businessId: job.businessId ? String(job.businessId) : null,
@@ -251,6 +266,7 @@ export async function getReportForJob(input: {
   jobId: string;
   userId: string;
   userRole?: UserRole;
+  format?: "pdf" | "html";
 }) {
   const job = await VisibilityJobModel.findById(input.jobId).lean();
   if (!job) {
@@ -263,7 +279,7 @@ export async function getReportForJob(input: {
   }
 
   const itemOutputs = mapItemOutputs(job.itemOutputs);
-  const bodyHtml = buildReportHtml({
+  const reportInput = {
     selected: (job.business as never) || null,
     category: job.category || "",
     city: job.city || "",
@@ -272,12 +288,38 @@ export async function getReportForJob(input: {
     score: (job.score as never) || null,
     plan: (job.plan as never) || null,
     itemOutputs,
-  });
+    generatedAt: job.updatedAt ? new Date(job.updatedAt) : new Date(),
+    jobError: job.error || null,
+  };
+
+  const bodyHtml = buildReportHtml(reportInput);
 
   const html = wrapReportDocument(bodyHtml);
   const nameSafe = (job.business?.name || "report").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-  return {
-    html,
-    filename: `ai-visibility-report-${nameSafe}.html`,
-  };
+  const format = input.format === "html" ? "html" : "pdf";
+
+  if (format === "html") {
+    return {
+      html,
+      filename: `ai-visibility-report-${nameSafe}.html`,
+      contentType: "text/html" as const,
+    };
+  }
+
+  const { buildReportPdfBuffer } = await import("./pdfReport");
+  try {
+    const pdf = await buildReportPdfBuffer(reportInput);
+    return {
+      pdf,
+      filename: `ai-visibility-report-${nameSafe}.pdf`,
+      contentType: "application/pdf" as const,
+    };
+  } catch (err) {
+    console.error("PDF generation failed, falling back to HTML:", err);
+    return {
+      html,
+      filename: `ai-visibility-report-${nameSafe}.html`,
+      contentType: "text/html" as const,
+    };
+  }
 }

@@ -1,4 +1,5 @@
 export * from "./constants";
+export * from "./presenceAudit";
 export * from "./types";
 export * from "./auth";
 export * from "./subscriptions";

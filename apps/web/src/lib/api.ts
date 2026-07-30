@@ -149,8 +149,49 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
-  getReport: (jobId: string) =>
-    request<{ html: string; filename: string }>(`/reports/${jobId}`),
+  getReport: async (jobId: string, format: "pdf" | "html" = "pdf") => {
+    const token = store.getState().auth.token;
+    const res = await fetch(`${API_URL}/reports/${jobId}?format=${format}`, {
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+    if (res.status === 401 && token) {
+      store.dispatch(logout());
+    }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new ApiError((data as { error?: string }).error || "Report download failed", res.status);
+    }
+    const disposition = res.headers.get("Content-Disposition") || "";
+    const match = disposition.match(/filename="([^"]+)"/);
+    const filename = match?.[1] || `ai-visibility-report.pdf`;
+
+    if (format === "pdf") {
+      const contentType = res.headers.get("Content-Type") || "";
+      if (contentType.includes("application/pdf")) {
+        const data = await res.arrayBuffer();
+        return {
+          data,
+          filename,
+          contentType: "application/pdf" as const,
+        };
+      }
+      const json = (await res.json()) as { html?: string; filename: string; contentType: string };
+      return {
+        data: json.html || "",
+        filename: json.filename,
+        contentType: "text/html" as const,
+      };
+    }
+
+    const json = (await res.json()) as { html?: string; filename: string; contentType: string };
+    return {
+      data: json.html || "",
+      filename: json.filename,
+      contentType: "text/html" as const,
+    };
+  },
 
   listCatalogPlans: () =>
     request<{ plans: import("@aeo-pcs/shared").ProductPlan[] }>("/catalog/plans"),
