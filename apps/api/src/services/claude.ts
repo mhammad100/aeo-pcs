@@ -89,30 +89,35 @@ export async function callAnthropic(options: {
   return { text, sources: [], inputTokens, outputTokens, model: options.modelId };
 }
 
-export async function callClaude(options: {
+function parseAnthropicSources(content: ClaudeContentBlock[]): Source[] {
+  const sources: Source[] = [];
+  content
+    .filter((b) => b.type === "web_search_tool_result")
+    .forEach((b) => {
+      const items = Array.isArray(b.content) ? b.content : [];
+      items.forEach((it) => {
+        if (it.url) {
+          try {
+            const domain = new URL(it.url).hostname.replace(/^www\./, "");
+            sources.push({ domain, url: it.url, title: it.title || domain });
+          } catch {
+            // ignore invalid URLs
+          }
+        }
+      });
+    });
+  return sources;
+}
+
+/** Web search via Anthropic Messages API (visibility checks). */
+export async function callAnthropicWithWebSearch(options: {
+  modelId: string;
   prompt: string;
   system: string;
-  useWebSearch?: boolean;
   maxTokens?: number;
-  usage?: ClaudeUsageContext;
-}): Promise<ClaudeCallResult> {
-  const { actionPlanModel } = await getAeoSettings();
-  if (actionPlanModel.enabled === false) {
-    throw new Error("Action plan generation is disabled in admin settings");
-  }
-  const modelId = actionPlanModel.modelId;
-
-  const body: Record<string, unknown> = {
-    model: modelId,
-    max_tokens: options.maxTokens ?? 1200,
-    system: options.system,
-    messages: [{ role: "user", content: options.prompt }],
-  };
-
-  if (options.useWebSearch) {
-    body.tools = [{ type: "web_search_20250305", name: "web_search" }];
-  }
-
+  usage?: LlmUsageContext;
+  pricing?: LlmPricing;
+}): Promise<LlmCallResult> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
@@ -121,7 +126,13 @@ export async function callClaude(options: {
       "anthropic-version": "2023-06-01",
       "anthropic-beta": "web-search-2025-03-05",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({
+      model: options.modelId,
+      max_tokens: options.maxTokens ?? 1200,
+      system: options.system,
+      messages: [{ role: "user", content: options.prompt }],
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+    }),
   });
 
   const data = (await res.json()) as {
@@ -140,23 +151,6 @@ export async function callClaude(options: {
     .map((b) => b.text || "")
     .join("\n");
 
-  const sources: Source[] = [];
-  content
-    .filter((b) => b.type === "web_search_tool_result")
-    .forEach((b) => {
-      const items = Array.isArray(b.content) ? b.content : [];
-      items.forEach((it) => {
-        if (it.url) {
-          try {
-            const domain = new URL(it.url).hostname.replace(/^www\./, "");
-            sources.push({ domain, url: it.url, title: it.title || domain });
-          } catch {
-            // ignore invalid URLs
-          }
-        }
-      });
-    });
-
   const inputTokens = data.usage?.input_tokens ?? 0;
   const outputTokens = data.usage?.output_tokens ?? 0;
 
@@ -165,17 +159,74 @@ export async function callClaude(options: {
       userId: options.usage.userId,
       businessId: options.usage.businessId,
       feature: options.usage.feature,
-      model: modelId,
+      model: options.modelId,
       inputTokens,
       outputTokens,
+      pricing: options.pricing,
+      refs: options.usage.refs,
+    });
+  }
+
+  return {
+    text,
+    sources: parseAnthropicSources(content),
+    inputTokens,
+    outputTokens,
+    model: options.modelId,
+  };
+}
+
+export async function callClaude(options: {
+  prompt: string;
+  system: string;
+  useWebSearch?: boolean;
+  maxTokens?: number;
+  usage?: ClaudeUsageContext;
+}): Promise<ClaudeCallResult> {
+  const { actionPlanModel } = await getAeoSettings();
+  if (actionPlanModel.enabled === false) {
+    throw new Error("Action plan generation is disabled in admin settings");
+  }
+  const modelId = actionPlanModel.modelId;
+
+  if (options.useWebSearch) {
+    const result = await callAnthropicWithWebSearch({
+      modelId,
+      prompt: options.prompt,
+      system: options.system,
+      maxTokens: options.maxTokens,
+      usage: options.usage,
       pricing: {
         inputPer1MTokens: actionPlanModel.inputPer1MTokens,
         outputPer1MTokens: actionPlanModel.outputPer1MTokens,
         currency: actionPlanModel.currency,
       },
-      refs: options.usage.refs,
     });
+    return {
+      text: result.text,
+      sources: result.sources,
+      inputTokens: result.inputTokens,
+      outputTokens: result.outputTokens,
+    };
   }
 
-  return { text, sources, inputTokens, outputTokens };
+  const result = await callAnthropic({
+    modelId,
+    prompt: options.prompt,
+    system: options.system,
+    maxTokens: options.maxTokens,
+    usage: options.usage,
+    pricing: {
+      inputPer1MTokens: actionPlanModel.inputPer1MTokens,
+      outputPer1MTokens: actionPlanModel.outputPer1MTokens,
+      currency: actionPlanModel.currency,
+    },
+  });
+
+  return {
+    text: result.text,
+    sources: result.sources,
+    inputTokens: result.inputTokens,
+    outputTokens: result.outputTokens,
+  };
 }

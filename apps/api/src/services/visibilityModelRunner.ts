@@ -1,4 +1,5 @@
 import type { VisibilityModelConfig } from "@aeo-pcs/shared";
+import { callAnthropicWithWebSearch } from "./claude";
 import { callGeminiWithWebSearch } from "./gemini";
 import { callOpenAIWithWebSearch } from "./openai";
 import { callPerplexityWithWebSearch } from "./perplexity";
@@ -31,6 +32,8 @@ export async function callVisibilityModel(input: {
       return callOpenAIWithWebSearch(common);
     case "perplexity":
       return callPerplexityWithWebSearch(common);
+    case "anthropic":
+      return callAnthropicWithWebSearch(common);
     default:
       throw new Error(
         `Provider "${input.model.provider}" is not supported for visibility checks`
