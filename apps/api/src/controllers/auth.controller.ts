@@ -25,3 +25,12 @@ export async function me(req: AuthedRequest, res: Response) {
   const result = await authService.getMe(req.userId!);
   res.json(result);
 }
+
+export async function changePassword(req: AuthedRequest, res: Response) {
+  await authService.changePassword(
+    req.userId!,
+    req.body.currentPassword,
+    req.body.newPassword
+  );
+  res.json({ ok: true });
+}

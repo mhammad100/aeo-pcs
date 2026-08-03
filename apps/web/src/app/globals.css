@@ -2187,6 +2187,82 @@ a {
   gap: 10px;
 }
 
+/* Prompt score list (dashboard + visibility insights) */
+.prompt-score-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.prompt-score-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--ma-line);
+  border-left: 3px solid #6b5548;
+  background: rgba(11, 20, 17, 0.45);
+}
+
+.prompt-score-list.is-positive li {
+  border-left-color: var(--ma-accent-soft);
+}
+
+.prompt-score-list__text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ma-ink);
+  min-width: 0;
+}
+
+.prompt-score-list__aside {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.prompt-score-list__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(143, 191, 159, 0.28);
+  background: rgba(143, 191, 159, 0.12);
+  color: var(--ma-accent-soft);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.prompt-score-list__badge.is-zero {
+  border-color: rgba(201, 106, 90, 0.35);
+  background: rgba(201, 106, 90, 0.12);
+  color: var(--ma-danger);
+}
+
+.prompt-score-list.is-positive .prompt-score-list__badge {
+  border-color: rgba(143, 191, 159, 0.35);
+  background: rgba(143, 191, 159, 0.16);
+}
+
+.prompt-score-list__hint {
+  font-size: 11px;
+  color: var(--ma-muted);
+  white-space: nowrap;
+}
+
 .dash-prompt-list li {
   display: flex;
   justify-content: space-between;
@@ -2429,6 +2505,35 @@ a {
   max-width: 260px;
 }
 
+.app-shell-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--ma-line);
+  background: rgba(11, 20, 17, 0.45);
+  color: inherit;
+  cursor: pointer;
+  max-width: 280px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.app-shell-user-trigger:hover,
+.app-shell-user-trigger:focus-visible {
+  border-color: rgba(143, 191, 159, 0.45);
+  background: rgba(143, 191, 159, 0.08);
+  outline: none;
+}
+
+.app-shell-user-trigger-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  text-align: left;
+}
+
 .app-shell-user-avatar {
   display: grid;
   place-items: center;
@@ -2463,6 +2568,39 @@ a {
   display: block;
   font-size: 11px;
   line-height: 1.2;
+  color: var(--ma-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-shell-user-dropdown .ant-dropdown-menu {
+  min-width: 220px;
+  padding: 6px;
+  background: var(--ma-bg-elevated) !important;
+  border: 1px solid var(--ma-line);
+}
+
+.app-shell-menu-user {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+  max-width: 220px;
+}
+
+.app-shell-menu-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ma-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-shell-menu-user-email {
+  font-size: 11px;
+  color: var(--ma-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2509,24 +2647,15 @@ a {
     padding: 0 var(--ma-space-4) !important;
   }
 
-  .app-shell-user-meta {
+  .app-shell-user-trigger-meta {
     display: none;
   }
 
-  .app-shell-user {
+  .app-shell-user-trigger {
     padding: 0;
     border: none;
     background: transparent;
     max-width: none;
-  }
-
-  .app-shell-logout-label {
-    display: none;
-  }
-
-  .app-shell-logout {
-    width: 40px;
-    padding: 0 !important;
   }
 }
 
@@ -2569,10 +2698,16 @@ a {
     padding: 16px;
   }
 
-  .dash-prompt-list li {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .prompt-score-list li {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .prompt-score-list__aside {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
   }
 }
 

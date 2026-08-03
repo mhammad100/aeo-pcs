@@ -91,3 +91,23 @@ export async function getMe(userId: string) {
   const business = await BusinessModel.findOne({ ownerUserId: user._id });
   return { user: toAuthUser(user, business) };
 }
+
+export async function changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string
+) {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 401);
+  }
+  const ok = await verifyPassword(currentPassword, user.passwordHash);
+  if (!ok) {
+    throw new AppError("Current password is incorrect", 400);
+  }
+  if (currentPassword === newPassword) {
+    throw new AppError("New password must be different from the current password", 400);
+  }
+  user.passwordHash = await hashPassword(newPassword);
+  await user.save();
+}
