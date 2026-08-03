@@ -114,8 +114,15 @@ export const api = {
     return `${base}/visibility/jobs/${encodeURIComponent(jobId)}/stream${qs ? `?${qs}` : ""}`;
   },
 
-  listVisibilityJobs: () =>
-    request<{ jobs: import("@aeo-pcs/shared").VisibilityJobSummary[] }>("/visibility/jobs"),
+  listVisibilityJobs: (params?: { limit?: number; status?: string }) => {
+    const search = new URLSearchParams();
+    if (params?.limit) search.set("limit", String(params.limit));
+    if (params?.status) search.set("status", params.status);
+    const qs = search.toString();
+    return request<{ jobs: import("@aeo-pcs/shared").VisibilityJobSummary[] }>(
+      `/visibility/jobs${qs ? `?${qs}` : ""}`
+    );
+  },
 
   getInsights: () =>
     request<{ insights: import("@aeo-pcs/shared").BusinessInsights }>("/visibility/insights"),
@@ -124,10 +131,7 @@ export const api = {
     request<{ settings: import("@aeo-pcs/shared").AeoRuntimeSettings }>("/settings/runtime"),
 
   getChecklist: () =>
-    request<{
-      items: import("@aeo-pcs/shared").ChecklistItem[];
-      progress: import("@aeo-pcs/shared").ChecklistProgress;
-    }>("/action-plan/checklist"),
+    request<import("@aeo-pcs/shared").ChecklistResponse>("/action-plan/checklist"),
 
   patchChecklistItem: (key: string, body: { done?: boolean; note?: string }) =>
     request<{

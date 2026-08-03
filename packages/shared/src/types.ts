@@ -213,6 +213,15 @@ export type ChecklistProgress = {
   percent: number;
 };
 
+export type ChecklistResponse = {
+  items: ChecklistItem[];
+  progress: ChecklistProgress;
+  progressAutomatable: ChecklistProgress;
+  progressManual: ChecklistProgress;
+  /** Generated content keyed by automatable plan item id. */
+  itemOutputs: Record<string, string>;
+};
+
 export type VisibilityJobSummary = {
   id: string;
   status: JobStatus;

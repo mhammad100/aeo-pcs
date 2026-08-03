@@ -1,5 +1,6 @@
-import type { ActionPlan, ChecklistItem, ChecklistProgress } from "@aeo-pcs/shared";
+import type { ActionPlan, ChecklistItem, ChecklistProgress, ChecklistResponse } from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
+import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
 
 function checklistProgress(items: { done?: boolean }[]): ChecklistProgress {
@@ -95,15 +96,22 @@ export async function syncChecklistFromPlan(input: {
   await business.save();
 }
 
-export async function getChecklistForUser(userId: string) {
+export async function getChecklistForUser(userId: string): Promise<ChecklistResponse> {
   const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
   if (!business) {
     throw new AppError("Business not found", 404);
   }
   const items = (business.checklist || []).map((item) => serializeItem(item));
+  const automatable = items.filter((item) => item.kind === "automatable");
+  const manual = items.filter((item) => item.kind === "manual");
+  const itemOutputs = await loadItemOutputsForChecklist(items);
+
   return {
     items,
     progress: checklistProgress(items),
+    progressAutomatable: checklistProgress(automatable),
+    progressManual: checklistProgress(manual),
+    itemOutputs,
   };
 }
 
@@ -144,3 +152,31 @@ export async function updateChecklistItem(input: {
 }
 
 export { checklistProgress };
+
+function mapItemOutputs(itemOutputs: unknown): Record<string, string> {
+  if (itemOutputs instanceof Map) {
+    return Object.fromEntries(itemOutputs);
+  }
+  return (itemOutputs as Record<string, string>) || {};
+}
+
+async function loadItemOutputsForChecklist(items: ChecklistItem[]): Promise<Record<string, string>> {
+  const jobIds = [
+    ...new Set(
+      items
+        .filter((item) => item.kind === "automatable" && item.sourceJobId)
+        .map((item) => item.sourceJobId as string)
+    ),
+  ];
+  if (!jobIds.length) return {};
+
+  const jobs = await VisibilityJobModel.find({ _id: { $in: jobIds } })
+    .select("itemOutputs")
+    .lean();
+
+  const merged: Record<string, string> = {};
+  for (const job of jobs) {
+    Object.assign(merged, mapItemOutputs(job.itemOutputs));
+  }
+  return merged;
+}
