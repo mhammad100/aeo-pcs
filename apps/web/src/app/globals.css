@@ -535,6 +535,50 @@ a {
   margin: 0 auto;
 }
 
+.ma-legal {
+  margin-top: 32px;
+}
+
+.ma-legal h2 {
+  font-family: var(--ma-font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 32px 0 12px;
+  color: var(--ma-ink);
+}
+
+.ma-legal h3 {
+  font-family: var(--ma-font-body);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  color: var(--ma-ink);
+}
+
+.ma-legal p,
+.ma-legal li {
+  color: var(--ma-muted);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0 0 12px;
+  max-width: 68ch;
+}
+
+.ma-legal ul {
+  margin: 0 0 16px;
+  padding-left: 1.25rem;
+}
+
+.ma-legal li {
+  margin-bottom: 6px;
+}
+
+.ma-legal a {
+  color: var(--ma-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .ma-price-grid {
   display: grid;
   gap: 20px;
