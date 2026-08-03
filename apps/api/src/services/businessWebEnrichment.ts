@@ -1,5 +1,6 @@
 import type { SocialLink } from "@aeo-pcs/shared";
-import { callClaude } from "./claude";
+import { getAeoSettings } from "./aeoSettings.service";
+import { callTaskModelWithWebSearch } from "./taskModelRunner";
 import { safeParseJSON } from "../utils/llm";
 
 export type WebEnrichment = {
@@ -56,11 +57,16 @@ If a URL cannot be read, skip it. Do not invent services not found on the pages.
     ...urls.map((url, i) => `${i + 1}. ${url}`),
   ].join("\n");
 
+  const settings = await getAeoSettings();
+  const model = settings.promptGenerationModel;
+  if (model.enabled === false) return null;
+
   try {
-    const { text } = await callClaude({
+    const { text } = await callTaskModelWithWebSearch({
+      model,
       prompt: userMsg,
       system,
-      useWebSearch: true,
+      maxTokens: 800,
       usage: {
         userId: input.usage?.userId,
         businessId: input.usage?.businessId,
