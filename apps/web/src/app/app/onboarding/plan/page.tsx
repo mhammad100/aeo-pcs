@@ -2,15 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Card, Spin, Typography, message } from "antd";
+import { Alert, Spin, message } from "antd";
 import AuthGuard from "@/components/AuthGuard";
-import OnboardingSteps from "@/components/OnboardingSteps";
+import OnboardingShell from "@/components/OnboardingShell";
 import PlanCatalog from "@/components/PlanCatalog";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import type { ProductPlan } from "@aeo-pcs/shared";
-
-const { Title, Text } = Typography;
 
 export default function OnboardingPlanPage() {
   const router = useRouter();
@@ -51,7 +49,7 @@ export default function OnboardingPlanPage() {
     setError(null);
     try {
       await api.subscribeToPlan(planId);
-      message.success("Plan updated");
+      message.success("Plan selected");
       router.replace("/app/onboarding/profile");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Could not update plan");
@@ -62,33 +60,26 @@ export default function OnboardingPlanPage() {
 
   return (
     <AuthGuard>
-      <div style={{ minHeight: "100vh", background: "#0F1A17", padding: "40px 24px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            Master AEO
-          </Text>
-          <Title level={2} style={{ color: "#EDEAE1", marginTop: 8 }}>
-            Choose a plan
-          </Title>
-          <OnboardingSteps current={0} />
+      <OnboardingShell
+        step={0}
+        wide
+        title="Choose a plan"
+        subtitle="Pick the plan that fits your business. You can change it later."
+      >
+        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 
-          {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
-
-          {loading ? (
-            <div style={{ display: "grid", placeItems: "center", padding: 48 }}>
-              <Spin />
-            </div>
-          ) : plans.length === 0 ? (
-            <Card>No plans are available right now. Check back soon.</Card>
-          ) : (
-            <PlanCatalog
-              plans={plans}
-              subscribingId={subscribingId}
-              onSelect={onSelectPlan}
-            />
-          )}
-        </div>
-      </div>
+        {loading ? (
+          <div className="onboarding-loading">
+            <Spin size="large" />
+          </div>
+        ) : plans.length === 0 ? (
+          <div className="onboarding-card onboarding-card-empty">
+            <p>No plans are available right now. Check back soon.</p>
+          </div>
+        ) : (
+          <PlanCatalog plans={plans} subscribingId={subscribingId} onSelect={onSelectPlan} />
+        )}
+      </OnboardingShell>
     </AuthGuard>
   );
 }

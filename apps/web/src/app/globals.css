@@ -4017,3 +4017,301 @@ a {
     grid-column: 1 / -1;
   }
 }
+
+/* Onboarding */
+.onboarding-page {
+  min-height: 100vh;
+  background: var(--ma-bg);
+  padding: 40px 24px 56px;
+}
+
+.onboarding-shell {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.onboarding-shell.is-wide {
+  max-width: 960px;
+}
+
+.onboarding-header {
+  margin-bottom: 28px;
+}
+
+.onboarding-brand {
+  display: inline-block;
+  margin-bottom: 12px;
+  color: var(--ma-accent-soft);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.onboarding-title {
+  margin: 0 0 8px;
+  font-family: var(--ma-font-display);
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 500;
+  color: var(--ma-ink);
+  line-height: 1.15;
+}
+
+.onboarding-subtitle {
+  margin: 0 0 20px;
+  color: var(--ma-muted);
+  font-size: 15px;
+  line-height: 1.5;
+  max-width: 52ch;
+}
+
+.onboarding-steps {
+  max-width: 420px;
+}
+
+.onboarding-steps .ant-steps-item-title {
+  color: var(--ma-muted) !important;
+  font-size: 13px !important;
+}
+
+.onboarding-steps .ant-steps-item-active .ant-steps-item-title,
+.onboarding-steps .ant-steps-item-finish .ant-steps-item-title {
+  color: var(--ma-ink) !important;
+}
+
+.onboarding-steps .ant-steps-item-icon {
+  border-color: var(--ma-line) !important;
+  background: rgba(18, 32, 27, 0.55) !important;
+}
+
+.onboarding-steps .ant-steps-item-active .ant-steps-item-icon {
+  border-color: var(--ma-accent-soft) !important;
+  background: rgba(143, 191, 159, 0.12) !important;
+}
+
+.onboarding-steps .ant-steps-item-finish .ant-steps-item-icon {
+  border-color: rgba(143, 191, 159, 0.45) !important;
+  background: rgba(143, 191, 159, 0.12) !important;
+}
+
+.onboarding-steps .ant-steps-item-finish .ant-steps-item-icon .ant-steps-icon {
+  color: var(--ma-accent-soft) !important;
+}
+
+.onboarding-loading {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+}
+
+.onboarding-card {
+  border-radius: 16px;
+  border: 1px solid var(--ma-line);
+  background: var(--ma-bg-elevated);
+  overflow: hidden;
+}
+
+.onboarding-card-empty {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--ma-muted);
+}
+
+.onboarding-card-head {
+  padding: 22px 24px 0;
+  position: relative;
+}
+
+.onboarding-card-head h2 {
+  margin: 0 0 6px;
+  font-family: var(--ma-font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--ma-ink);
+}
+
+.onboarding-card-head p {
+  margin: 0;
+  color: var(--ma-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 56ch;
+}
+
+.onboarding-optional-badge {
+  display: inline-flex;
+  margin-top: 10px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--ma-line);
+  color: var(--ma-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.onboarding-card .app-profile-form {
+  padding: 20px 24px 8px;
+}
+
+.onboarding-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--ma-line);
+  background: rgba(11, 20, 17, 0.35);
+}
+
+.onboarding-card-foot-end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.onboarding-profile-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.onboarding-profile-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--ma-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.onboarding-profile-progress-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(18, 32, 27, 0.65);
+  border: 1px solid var(--ma-line);
+  overflow: hidden;
+}
+
+.onboarding-profile-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--ma-accent-soft), var(--ma-accent));
+  transition: width 0.25s ease;
+}
+
+.onboarding-profile-steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .onboarding-profile-steps {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.onboarding-profile-step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--ma-line);
+  background: rgba(18, 32, 27, 0.45);
+  color: var(--ma-muted);
+  font: inherit;
+  text-align: left;
+  cursor: default;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.onboarding-profile-step:not(:disabled) {
+  cursor: pointer;
+}
+
+.onboarding-profile-step.is-active {
+  border-color: rgba(143, 191, 159, 0.4);
+  background: rgba(143, 191, 159, 0.1);
+  color: var(--ma-ink);
+}
+
+.onboarding-profile-step.is-done {
+  color: var(--ma-ink);
+}
+
+.onboarding-profile-step:disabled {
+  opacity: 0.55;
+}
+
+.onboarding-profile-step-num {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--ma-line);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.onboarding-profile-step.is-active .onboarding-profile-step-num,
+.onboarding-profile-step.is-done .onboarding-profile-step-num {
+  border-color: rgba(143, 191, 159, 0.45);
+  background: rgba(143, 191, 159, 0.12);
+  color: var(--ma-accent-soft);
+}
+
+.onboarding-profile-step-label {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.onboarding-profile-step-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.onboarding-profile-step-sub {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--ma-muted);
+  line-height: 1.2;
+}
+
+.onboarding-profile-step.is-active .onboarding-profile-step-sub {
+  color: rgba(237, 234, 225, 0.65);
+}
+
+@media (max-width: 480px) {
+  .onboarding-page {
+    padding: 28px 16px 40px;
+  }
+
+  .onboarding-card-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .onboarding-card-foot-start,
+  .onboarding-card-foot-end {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .onboarding-card-foot-end .ant-btn-primary {
+    flex: 1;
+  }
+}
