@@ -50,6 +50,7 @@ function selectedKey(pathname: string | null): string {
 }
 
 function pageTitle(pathname: string | null): string {
+  if (pathname === "/app/visibility/history") return "Visibility history";
   const key = selectedKey(pathname);
   return NAV_ITEMS.find((item) => item.key === key)?.label ?? "Dashboard";
 }

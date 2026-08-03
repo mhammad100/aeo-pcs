@@ -12,8 +12,20 @@ export async function createJob(req: AuthedRequest, res: Response) {
 }
 
 export async function listJobs(req: AuthedRequest, res: Response) {
+  const limitRaw = Number(req.query.limit);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 20;
+  const status =
+    req.query.status === "completed" ||
+    req.query.status === "failed" ||
+    req.query.status === "running" ||
+    req.query.status === "queued"
+      ? req.query.status
+      : undefined;
+
   const jobs = await visibilityJobsService.listVisibilityJobs({
     userId: req.userId!,
+    limit,
+    status,
   });
   res.json({ jobs });
 }

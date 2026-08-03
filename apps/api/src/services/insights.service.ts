@@ -27,13 +27,21 @@ function asScore(score: unknown): VisibilityScore | undefined {
 export async function listVisibilityJobs(input: {
   userId: string;
   limit?: number;
+  status?: VisibilityJobSummary["status"];
 }): Promise<VisibilityJobSummary[]> {
   const owned = await BusinessModel.findOne({ ownerUserId: input.userId }).select("_id").lean();
   if (!owned) {
     throw new AppError("Business not found", 404);
   }
 
-  const jobs = await VisibilityJobModel.find({ businessId: owned._id })
+  const query: { businessId: typeof owned._id; status?: VisibilityJobSummary["status"] } = {
+    businessId: owned._id,
+  };
+  if (input.status) {
+    query.status = input.status;
+  }
+
+  const jobs = await VisibilityJobModel.find(query)
     .sort({ createdAt: -1 })
     .limit(input.limit ?? 20)
     .select("status score createdAt plan")
@@ -63,7 +71,7 @@ export async function getBusinessInsights(userId: string): Promise<BusinessInsig
     await Promise.all([
     VisibilityJobModel.find({ businessId: business._id, status: "completed" })
       .sort({ createdAt: -1 })
-      .limit(10)
+      .limit(5)
       .select("status score createdAt plan")
       .lean(),
     VisibilityJobModel.find({

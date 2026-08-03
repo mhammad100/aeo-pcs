@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Empty, Progress, Row, Spin, Table, Typography } from "antd";
+import { Alert, Button, Card, Col, Progress, Row, Spin, Typography } from "antd";
 import AppShell from "@/components/AppShell";
 import { ModelBreakdownChart, VisibilityTrendChart } from "@/components/DashboardCharts";
 import PromptScoreList from "@/components/PromptScoreList";
+import RecentRunsList, { RecentRunsEmpty } from "@/components/RecentRunsList";
 import StatCard from "@/components/StatCard";
 import { api, ApiError } from "@/lib/api";
 import { useAppSelector } from "@/store/hooks";
@@ -160,39 +161,25 @@ export default function AppDashboardPage() {
 
             <Card
               title="Recent visibility runs"
-              className="dash-panel-card"
+              className="dash-panel-card recent-runs-card"
               extra={
-                <Link href="/app/visibility">
-                  <Button type="primary">New check</Button>
-                </Link>
+                <div className="dash-card-actions">
+                  {(insights?.recentJobs?.length ?? 0) > 0 && (
+                    <Link href="/app/visibility/history">
+                      <Button>View all</Button>
+                    </Link>
+                  )}
+                  <Link href="/app/visibility">
+                    <Button type="primary">New check</Button>
+                  </Link>
+                </div>
               }
               style={{ marginBottom: 16 }}
             >
               {!insights?.recentJobs?.length ? (
-                <Empty description="No completed runs yet" />
+                <RecentRunsEmpty />
               ) : (
-                <Table
-                  rowKey="id"
-                  pagination={false}
-                  dataSource={insights.recentJobs}
-                  columns={[
-                    {
-                      title: "Date",
-                      dataIndex: "createdAt",
-                      render: (v: string) => new Date(v).toLocaleString(),
-                    },
-                    {
-                      title: "Score",
-                      dataIndex: ["score", "visibilityPct"],
-                      render: (v: number | undefined) => (typeof v === "number" ? `${v}%` : "—"),
-                    },
-                    {
-                      title: "Plan",
-                      dataIndex: "hasPlan",
-                      render: (v: boolean) => (v ? "Yes" : "No"),
-                    },
-                  ]}
-                />
+                <RecentRunsList jobs={insights.recentJobs.slice(0, 5)} />
               )}
             </Card>
 
