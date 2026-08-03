@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Alert,
   Button,
+  Input,
   Progress,
   Space,
   Spin,
@@ -19,6 +20,7 @@ import { useVisibilityJobStream } from "@/hooks/useVisibilityJobStream";
 import PresenceAuditPanel from "@/components/PresenceAuditPanel";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { hydrateFromProfile } from "@/store/businessSlice";
+import { clearPrompts, resetPrompts, setPrompts, updatePrompt } from "@/store/promptsSlice";
 import {
   resetVisibility,
   setError,
@@ -59,6 +61,7 @@ export default function VisibilityWizard() {
   const dispatch = useAppDispatch();
   const business = useAppSelector((s) => s.business);
   const visibility = useAppSelector((s) => s.visibility);
+  const prompts = useAppSelector((s) => s.prompts);
   const [localBusyLabel, setLocalBusyLabel] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(!business.profileLoaded);
   const [stepOverride, setStepOverride] = useState<number | null>(null);
@@ -75,6 +78,11 @@ export default function VisibilityWizard() {
   const hasPlan = hasPlanContent(visibility.plan);
   const isPartialCompletion =
     visibility.status === "completed" && Boolean(visibility.error) && hasResults;
+
+  const showReview = prompts.prompts.length > 0 && !visibility.jobId && !visibility.status;
+  const promptsEdited =
+    prompts.prompts.length === prompts.original.length &&
+    prompts.prompts.some((p, i) => p !== prompts.original[i]);
 
   const derivedStep = useMemo(() => {
     if (hasPlan) return 1;
@@ -103,6 +111,7 @@ export default function VisibilityWizard() {
 
   function onStartNewCheck() {
     dispatch(resetVisibility());
+    dispatch(clearPrompts());
     setStepOverride(0);
   }
 
@@ -203,30 +212,55 @@ export default function VisibilityWizard() {
     };
   }, [dispatch, visibility.jobId, hasResults]);
 
-  async function onRunCheck() {
+  async function onGeneratePrompts() {
     if (!business.selected) return;
     dispatch(setUiBusy(true));
-    setLocalBusyLabel("Preparing visibility check");
+    setLocalBusyLabel("Generating prompts");
     dispatch(setError(null));
     dispatch(resetVisibility());
+    dispatch(clearPrompts());
     try {
-      const { prompts } = await api.generatePrompts({
+      const { prompts: generated } = await api.generatePrompts({
         business: business.selected,
         category: business.category,
         city: business.city,
         country: business.country,
       });
+      dispatch(setPrompts(generated));
+      setStepOverride(0);
+    } catch (err) {
+      dispatch(setError(err instanceof Error ? err.message : "Prompt generation failed"));
+    } finally {
+      dispatch(setUiBusy(false));
+      setLocalBusyLabel(null);
+    }
+  }
 
+  function onEditPrompt(index: number, value: string) {
+    dispatch(updatePrompt({ index, value }));
+  }
+
+  function onResetPrompts() {
+    dispatch(resetPrompts());
+  }
+
+  async function onConfirmAndRun() {
+    const finalPrompts = prompts.prompts.map((p) => p.trim()).filter(Boolean);
+    if (!finalPrompts.length) return;
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel("Preparing visibility check");
+    dispatch(setError(null));
+    try {
       const { jobId } = await api.createVisibilityJob({
         category: business.category,
-        prompts,
+        prompts: finalPrompts,
       });
 
       dispatch(setJobId(jobId));
       dispatch(
         setJobSnapshot({
           status: "queued",
-          progress: { completed: 0, total: prompts.length * visibilityModelCount },
+          progress: { completed: 0, total: finalPrompts.length * visibilityModelCount },
           results: null,
           score: null,
           plan: null,
@@ -234,6 +268,7 @@ export default function VisibilityWizard() {
           error: null,
         })
       );
+      dispatch(clearPrompts());
       setStepOverride(0);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Visibility check failed"));
@@ -352,7 +387,8 @@ export default function VisibilityWizard() {
     );
   }
 
-  const showIdle = !visibility.jobId && !jobRunning && !hasResults && !visibility.status;
+  const showIdle =
+    !visibility.jobId && !jobRunning && !hasResults && !visibility.status && !showReview;
 
   return (
     <div className="vis-page">
@@ -366,7 +402,11 @@ export default function VisibilityWizard() {
         </div>
         <div className="vis-header-actions">
           <MetaPills />
-          {(visibility.jobId || hasResults || hasPlan || visibility.status === "failed") && (
+          {(visibility.jobId ||
+            hasResults ||
+            hasPlan ||
+            showReview ||
+            visibility.status === "failed") && (
             <Button onClick={onStartNewCheck}>New check</Button>
           )}
         </div>
@@ -425,18 +465,34 @@ export default function VisibilityWizard() {
               hint={
                 jobRunning
                   ? "Checking how AI assistants mention your business."
-                  : hasResults
-                    ? "Your visibility index and key insights."
-                    : stepHints[0]
+                  : showReview
+                    ? "Review the generated prompts below. You can edit wording."
+                    : hasResults
+                      ? "Your visibility index and key insights."
+                      : stepHints[0]
               }
               foot={
-                showIdle ? (
+                showReview ? (
+                  <>
+                    <Button onClick={onResetPrompts} disabled={!promptsEdited}>
+                      Reset
+                    </Button>
+                    <Button
+                      type="primary"
+                      loading={visibility.uiBusy}
+                      disabled={prompts.prompts.every((p) => !p.trim())}
+                      onClick={onConfirmAndRun}
+                    >
+                      {localBusyLabel || "Confirm & run check"}
+                    </Button>
+                  </>
+                ) : showIdle ? (
                   <Button
                     type="primary"
                     size="large"
                     loading={visibility.uiBusy}
                     disabled={!canRunVisibility || subscriptionLoading || !business.selected}
-                    onClick={onRunCheck}
+                    onClick={onGeneratePrompts}
                   >
                     {localBusyLabel || "Run visibility check"}
                   </Button>
@@ -465,12 +521,30 @@ export default function VisibilityWizard() {
                     )}
                   </>
                 ) : !jobRunning && visibility.status === "failed" ? (
-                  <Button type="primary" onClick={onRunCheck}>
+                  <Button type="primary" onClick={onGeneratePrompts}>
                     Try again
                   </Button>
                 ) : undefined
               }
             >
+              {showReview && (
+                <div className="vis-prompts-review">
+                  <Space direction="vertical" style={{ width: "100%" }} size={12}>
+                    {prompts.prompts.map((p, i) => (
+                      <div className="vis-prompt-field" key={i}>
+                        <span className="vis-prompt-index">{i + 1}</span>
+                        <Input.TextArea
+                          value={p}
+                          autoSize={{ minRows: 1, maxRows: 4 }}
+                          maxLength={300}
+                          onChange={(e) => onEditPrompt(i, e.target.value)}
+                        />
+                      </div>
+                    ))}
+                  </Space>
+                </div>
+              )}
+
               {showIdle && business.selected && (
                 <div className="vis-idle">
                   <h4 className="vis-business-name">{business.selected.name}</h4>
