@@ -20,8 +20,14 @@ export async function generate(req: AuthedRequest, res: Response) {
     country: req.body.country,
     targetLocations: owned.targetLocations?.length
       ? owned.targetLocations.map(String)
-      : [owned.city].filter(Boolean),
+      : undefined,
     targetItems: (owned.targetItems || []).map(String),
+    websiteUrl: owned.websiteUrl ? String(owned.websiteUrl) : undefined,
+    googleBusinessUrl: owned.googleBusinessUrl ? String(owned.googleBusinessUrl) : undefined,
+    socialLinks: (owned.socialLinks || []).map((link) => ({
+      label: String(link.label),
+      url: String(link.url),
+    })),
     usage: { userId: req.userId, businessId: String(owned._id) },
   });
   res.json({ prompts });

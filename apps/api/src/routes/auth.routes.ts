@@ -9,6 +9,7 @@ export const authRouter = Router();
 authRouter.post("/login", validate(loginValidators), asyncHandler(authController.login));
 authRouter.post("/signup", validate(signupValidators), asyncHandler(authController.signup));
 authRouter.get("/me", requireAuth, asyncHandler(authController.me));
+authRouter.post("/logout", requireAuth, asyncHandler(authController.logout));
 authRouter.post(
   "/change-password",
   requireAuth,

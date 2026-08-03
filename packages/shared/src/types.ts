@@ -109,7 +109,7 @@ export type ActionPlan = {
   presenceAudit?: PresenceAudit;
 };
 
-export type JobStatus = "queued" | "running" | "completed" | "failed";
+export type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
 export type VisibilityJobProgress = {
   completed: number;

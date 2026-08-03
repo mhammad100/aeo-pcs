@@ -18,7 +18,8 @@ export async function listJobs(req: AuthedRequest, res: Response) {
     req.query.status === "completed" ||
     req.query.status === "failed" ||
     req.query.status === "running" ||
-    req.query.status === "queued"
+    req.query.status === "queued" ||
+    req.query.status === "cancelled"
       ? req.query.status
       : undefined;
 
@@ -28,6 +29,20 @@ export async function listJobs(req: AuthedRequest, res: Response) {
     status,
   });
   res.json({ jobs });
+}
+
+export async function getActiveJob(req: AuthedRequest, res: Response) {
+  const result = await visibilityJobsService.getActiveVisibilityJob(req.userId!);
+  res.json(result);
+}
+
+export async function cancelJob(req: AuthedRequest, res: Response) {
+  const result = await visibilityJobsService.cancelVisibilityJob({
+    jobId: req.params.jobId,
+    userId: req.userId!,
+    userRole: req.userRole,
+  });
+  res.json(result);
 }
 
 export async function getInsights(req: AuthedRequest, res: Response) {

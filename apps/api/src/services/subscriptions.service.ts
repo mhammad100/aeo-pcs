@@ -20,7 +20,7 @@ async function runsUsedThisMonth(businessId: string) {
   return VisibilityJobModel.countDocuments({
     businessId,
     createdAt: { $gte: start, $lt: end },
-    status: { $in: ["queued", "running", "completed"] },
+    status: { $in: ["queued", "running", "completed", "cancelled"] },
   });
 }
 

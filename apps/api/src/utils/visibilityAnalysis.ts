@@ -1,5 +1,6 @@
 import type { MentionSentiment, Source, VisibilityScore } from "@aeo-pcs/shared";
 import type { PromptResult } from "@aeo-pcs/shared";
+import { resolvePromptLocations } from "@aeo-pcs/shared";
 import { extractMentioned } from "./llm";
 
 export type VisibilityBusinessContext = {
@@ -62,9 +63,9 @@ export function buildVisibilityUserPrompt(input: {
   targetLocations?: string[];
   targetItems?: string[];
 }): string {
-  const locations = [...new Set([input.city, ...(input.targetLocations || [])].filter(Boolean))];
-  const locationLine = locations.length
-    ? `Location context: ${locations.join(", ")}, ${input.country}`
+  const promptLocations = resolvePromptLocations(input.city, input.targetLocations);
+  const locationLine = promptLocations.length
+    ? `Location context: ${promptLocations.join(", ")}, ${input.country}`
     : `Location context: ${input.country}`;
   const items = (input.targetItems || []).filter(Boolean);
   const itemLine = items.length ? `Relevant services/products: ${items.join(", ")}` : "";

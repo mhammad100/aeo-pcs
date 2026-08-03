@@ -1,4 +1,10 @@
-import type { AuthUser, LoginRequest, LoginResponse, MeResponse } from "@aeo-pcs/shared";
+import type {
+  AuthUser,
+  LoginConflictDetails,
+  LoginRequest,
+  LoginResponse,
+  MeResponse,
+} from "@aeo-pcs/shared";
 import { store } from "@/store";
 import { logoutAndReset } from "@/store/session";
 
@@ -6,10 +12,19 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api/v1
 
 export class ApiError extends Error {
   status: number;
+  code?: string;
+  details?: LoginConflictDetails & Record<string, unknown>;
 
-  constructor(message: string, status: number) {
+  constructor(
+    message: string,
+    status: number,
+    code?: string,
+    details?: LoginConflictDetails & Record<string, unknown>
+  ) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -25,11 +40,22 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   const data = await res.json().catch(() => ({}));
+  const code = (data as { code?: string }).code;
+  const details = (data as { details?: LoginConflictDetails & Record<string, unknown> }).details;
+
   if (res.status === 401 && token) {
-    void store.dispatch(logoutAndReset());
+    if (code === "SESSION_REVOKED") {
+      sessionStorage.setItem("auth-session-revoked", "1");
+    }
+    void store.dispatch(logoutAndReset({ revokeServer: false }));
   }
   if (!res.ok) {
-    throw new ApiError((data as { error?: string }).error || "Request failed", res.status);
+    throw new ApiError(
+      (data as { error?: string }).error || "Request failed",
+      res.status,
+      code,
+      details
+    );
   }
   return data as T;
 }
@@ -95,6 +121,25 @@ export const api = {
     request<{ jobId: string }>("/visibility/jobs", {
       method: "POST",
       body: JSON.stringify(body),
+    }),
+
+  getActiveVisibilityJob: () =>
+    request<{
+      job: (import("@aeo-pcs/shared").VisibilityJob & {
+        plan?: import("@aeo-pcs/shared").ActionPlan;
+        itemOutputs?: Record<string, string>;
+      }) | null;
+    }>("/visibility/jobs/active"),
+
+  cancelVisibilityJob: (jobId: string) =>
+    request<{
+      job: import("@aeo-pcs/shared").VisibilityJob & {
+        plan?: import("@aeo-pcs/shared").ActionPlan;
+        itemOutputs?: Record<string, string>;
+      };
+    }>(`/visibility/jobs/${encodeURIComponent(jobId)}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({}),
     }),
 
   getVisibilityJob: (jobId: string) =>
@@ -168,7 +213,7 @@ export const api = {
       },
     });
     if (res.status === 401 && token) {
-      void store.dispatch(logoutAndReset());
+      void store.dispatch(logoutAndReset({ revokeServer: false }));
     }
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));

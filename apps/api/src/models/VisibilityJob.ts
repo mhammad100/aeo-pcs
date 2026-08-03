@@ -67,7 +67,7 @@ const VisibilityJobSchema = new Schema(
     businessId: { type: Schema.Types.ObjectId, ref: "Business", index: true },
     status: {
       type: String,
-      enum: ["queued", "running", "completed", "failed"],
+      enum: ["queued", "running", "completed", "failed", "cancelled"],
       default: "queued",
     },
     progress: {

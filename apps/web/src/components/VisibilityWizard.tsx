@@ -6,12 +6,13 @@ import {
   Alert,
   Button,
   Input,
+  Modal,
   Progress,
   Space,
   Spin,
   Typography,
 } from "antd";
-import { type AeoRuntimeSettings, formatCategoryLabel } from "@aeo-pcs/shared";
+import { type AeoRuntimeSettings, COPY, formatCategoryLabel } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import VisibilityInsights from "@/components/VisibilityInsights";
@@ -39,6 +40,8 @@ const DEFAULT_RUNTIME: AeoRuntimeSettings = {
   visibilityModelCount: 3,
   visibilityModels: [],
 };
+
+const PROMPTS_DRAFT_KEY = "visibility-prompts-draft";
 
 function downloadBlob(content: BlobPart, filename: string, mime: string) {
   const blob = new Blob([content], { type: mime });
@@ -72,6 +75,7 @@ export default function VisibilityWizard() {
   const [canRunVisibility, setCanRunVisibility] = useState(false);
   const [lastPrompts, setLastPrompts] = useState<string[]>([]);
   const [showPromptChoice, setShowPromptChoice] = useState(false);
+  const [resumeChecked, setResumeChecked] = useState(false);
 
   const visibilityModelCount = runtime.visibilityModelCount;
   const modelLabels = runtime.visibilityModels.map((m) => m.label);
@@ -94,6 +98,7 @@ export default function VisibilityWizard() {
       visibility.status === "queued" ||
       visibility.status === "running" ||
       visibility.status === "failed" ||
+      visibility.status === "cancelled" ||
       visibility.status === "completed"
     ) {
       return 0;
@@ -111,11 +116,68 @@ export default function VisibilityWizard() {
 
   useVisibilityJobStream(visibility.jobId);
 
+  async function refreshSubscription() {
+    const { subscription } = await api.getMySubscription();
+    const subscribed = hasActiveSubscription(subscription);
+    const used = subscription.runsUsedThisPeriod ?? 0;
+    const limit = subscription.runsLimit ?? 0;
+    setRunsUsed(used);
+    setRunsLimit(limit);
+    setCanRunVisibility(subscribed && used < limit);
+  }
+
+  function clearPromptDraft() {
+    sessionStorage.removeItem(PROMPTS_DRAFT_KEY);
+  }
+
+  function savePromptDraft(nextPrompts: string[]) {
+    sessionStorage.setItem(PROMPTS_DRAFT_KEY, JSON.stringify(nextPrompts));
+  }
+
+  function confirmCancelRun(onConfirmed: () => void) {
+    Modal.confirm({
+      title: COPY.visibility.cancelConfirmTitle,
+      content: COPY.visibility.cancelConfirmBody,
+      okText: COPY.visibility.cancelConfirmOk,
+      okButtonProps: { danger: true },
+      cancelText: COPY.visibility.cancelConfirmCancel,
+      onOk: async () => {
+        if (!visibility.jobId) return;
+        dispatch(setUiBusy(true));
+        try {
+          await api.cancelVisibilityJob(visibility.jobId);
+          dispatch(
+            setJobSnapshot({
+              status: "cancelled",
+              error: COPY.visibility.cancelledMessage,
+            })
+          );
+          clearPromptDraft();
+          await refreshSubscription();
+          onConfirmed();
+        } catch (err) {
+          dispatch(setError(err instanceof ApiError ? err.message : COPY.visibility.cancelFailed));
+        } finally {
+          dispatch(setUiBusy(false));
+        }
+      },
+    });
+  }
+
   function onStartNewCheck() {
-    dispatch(resetVisibility());
-    dispatch(clearPrompts());
-    setShowPromptChoice(false);
-    setStepOverride(0);
+    const startFresh = () => {
+      dispatch(resetVisibility());
+      dispatch(clearPrompts());
+      clearPromptDraft();
+      setShowPromptChoice(false);
+      setStepOverride(0);
+    };
+
+    if (jobRunning && visibility.jobId) {
+      confirmCancelRun(startFresh);
+      return;
+    }
+    startFresh();
   }
 
   useEffect(() => {
@@ -164,6 +226,56 @@ export default function VisibilityWizard() {
       cancelled = true;
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (profileLoading || visibility.jobId || resumeChecked) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { job } = await api.getActiveVisibilityJob();
+        if (cancelled) return;
+        if (job) {
+          dispatch(setJobId(job.id));
+          dispatch(
+            setJobSnapshot({
+              status: job.status,
+              progress: job.progress,
+              results: job.results,
+              score: job.score,
+              plan: job.plan ?? null,
+              itemOutputs: job.itemOutputs ?? {},
+              error: job.error,
+            })
+          );
+        } else {
+          const draft = sessionStorage.getItem(PROMPTS_DRAFT_KEY);
+          if (draft) {
+            const parsed = JSON.parse(draft) as string[];
+            if (Array.isArray(parsed) && parsed.length) {
+              dispatch(setPrompts(parsed));
+            }
+          }
+        }
+      } catch {
+        /* resume optional */
+      } finally {
+        if (!cancelled) setResumeChecked(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileLoading, visibility.jobId, resumeChecked, dispatch]);
+
+  useEffect(() => {
+    if (
+      visibility.status === "completed" ||
+      visibility.status === "cancelled" ||
+      visibility.status === "failed"
+    ) {
+      void refreshSubscription();
+    }
+  }, [visibility.status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -249,6 +361,7 @@ export default function VisibilityWizard() {
         country: business.country,
       });
       dispatch(setPrompts(generated));
+      savePromptDraft(generated);
       setStepOverride(0);
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Prompt generation failed"));
@@ -276,6 +389,9 @@ export default function VisibilityWizard() {
 
   function onEditPrompt(index: number, value: string) {
     dispatch(updatePrompt({ index, value }));
+    const next = [...prompts.prompts];
+    next[index] = value;
+    savePromptDraft(next);
   }
 
   function onResetPrompts() {
@@ -296,6 +412,7 @@ export default function VisibilityWizard() {
 
       dispatch(setJobId(jobId));
       setLastPrompts(finalPrompts);
+      clearPromptDraft();
       dispatch(
         setJobSnapshot({
           status: "queued",
@@ -309,8 +426,26 @@ export default function VisibilityWizard() {
       );
       dispatch(clearPrompts());
       setStepOverride(0);
+      await refreshSubscription();
     } catch (err) {
-      dispatch(setError(err instanceof Error ? err.message : "Visibility check failed"));
+      if (err instanceof ApiError && err.code === "VISIBILITY_IN_PROGRESS" && err.details?.jobId) {
+        const activeJobId = String(err.details.jobId);
+        const job = await api.getVisibilityJob(activeJobId);
+        dispatch(setJobId(activeJobId));
+        dispatch(
+          setJobSnapshot({
+            status: job.status,
+            progress: job.progress,
+            results: job.results,
+            score: job.score,
+            plan: job.plan ?? null,
+            itemOutputs: job.itemOutputs ?? {},
+            error: job.error,
+          })
+        );
+        return;
+      }
+      dispatch(setError(err instanceof ApiError ? err.message : "Visibility check failed"));
     } finally {
       dispatch(setUiBusy(false));
       setLocalBusyLabel(null);
@@ -450,7 +585,8 @@ export default function VisibilityWizard() {
             hasResults ||
             hasPlan ||
             showReview ||
-            visibility.status === "failed") && (
+            visibility.status === "failed" ||
+            visibility.status === "cancelled") && (
             <Button onClick={onStartNewCheck}>New check</Button>
           )}
         </div>
@@ -493,6 +629,16 @@ export default function VisibilityWizard() {
             />
           )}
         </div>
+      )}
+
+      {jobRunning && (
+        <Alert
+          type="info"
+          showIcon
+          style={{ marginBottom: 20 }}
+          message={COPY.visibility.inProgressTitle}
+          description={COPY.visibility.inProgressDescription}
+        />
       )}
 
       <div className="vis-layout">
@@ -582,6 +728,14 @@ export default function VisibilityWizard() {
                 ) : !jobRunning && visibility.status === "failed" ? (
                   <Button type="primary" onClick={onGeneratePrompts}>
                     Try again
+                  </Button>
+                ) : !jobRunning && visibility.status === "cancelled" ? (
+                  <Button type="primary" onClick={onGeneratePrompts}>
+                    Start new check
+                  </Button>
+                ) : jobRunning ? (
+                  <Button danger onClick={() => confirmCancelRun(() => {})} loading={visibility.uiBusy}>
+                    Cancel check
                   </Button>
                 ) : undefined
               }
@@ -676,6 +830,10 @@ export default function VisibilityWizard() {
 
               {visibility.status === "failed" && !jobRunning && !hasResults && (
                 <Alert type="error" showIcon message={visibility.error || "Check failed"} />
+              )}
+
+              {visibility.status === "cancelled" && !jobRunning && !hasResults && (
+                <Alert type="warning" showIcon message={visibility.error || COPY.visibility.cancelledMessage} />
               )}
 
               {!jobRunning && hasResults && visibility.results && visibility.score && (

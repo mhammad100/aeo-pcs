@@ -5,6 +5,7 @@ import { isValidHttpUrl } from "../services/businesses.service";
 export const loginValidators = [
   body("email").isEmail().normalizeEmail(),
   body("password").isString().isLength({ min: 8, max: 128 }),
+  body("revokeOtherSession").optional().isBoolean(),
 ];
 
 export const signupValidators = loginValidators;

@@ -4,7 +4,7 @@ import { Button, Form, Input, Select, Space } from "antd";
 import type { FormInstance } from "antd/es/form";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import SocialPlatformSelect from "@/components/SocialPlatformSelect";
-import { CATEGORIES, type BusinessProfile } from "@aeo-pcs/shared";
+import { CATEGORIES, COPY, type BusinessProfile } from "@aeo-pcs/shared";
 import { SOCIAL_PLATFORMS, socialPlatformPlaceholder } from "@/lib/socialPlatforms";
 
 const TARGET_ITEM_EXAMPLES = [
@@ -230,7 +230,7 @@ export default function BusinessProfileForm({
       <Form.Item
         name="targetLocations"
         label="Target locations (optional)"
-        tooltip="Neighborhoods and areas you serve, in addition to your primary city"
+        tooltip={COPY.profile.targetLocationsTooltip}
       >
         <Select
           mode="tags"

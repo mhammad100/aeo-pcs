@@ -34,6 +34,7 @@ export async function runVisibilityCheck(input: {
     currentPrompt: string;
     currentModel: string;
   }) => Promise<void> | void;
+  shouldAbort?: () => Promise<boolean>;
 }): Promise<{ results: PromptResult[]; score: VisibilityScore; partialWarning: string | null }> {
   if (!input.models.length) {
     throw new Error("No visibility models configured");
@@ -54,6 +55,10 @@ export async function runVisibilityCheck(input: {
   };
 
   for (const prompt of input.prompts) {
+    if (input.shouldAbort && (await input.shouldAbort())) {
+      throw new Error("Visibility check cancelled");
+    }
+
     const userPrompt = buildVisibilityUserPrompt({
       prompt,
       category: input.category,
@@ -65,6 +70,10 @@ export async function runVisibilityCheck(input: {
 
     const perModel: PromptResult["perModel"] = [];
     for (const model of input.models) {
+      if (input.shouldAbort && (await input.shouldAbort())) {
+        throw new Error("Visibility check cancelled");
+      }
+
       if (input.onProgress) {
         await input.onProgress({
           completed,

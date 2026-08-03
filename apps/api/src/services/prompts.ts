@@ -1,12 +1,14 @@
-import type { BusinessCandidate } from "@aeo-pcs/shared";
+import type { BusinessCandidate, SocialLink } from "@aeo-pcs/shared";
 import {
   buildVisibilityPromptSystem,
   buildVisibilityPromptUserMessage,
   filterValidVisibilityPrompts,
+  resolvePromptLocations,
   summarizeTargetItems,
 } from "@aeo-pcs/shared";
 import { safeParseJSON } from "../utils/llm";
 import { getAeoSettings } from "./aeoSettings.service";
+import { enrichBusinessFromWeb, formatWebEnrichment } from "./businessWebEnrichment";
 import { callTaskModel } from "./taskModelRunner";
 
 const MAX_GENERATION_ATTEMPTS = 3;
@@ -19,6 +21,9 @@ export async function generatePrompts(input: {
   country: string;
   targetLocations?: string[];
   targetItems?: string[];
+  websiteUrl?: string;
+  googleBusinessUrl?: string;
+  socialLinks?: SocialLink[];
   usage?: { userId?: string | null; businessId?: string | null };
 }): Promise<string[]> {
   const settings = await getAeoSettings();
@@ -30,34 +35,50 @@ export async function generatePrompts(input: {
   }
 
   const city = input.city.trim();
-  const locations = [...new Set([city, ...(input.targetLocations || [])].filter(Boolean))];
-  const neighborhoods = (input.targetLocations || []).filter(
-    (loc) => loc.trim().toLowerCase() !== city.toLowerCase()
-  );
-  const locationHint = locations.join(", ");
+  const country = input.country.trim();
+  const promptLocations = resolvePromptLocations(city, input.targetLocations);
   const description = (input.business.description || "").trim();
-  const targetItemsSummary = summarizeTargetItems((input.targetItems || []).filter(Boolean));
+
+  const enrichment = await enrichBusinessFromWeb({
+    name: input.business.name,
+    city,
+    country,
+    websiteUrl: input.websiteUrl,
+    googleBusinessUrl: input.googleBusinessUrl,
+    socialLinks: input.socialLinks,
+    usage: input.usage,
+  });
+
+  const webContext = enrichment ? formatWebEnrichment(enrichment) : undefined;
+  const profileItems = (input.targetItems || []).filter(Boolean);
+  const webItems = enrichment?.services || [];
+  const mergedItems =
+    profileItems.length > 0 ? profileItems : webItems.length > 0 ? webItems : [];
+  const targetItemsSummary = summarizeTargetItems(mergedItems);
+  const effectiveDescription =
+    description || enrichment?.description?.trim() || input.business.category || "";
 
   const system = buildVisibilityPromptSystem({
     count,
     category: input.category,
     customCategory: input.customCategory,
-    city,
-    country: input.country,
-    locationHint,
-    neighborhoods,
+    headquartersCity: city || undefined,
+    country,
+    promptLocations,
     targetItemsSummary,
+    webContext,
   });
 
   const userMsg = buildVisibilityPromptUserMessage({
     businessName: input.business.name,
     category: input.category,
     customCategory: input.customCategory,
-    city,
-    country: input.country,
-    locationHint,
+    headquartersCity: city || undefined,
+    country,
+    promptLocations,
     targetItemsSummary,
-    description,
+    description: effectiveDescription,
+    webContext,
   });
 
   let lastInvalid: string[] = [];

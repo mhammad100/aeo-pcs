@@ -16,6 +16,8 @@ visibilityRouter.post(
 
 visibilityRouter.get("/jobs", requireAuth, asyncHandler(visibilityController.listJobs));
 
+visibilityRouter.get("/jobs/active", requireAuth, asyncHandler(visibilityController.getActiveJob));
+
 visibilityRouter.get("/insights", requireAuth, asyncHandler(visibilityController.getInsights));
 
 visibilityRouter.get(
@@ -30,4 +32,11 @@ visibilityRouter.get(
   requireAuth,
   validate(jobIdParamValidators),
   asyncHandler(visibilityController.getJob)
+);
+
+visibilityRouter.post(
+  "/jobs/:jobId/cancel",
+  requireAuth,
+  validate(jobIdParamValidators),
+  asyncHandler(visibilityController.cancelJob)
 );

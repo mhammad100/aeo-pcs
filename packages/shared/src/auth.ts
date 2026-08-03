@@ -39,11 +39,18 @@ export type AuthUser = {
 export type LoginRequest = {
   email: string;
   password: string;
+  /** When true, replaces the active session on another device. */
+  revokeOtherSession?: boolean;
 };
 
 export type LoginResponse = {
   token: string;
   user: AuthUser;
+};
+
+export type LoginConflictDetails = {
+  visibilityRunInProgress: boolean;
+  activeJobId?: string;
 };
 
 export type MeResponse = {

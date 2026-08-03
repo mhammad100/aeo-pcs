@@ -1,9 +1,11 @@
 import type { BusinessCandidate, UserRole } from "@aeo-pcs/shared";
+import { COPY, resolvePromptLocations } from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
 import { getAeoSettings, getEnabledVisibilityModels } from "./aeoSettings.service";
-import { enqueueVisibilityJob } from "./jobRunner";
+import { enqueueVisibilityJob, requestCancelVisibilityJob } from "./jobRunner";
+import { publishJobUpdate } from "./jobEvents";
 import { buildActionPlan, generateItemContent } from "./plan";
 import { buildReportHtml, wrapReportDocument } from "./report";
 import { syncChecklistFromPlan } from "./checklist.service";
@@ -11,6 +13,64 @@ import { getBusinessInsights, listVisibilityJobs } from "./insights.service";
 import { assertVisibilityRunAllowed, assertAiFeaturesAllowed } from "./subscriptions.service";
 
 export { getBusinessInsights, listVisibilityJobs };
+
+export async function findActiveVisibilityJobForBusiness(businessId: string) {
+  return VisibilityJobModel.findOne({
+    businessId,
+    status: { $in: ["queued", "running"] },
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+}
+
+export async function getActiveVisibilityJob(userId: string) {
+  const owned = await BusinessModel.findOne({ ownerUserId: userId }).select("_id").lean();
+  if (!owned) {
+    throw new AppError("Business not found", 404);
+  }
+
+  const job = await findActiveVisibilityJobForBusiness(String(owned._id));
+  if (!job) {
+    return { job: null };
+  }
+
+  const resolved = await failIfStale(job);
+  if (resolved.status !== "queued" && resolved.status !== "running") {
+    return { job: null };
+  }
+
+  return { job: serializeJob(resolved as Record<string, unknown>) };
+}
+
+export async function cancelVisibilityJob(input: {
+  jobId: string;
+  userId: string;
+  userRole?: UserRole;
+}) {
+  const job = await VisibilityJobModel.findById(input.jobId);
+  if (!job) {
+    throw new AppError("Job not found", 404);
+  }
+  assertJobAccess(job, input.userId, input.userRole);
+
+  if (job.status !== "queued" && job.status !== "running") {
+    throw new AppError("Only in-progress visibility checks can be cancelled", 400);
+  }
+
+  requestCancelVisibilityJob(input.jobId);
+  job.set("status", "cancelled");
+  job.set("error", COPY.visibility.cancelledMessage);
+  await job.save();
+
+  publishJobUpdate(input.jobId, {
+    status: "cancelled",
+    error: COPY.visibility.cancelledMessage,
+  });
+
+  return {
+    job: serializeJob(job.toObject() as Record<string, unknown>),
+  };
+}
 
 function mapItemOutputs(itemOutputs: unknown): Record<string, string> {
   if (itemOutputs instanceof Map) {
@@ -87,7 +147,21 @@ export async function createVisibilityJob(input: {
     );
   }
 
+  const active = await findActiveVisibilityJobForBusiness(String(owned._id));
+  if (active) {
+    throw new AppError(
+      COPY.visibility.alreadyInProgress,
+      409,
+      "VISIBILITY_IN_PROGRESS",
+      { jobId: String(active._id) }
+    );
+  }
+
   const models = await getEnabledVisibilityModels();
+  const promptLocations = resolvePromptLocations(
+    owned.city,
+    owned.targetLocations?.length ? owned.targetLocations.map(String) : undefined
+  );
 
   const business: BusinessCandidate = {
     name: owned.name.trim(),
@@ -95,7 +169,7 @@ export async function createVisibilityJob(input: {
     address: [owned.city, owned.country].filter(Boolean).join(", "),
     description: owned.description || "",
     nameAliases: (owned.nameAliases || []).map(String),
-    targetLocations: (owned.targetLocations?.length ? owned.targetLocations : [owned.city]).map(String),
+    targetLocations: promptLocations,
     targetItems: (owned.targetItems || []).map(String),
   };
 

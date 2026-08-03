@@ -6,9 +6,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  details?: Record<string, unknown>;
+  constructor(message: string, status: number, code?: string, details?: Record<string, unknown>) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -23,9 +27,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   const data = await res.json().catch(() => ({}));
+  const code = (data as { code?: string }).code;
+  const details = (data as { details?: Record<string, unknown> }).details;
   if (res.status === 401 && token) store.dispatch(logout());
   if (!res.ok) {
-    throw new ApiError((data as { error?: string }).error || "Request failed", res.status);
+    throw new ApiError(
+      (data as { error?: string }).error || "Request failed",
+      res.status,
+      code,
+      details
+    );
   }
   return data as T;
 }
