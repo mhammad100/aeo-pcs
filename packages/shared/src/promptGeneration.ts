@@ -129,7 +129,7 @@ export type BuildPromptSystemInput = {
 };
 
 export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): string {
-  const category = normalizeCategory(input.category);
+  // const category = normalizeCategory(input.category);
   const effectiveCategory = getEffectiveCategory(input.category, input.customCategory);
   const categoryHint = getCategoryPromptHint(input.category, input.customCategory);
   const b2b = isB2BCategory(input.category);
@@ -139,7 +139,7 @@ export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): stri
     : `- Use "${input.city}" or "${input.country}" for location — do NOT invent sub-areas or neighborhoods not listed under service areas`;
 
   const offeringRule = input.targetItemsSummary
-    ? `- Reflect these offering themes across prompts (2–3 themes total, not one question per item): ${input.targetItemsSummary}`
+    ? `- Reflect these offering themes across prompts (2-3 themes total, not one question per item): ${input.targetItemsSummary}`
     : `- Match category "${effectiveCategory}" using traits from the business description`;
 
   const b2bRule = b2b
