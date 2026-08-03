@@ -1402,10 +1402,20 @@ a {
   color: #d4a853;
 }
 
+.vis-prompts-review {
+  max-width: 640px;
+}
+
 .vis-prompt-field {
   display: flex;
   gap: 10px;
   align-items: flex-start;
+}
+
+.vis-prompt-field .ant-input {
+  background: rgba(11, 20, 17, 0.4);
+  border-color: var(--ma-line);
+  color: var(--ma-ink);
 }
 
 .vis-prompts-intro {
