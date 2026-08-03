@@ -8,14 +8,16 @@ import {
   AuditOutlined,
   CheckSquareOutlined,
   CreditCardOutlined,
+  LockOutlined,
   LogoutOutlined,
   MenuOutlined,
   SettingOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import { Button, Drawer, Grid, Layout, Menu, Typography } from "antd";
+import { Button, Drawer, Dropdown, Grid, Layout, Menu, Typography } from "antd";
 import type { MenuProps } from "antd";
 import AuthGuard from "@/components/AuthGuard";
+import ChangePasswordModal from "@/components/ChangePasswordModal";
 import ProfileGate from "@/components/ProfileGate";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -124,6 +126,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const screens = Grid.useBreakpoint();
   const isDesktop = screens.lg ?? true;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const businessName = user?.business?.name;
   const title = pageTitle(pathname);
@@ -141,6 +144,39 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     void dispatch(logoutAndReset());
     router.replace("/login");
   }
+
+  const userMenuItems: MenuProps["items"] = [
+    {
+      key: "profile",
+      label: (
+        <div className="app-shell-menu-user">
+          <span className="app-shell-menu-user-name">{businessName || "Your account"}</span>
+          <span className="app-shell-menu-user-email">{user?.email}</span>
+        </div>
+      ),
+      disabled: true,
+    },
+    { type: "divider" },
+    {
+      key: "password",
+      label: "Change password",
+      icon: <LockOutlined />,
+      onClick: () => setPasswordOpen(true),
+    },
+    {
+      key: "settings",
+      label: <Link href="/app/settings">Account settings</Link>,
+      icon: <SettingOutlined />,
+    },
+    { type: "divider" },
+    {
+      key: "logout",
+      label: "Log out",
+      icon: <LogoutOutlined />,
+      danger: true,
+      onClick: onLogout,
+    },
+  ];
 
   const nav = <ShellNav pathname={pathname} onNavigate={() => setMobileNavOpen(false)} />;
 
@@ -189,33 +225,32 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="app-shell-header-end">
-                  <div className="app-shell-user">
-                    <span className="app-shell-user-avatar" aria-hidden>
-                      {initials}
-                    </span>
-                    <div className="app-shell-user-meta">
-                      {businessName && (
-                        <Text className="app-shell-user-business">{businessName}</Text>
-                      )}
-                      <Text type="secondary" className="app-shell-user-email">
-                        {user?.email}
-                      </Text>
-                    </div>
-                  </div>
-                  <Button
-                    type="default"
-                    className="app-shell-logout"
-                    icon={<LogoutOutlined />}
-                    onClick={onLogout}
+                  <Dropdown
+                    menu={{ items: userMenuItems }}
+                    trigger={["click"]}
+                    placement="bottomRight"
+                    overlayClassName="app-shell-user-dropdown"
                   >
-                    <span className="app-shell-logout-label">Log out</span>
-                  </Button>
+                    <button type="button" className="app-shell-user-trigger">
+                      <span className="app-shell-user-avatar" aria-hidden>
+                        {initials}
+                      </span>
+                      <span className="app-shell-user-trigger-meta">
+                        {businessName && (
+                          <span className="app-shell-user-business">{businessName}</span>
+                        )}
+                        <span className="app-shell-user-email">{user?.email}</span>
+                      </span>
+                    </button>
+                  </Dropdown>
                 </div>
               </Header>
 
               <Content className="app-shell-content">{children}</Content>
             </Layout>
           </Layout>
+
+          <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
         </ProfileGate>
       </SubscriptionGate>
     </AuthGuard>

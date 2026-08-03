@@ -49,6 +49,12 @@ export const api = {
 
   me: () => request<MeResponse>("/auth/me"),
 
+  changePassword: (body: { currentPassword: string; newPassword: string }) =>
+    request<{ ok: boolean }>("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   getMyBusiness: () =>
     request<{ business: import("@aeo-pcs/shared").BusinessProfile }>("/businesses/me"),
 

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { Typography } from "antd";
+import PromptScoreList from "@/components/PromptScoreList";
 import {
   computeVisibilityRunInsights,
   type PromptContext,
@@ -112,32 +113,14 @@ export default function VisibilityInsights({
       {insights.weakPrompts.length > 0 && (
         <section className="vis-insight-section">
           <h4>Where you&apos;re missing visibility</h4>
-          <ul className="vis-insight-list">
-            {insights.weakPrompts.map((p) => (
-              <li key={p.prompt}>
-                <span className="vis-insight-list-main">{p.prompt}</span>
-                <span className="vis-insight-list-meta">
-                  {p.mentions}/{p.total} models mentioned you
-                </span>
-              </li>
-            ))}
-          </ul>
+          <PromptScoreList items={insights.weakPrompts} variant="weak" />
         </section>
       )}
 
       {insights.strongPrompts.length > 0 && (
         <section className="vis-insight-section">
           <h4>Where AI mentions you</h4>
-          <ul className="vis-insight-list is-positive">
-            {insights.strongPrompts.map((p) => (
-              <li key={p.prompt}>
-                <span className="vis-insight-list-main">{p.prompt}</span>
-                <span className="vis-insight-list-meta">
-                  {p.mentions}/{p.total} models
-                </span>
-              </li>
-            ))}
-          </ul>
+          <PromptScoreList items={insights.strongPrompts} variant="strong" />
         </section>
       )}
 

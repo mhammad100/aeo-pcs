@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Alert, Button, Card, Col, Empty, Progress, Row, Spin, Table, Typography } from "antd";
 import AppShell from "@/components/AppShell";
 import { ModelBreakdownChart, VisibilityTrendChart } from "@/components/DashboardCharts";
+import PromptScoreList from "@/components/PromptScoreList";
 import StatCard from "@/components/StatCard";
 import { api, ApiError } from "@/lib/api";
 import { useAppSelector } from "@/store/hooks";
@@ -150,16 +151,7 @@ export default function AppDashboardPage() {
                 {runInsights.weakPrompts.length > 0 && (
                   <Col xs={24} md={12} className="dash-stretch-col">
                     <Card title="Where you're missing visibility" className="dash-panel-card">
-                      <ul className="dash-prompt-list">
-                        {runInsights.weakPrompts.map((p) => (
-                          <li key={p.prompt}>
-                            <span>{p.prompt}</span>
-                            <Text type="secondary">
-                              {p.mentions}/{p.total}
-                            </Text>
-                          </li>
-                        ))}
-                      </ul>
+                      <PromptScoreList items={runInsights.weakPrompts} variant="weak" />
                     </Card>
                   </Col>
                 )}

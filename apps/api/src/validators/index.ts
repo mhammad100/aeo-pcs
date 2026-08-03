@@ -9,6 +9,11 @@ export const loginValidators = [
 
 export const signupValidators = loginValidators;
 
+export const changePasswordValidators = [
+  body("currentPassword").isString().isLength({ min: 8, max: 128 }),
+  body("newPassword").isString().isLength({ min: 8, max: 128 }),
+];
+
 export const createAdminUserValidators = [
   body("email").isEmail().normalizeEmail(),
   body("password").isString().isLength({ min: 8, max: 128 }),
