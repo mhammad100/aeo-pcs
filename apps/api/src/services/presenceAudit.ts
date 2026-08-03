@@ -9,9 +9,11 @@ import type {
 } from "@aeo-pcs/shared";
 import {
   collectOwnedDomains,
+  collectMentionNames,
   isBrandMentioned,
   type VisibilityBusinessContext,
 } from "../utils/visibilityAnalysis";
+import { filterLocalBusinesses } from "@aeo-pcs/shared";
 
 const URL_CHECK_TIMEOUT_MS = 8000;
 
@@ -144,16 +146,12 @@ function aggregateVisibilitySignals(input: {
         }
       }
 
-      for (const brand of m.brandsMentioned || []) {
-        const name = brand.trim();
-        if (!name) continue;
-        if (
-          input.bizCtx.name &&
-          name.toLowerCase().includes(input.bizCtx.name.toLowerCase())
-        ) {
-          continue;
-        }
-        competitorCounts.set(name, (competitorCounts.get(name) || 0) + 1);
+      const citedDomains = m.sources
+        .map((s) => (s.domain || "").trim())
+        .filter(Boolean);
+      const ownNames = collectMentionNames(input.bizCtx);
+      for (const brand of filterLocalBusinesses(m.brandsMentioned || [], citedDomains, ownNames)) {
+        competitorCounts.set(brand, (competitorCounts.get(brand) || 0) + 1);
       }
     }
   }

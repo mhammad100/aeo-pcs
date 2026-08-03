@@ -55,6 +55,7 @@ export const api = {
   updateMyBusiness: (body: {
     name: string;
     category: string;
+    customCategory?: string;
     city: string;
     country: string;
     description: string;

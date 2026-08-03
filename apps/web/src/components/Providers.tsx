@@ -15,13 +15,18 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             theme={{
               algorithm: theme.darkAlgorithm,
               token: {
-                colorPrimary: "#C9773D",
-                colorBgBase: "#0F1A17",
-                colorBgContainer: "#152420",
-                colorText: "#EDEAE1",
-                colorBorder: "#2B3B34",
+                colorPrimary: "#d4844a",
+                colorBgBase: "#0b1411",
+                colorBgContainer: "#12201b",
+                colorBgElevated: "#152420",
+                colorText: "#f2efe6",
+                colorTextSecondary: "#9aaba2",
+                colorBorder: "rgba(143, 191, 159, 0.18)",
+                colorSuccess: "#8fbf9f",
+                colorWarning: "#d4844a",
+                colorError: "#c96a5a",
                 borderRadius: 8,
-                fontFamily: "Georgia, 'Times New Roman', serif",
+                fontFamily: "var(--ma-font-body)",
               },
             }}
           >

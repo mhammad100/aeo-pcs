@@ -37,6 +37,7 @@ export async function analyzeVisibilityAnswer(input: {
 - sentiment: "positive", "neutral", or "negative" for how the target business is described (null if not mentioned)
 
 Do NOT include in localBusinessesMentioned:
+- The target business or any of its aliases (listed below)
 - Business directories or listing sites
 - Review aggregators or local search portals
 - Delivery or marketplace apps

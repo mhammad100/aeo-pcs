@@ -15,6 +15,7 @@ export async function generate(req: AuthedRequest, res: Response) {
   const prompts = await generatePrompts({
     business: req.body.business,
     category: req.body.category,
+    customCategory: owned.customCategory ? String(owned.customCategory) : undefined,
     city: req.body.city,
     country: req.body.country,
     targetLocations: owned.targetLocations?.length

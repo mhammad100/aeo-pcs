@@ -39,8 +39,10 @@ const STOP_WORDS = new Set([
   "your",
 ]);
 
-function normalizeKey(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+function normalizeKey(value: unknown): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
 }
 
 /** Keys derived from a cited domain for matching platform/source names in answer text. */
@@ -64,8 +66,8 @@ export function citedDomainKeys(domain: string): string[] {
   return [...keys];
 }
 
-export function looksLikeUrlOrDomain(name: string): boolean {
-  const trimmed = name.trim();
+export function looksLikeUrlOrDomain(name: unknown): boolean {
+  const trimmed = String(name ?? "").trim();
   if (!trimmed) return false;
   if (/^https?:\/\//i.test(trimmed)) return true;
   if (/^www\./i.test(trimmed)) return true;
@@ -77,8 +79,8 @@ export function looksLikeUrlOrDomain(name: string): boolean {
  * True when a name likely refers to a citation source / platform, not a local business.
  * Uses cited domains from the same answer — no hardcoded directory list.
  */
-export function isLikelySourceOrPlatform(name: string, citedDomains: string[] = []): boolean {
-  const trimmed = name.trim();
+export function isLikelySourceOrPlatform(name: unknown, citedDomains: string[] = []): boolean {
+  const trimmed = String(name ?? "").trim();
   if (!trimmed) return true;
 
   const key = normalizeKey(trimmed);
@@ -96,21 +98,38 @@ export function isLikelySourceOrPlatform(name: string, citedDomains: string[] = 
   return false;
 }
 
+/** True when a brand name matches the user's own business (exact or fuzzy). */
+export function isOwnBrand(name: unknown, ownNames: string[] = []): boolean {
+  const key = normalizeKey(name);
+  if (!key) return true;
+
+  for (const own of ownNames) {
+    const ownKey = normalizeKey(own);
+    if (!ownKey) continue;
+    if (key === ownKey) return true;
+    if (key.length >= 4 && ownKey.length >= 4) {
+      if (key.includes(ownKey) || ownKey.includes(key)) return true;
+    }
+  }
+
+  return false;
+}
+
 /** Keep only names that look like local businesses, excluding own brand and citation sources. */
 export function filterLocalBusinesses(
-  brands: string[],
+  brands: unknown[],
   citedDomains: string[] = [],
   ownNames: string[] = []
 ): string[] {
-  const ownKeys = new Set(ownNames.map((n) => normalizeKey(n)).filter(Boolean));
+  const safeOwnNames = ownNames.map((n) => String(n ?? "").trim()).filter(Boolean);
   const seen = new Set<string>();
   const out: string[] = [];
 
   for (const brand of brands) {
-    const trimmed = brand.trim();
+    const trimmed = String(brand ?? "").trim();
     if (!trimmed) continue;
     const key = normalizeKey(trimmed);
-    if (ownKeys.has(key)) continue;
+    if (isOwnBrand(trimmed, safeOwnNames)) continue;
     if (isLikelySourceOrPlatform(trimmed, citedDomains)) continue;
     if (seen.has(key)) continue;
     seen.add(key);

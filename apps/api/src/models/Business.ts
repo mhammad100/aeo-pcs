@@ -27,6 +27,7 @@ const BusinessSchema = new Schema(
     ownerUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     name: { type: String, default: "", trim: true },
     category: { type: String, default: "", trim: true },
+    customCategory: { type: String, default: "", trim: true },
     city: { type: String, default: "", trim: true },
     country: { type: String, default: "", trim: true },
     description: { type: String, default: "", trim: true },

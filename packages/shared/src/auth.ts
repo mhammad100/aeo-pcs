@@ -11,6 +11,8 @@ export type BusinessProfile = {
   id: string;
   name: string;
   category: string;
+  /** Free-text type when category is "Other". */
+  customCategory?: string;
   city: string;
   country: string;
   description: string;

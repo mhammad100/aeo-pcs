@@ -7,6 +7,7 @@ import { CATEGORIES, type BusinessProfile } from "@aeo-pcs/shared";
 export type BusinessProfileFormValues = {
   name: string;
   category: string;
+  customCategory?: string;
   city: string;
   country: string;
   description: string;
@@ -57,6 +58,7 @@ export default function BusinessProfileForm({
   onSubmit,
 }: Props) {
   const [form] = Form.useForm<BusinessProfileFormValues>();
+  const category = Form.useWatch("category", form);
 
   const identityFields = (
     <>
@@ -81,6 +83,18 @@ export default function BusinessProfileForm({
           />
         </Form.Item>
       </div>
+      {category === "Other" && (
+        <Form.Item
+          name="customCategory"
+          label="Business type"
+          rules={[
+            { required: true, message: "Describe your business type" },
+            { min: 2, message: "At least 2 characters" },
+          ]}
+        >
+          <Input placeholder="e.g. Pet grooming, Law firm, Photography studio" />
+        </Form.Item>
+      )}
       <Form.Item
         name="description"
         label="Short description"
@@ -256,6 +270,7 @@ export default function BusinessProfileForm({
       initialValues={{
         name: initial?.name || "",
         category: initial?.category || undefined,
+        customCategory: initial?.customCategory || "",
         city: initial?.city || "",
         country: initial?.country || "India",
         description: initial?.description || "",

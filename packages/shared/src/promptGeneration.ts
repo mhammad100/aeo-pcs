@@ -35,6 +35,22 @@ const CATEGORY_HINTS: Record<Category, string> = {
     "Discovery angles: core services, differentiators, ideal customer need, service area — adapt to the description.",
 };
 
+/** Resolved category label for prompts, display, and LLM context. */
+export function getEffectiveCategory(category: string, customCategory?: string): string {
+  if (normalizeCategory(category) === "Other" && customCategory?.trim()) {
+    return customCategory.trim();
+  }
+  return category.trim() || "Other";
+}
+
+/** Human-readable category for UI. */
+export function formatCategoryLabel(category: string, customCategory?: string): string {
+  if (normalizeCategory(category) === "Other" && customCategory?.trim()) {
+    return customCategory.trim();
+  }
+  return category.trim() || "Other";
+}
+
 /** Map partial/legacy category labels to canonical CATEGORIES values. */
 export function normalizeCategory(category: string): Category {
   const trimmed = category.trim();
@@ -51,8 +67,12 @@ export function normalizeCategory(category: string): Category {
   return match ?? "Other";
 }
 
-export function getCategoryPromptHint(category: string): string {
-  return CATEGORY_HINTS[normalizeCategory(category)];
+export function getCategoryPromptHint(category: string, customCategory?: string): string {
+  const normalized = normalizeCategory(category);
+  if (normalized === "Other" && customCategory?.trim()) {
+    return `Discovery angles for a ${customCategory.trim()} business: core services, differentiators, ideal customer need, service area — adapt to the description.`;
+  }
+  return CATEGORY_HINTS[normalized];
 }
 
 export function isB2BCategory(category: string): boolean {
@@ -100,6 +120,7 @@ export function filterValidVisibilityPrompts(prompts: string[]): string[] {
 export type BuildPromptSystemInput = {
   count: number;
   category: string;
+  customCategory?: string;
   city: string;
   country: string;
   locationHint: string;
@@ -109,7 +130,8 @@ export type BuildPromptSystemInput = {
 
 export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): string {
   const category = normalizeCategory(input.category);
-  const categoryHint = CATEGORY_HINTS[category];
+  const effectiveCategory = getEffectiveCategory(input.category, input.customCategory);
+  const categoryHint = getCategoryPromptHint(input.category, input.customCategory);
   const b2b = isB2BCategory(input.category);
 
   const locationRules = input.neighborhoods.length
@@ -118,7 +140,7 @@ export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): stri
 
   const offeringRule = input.targetItemsSummary
     ? `- Reflect these offering themes across prompts (2–3 themes total, not one question per item): ${input.targetItemsSummary}`
-    : `- Match category "${category}" using traits from the business description`;
+    : `- Match category "${effectiveCategory}" using traits from the business description`;
 
   const b2bRule = b2b
     ? "- B2B, vendor-selection, and \"who should I hire / who supplies\" prompts are appropriate for this category"
@@ -146,6 +168,7 @@ ${b2bRule}
 export function buildVisibilityPromptUserMessage(input: {
   businessName: string;
   category: string;
+  customCategory?: string;
   city: string;
   country: string;
   locationHint: string;
@@ -154,7 +177,7 @@ export function buildVisibilityPromptUserMessage(input: {
 }): string {
   return [
     `Business: ${input.businessName}`,
-    `Category: ${normalizeCategory(input.category)}`,
+    `Category: ${getEffectiveCategory(input.category, input.customCategory)}`,
     `Primary city: ${input.city}`,
     `Country: ${input.country}`,
     `Service areas (use ONLY these for neighborhoods): ${input.locationHint}`,

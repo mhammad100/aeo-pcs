@@ -31,6 +31,7 @@ const businessSlice = createSlice({
         city: string;
         country: string;
         description?: string;
+        customCategory?: string;
         nameAliases?: string[];
         targetLocations?: string[];
         targetItems?: string[];
@@ -43,6 +44,7 @@ const businessSlice = createSlice({
         category: p.category || "Other",
         address: [p.city, p.country].filter(Boolean).join(", "),
         description: p.description || "",
+        customCategory: p.customCategory,
         nameAliases: p.nameAliases || [],
         targetLocations: p.targetLocations || [],
         targetItems: p.targetItems || [],

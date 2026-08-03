@@ -11,7 +11,7 @@ import {
   Spin,
   Typography,
 } from "antd";
-import { type AeoRuntimeSettings } from "@aeo-pcs/shared";
+import { type AeoRuntimeSettings, formatCategoryLabel } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import VisibilityInsights from "@/components/VisibilityInsights";
@@ -70,6 +70,8 @@ export default function VisibilityWizard() {
   const [runsUsed, setRunsUsed] = useState(0);
   const [runsLimit, setRunsLimit] = useState(0);
   const [canRunVisibility, setCanRunVisibility] = useState(false);
+  const [lastPrompts, setLastPrompts] = useState<string[]>([]);
+  const [showPromptChoice, setShowPromptChoice] = useState(false);
 
   const visibilityModelCount = runtime.visibilityModelCount;
   const modelLabels = runtime.visibilityModels.map((m) => m.label);
@@ -112,6 +114,7 @@ export default function VisibilityWizard() {
   function onStartNewCheck() {
     dispatch(resetVisibility());
     dispatch(clearPrompts());
+    setShowPromptChoice(false);
     setStepOverride(0);
   }
 
@@ -131,6 +134,7 @@ export default function VisibilityWizard() {
           hydrateFromProfile({
             name: profile.name,
             category: profile.category,
+            customCategory: profile.customCategory,
             city: profile.city,
             country: profile.country,
             description: profile.description,
@@ -160,6 +164,23 @@ export default function VisibilityWizard() {
       cancelled = true;
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { insights } = await api.getInsights();
+        if (!cancelled && insights.lastPrompts?.length) {
+          setLastPrompts(insights.lastPrompts);
+        }
+      } catch {
+        /* insights optional for prompt reuse */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -219,6 +240,7 @@ export default function VisibilityWizard() {
     dispatch(setError(null));
     dispatch(resetVisibility());
     dispatch(clearPrompts());
+    setShowPromptChoice(false);
     try {
       const { prompts: generated } = await api.generatePrompts({
         business: business.selected,
@@ -234,6 +256,22 @@ export default function VisibilityWizard() {
       dispatch(setUiBusy(false));
       setLocalBusyLabel(null);
     }
+  }
+
+  function onBeginCheck() {
+    if (lastPrompts.length > 0) {
+      setShowPromptChoice(true);
+      return;
+    }
+    void onGeneratePrompts();
+  }
+
+  function onKeepPreviousPrompts() {
+    dispatch(resetVisibility());
+    dispatch(clearPrompts());
+    dispatch(setPrompts(lastPrompts));
+    setShowPromptChoice(false);
+    setStepOverride(0);
   }
 
   function onEditPrompt(index: number, value: string) {
@@ -257,6 +295,7 @@ export default function VisibilityWizard() {
       });
 
       dispatch(setJobId(jobId));
+      setLastPrompts(finalPrompts);
       dispatch(
         setJobSnapshot({
           status: "queued",
@@ -388,7 +427,12 @@ export default function VisibilityWizard() {
   }
 
   const showIdle =
-    !visibility.jobId && !jobRunning && !hasResults && !visibility.status && !showReview;
+    !visibility.jobId &&
+    !jobRunning &&
+    !hasResults &&
+    !visibility.status &&
+    !showReview &&
+    !showPromptChoice;
 
   return (
     <div className="vis-page">
@@ -492,10 +536,25 @@ export default function VisibilityWizard() {
                     size="large"
                     loading={visibility.uiBusy}
                     disabled={!canRunVisibility || subscriptionLoading || !business.selected}
-                    onClick={onGeneratePrompts}
+                    onClick={onBeginCheck}
                   >
                     {localBusyLabel || "Run visibility check"}
                   </Button>
+                ) : showPromptChoice ? (
+                  <>
+                    <Button onClick={() => setShowPromptChoice(false)}>Back</Button>
+                    <Button type="primary" onClick={onKeepPreviousPrompts}>
+                      Keep previous questions
+                    </Button>
+                    <Button
+                      type="primary"
+                      ghost
+                      loading={visibility.uiBusy}
+                      onClick={onGeneratePrompts}
+                    >
+                      Generate new questions
+                    </Button>
+                  </>
                 ) : !jobRunning && hasResults ? (
                   <>
                     {hasResults && (
@@ -545,6 +604,24 @@ export default function VisibilityWizard() {
                 </div>
               )}
 
+              {showPromptChoice && (
+                <div className="vis-prompt-choice">
+                  <h4 className="vis-business-name">Search questions</h4>
+                  <Paragraph type="secondary" style={{ marginBottom: 16, maxWidth: 520 }}>
+                    You have questions from your last visibility run. Keep them for consistent
+                    tracking, or generate fresh ones from your profile.
+                  </Paragraph>
+                  <ul className="vis-prompt-choice-list">
+                    {lastPrompts.map((p, i) => (
+                      <li key={i}>
+                        <span className="vis-prompt-index">{i + 1}</span>
+                        <span>{p}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {showIdle && business.selected && (
                 <div className="vis-idle">
                   <h4 className="vis-business-name">{business.selected.name}</h4>
@@ -562,7 +639,12 @@ export default function VisibilityWizard() {
                     </div>
                     <div className="vis-detail-item">
                       <label>Category</label>
-                      <span>{business.category || "—"}</span>
+                      <span>
+                        {formatCategoryLabel(
+                          business.category,
+                          business.selected?.customCategory
+                        ) || "—"}
+                      </span>
                     </div>
                   </div>
                   <Link href="/app/settings" className="vis-prompts-settings-link">
@@ -601,6 +683,7 @@ export default function VisibilityWizard() {
                   results={visibility.results}
                   score={visibility.score}
                   businessName={business.selected?.name}
+                  nameAliases={business.selected?.nameAliases}
                   promptContext={{
                     description: business.selected?.description,
                     category: business.category,

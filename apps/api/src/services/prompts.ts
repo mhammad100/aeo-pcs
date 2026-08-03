@@ -14,6 +14,7 @@ const MAX_GENERATION_ATTEMPTS = 3;
 export async function generatePrompts(input: {
   business: BusinessCandidate;
   category: string;
+  customCategory?: string;
   city: string;
   country: string;
   targetLocations?: string[];
@@ -40,6 +41,7 @@ export async function generatePrompts(input: {
   const system = buildVisibilityPromptSystem({
     count,
     category: input.category,
+    customCategory: input.customCategory,
     city,
     country: input.country,
     locationHint,
@@ -50,6 +52,7 @@ export async function generatePrompts(input: {
   const userMsg = buildVisibilityPromptUserMessage({
     businessName: input.business.name,
     category: input.category,
+    customCategory: input.customCategory,
     city,
     country: input.country,
     locationHint,

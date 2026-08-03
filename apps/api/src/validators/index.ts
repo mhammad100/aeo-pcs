@@ -26,6 +26,17 @@ export const businessProfileValidators = [
     .isString()
     .trim()
     .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
+  body("customCategory")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ max: 120 })
+    .custom((value, { req }) => {
+      if (req.body.category === "Other" && (!value || String(value).trim().length < 2)) {
+        throw new Error("Enter your business type when category is Other");
+      }
+      return true;
+    }),
   body("city").isString().trim().isLength({ min: 1, max: 100 }),
   body("country").isString().trim().isLength({ min: 1, max: 100 }),
   body("description").isString().trim().isLength({ min: 10, max: 2000 }),

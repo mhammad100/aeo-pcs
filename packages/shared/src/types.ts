@@ -4,6 +4,7 @@ import type { PresenceAudit } from "./presenceAudit";
 export type BusinessCandidate = {
   name: string;
   category: string;
+  customCategory?: string;
   address: string;
   description: string;
   nameAliases?: string[];
@@ -227,6 +228,19 @@ export type BusinessInsights = {
   scoreDelta: number | null;
   checklist: ChecklistProgress;
   recentJobs: VisibilityJobSummary[];
+  /** Visibility % from each completed run (oldest first). */
+  scoreHistory: ScoreHistoryPoint[];
+  /** Prompts from the most recent completed run. */
+  lastPrompts: string[];
+  /** Insights derived from the latest completed run. */
+  latestRunInsights: import("./visibilityInsights").VisibilityRunInsights | null;
+};
+
+export type ScoreHistoryPoint = {
+  date: string;
+  visibilityPct: number;
+  brandVisibilityPct: number;
+  sourceVisibilityPct: number;
 };
 
 export type ProductPlanLimits = {
