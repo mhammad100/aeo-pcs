@@ -65,6 +65,7 @@ export type AdminBusinessRow = {
 export const api = {
   login: (body: LoginRequest) =>
     request<LoginResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST", body: "{}" }),
   me: () => request<MeResponse>("/auth/me"),
   listUsers: () => request<{ users: AdminUserRow[] }>("/admin/users"),
   listBusinesses: () => request<{ businesses: AdminBusinessRow[] }>("/admin/businesses"),
