@@ -45,6 +45,15 @@ export default function PublicFooter() {
           <p>
             <Link href="/signup">Sign up</Link>
           </p>
+          <p>
+            <Link href="/privacy">Privacy Policy</Link>
+          </p>
+          <p>
+            <Link href="/terms">Terms and conditions</Link>
+          </p>
+          <p>
+            <Link href="/refund">Refund policy</Link>
+          </p>
           <p style={{ marginTop: 16 }}>© {new Date().getFullYear()} Master AEO</p>
         </div>
       </div>
