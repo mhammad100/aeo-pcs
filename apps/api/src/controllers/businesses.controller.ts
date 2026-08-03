@@ -11,6 +11,7 @@ export async function updateMe(req: AuthedRequest, res: Response) {
   const business = await businessesService.updateMyBusiness(req.userId!, {
     name: req.body.name,
     category: req.body.category,
+    customCategory: req.body.customCategory,
     city: req.body.city,
     country: req.body.country,
     description: req.body.description,

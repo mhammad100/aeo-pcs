@@ -17,6 +17,7 @@ function mergeProfileValues(
   return {
     name: partial.name ?? business?.name ?? "",
     category: partial.category ?? business?.category ?? "",
+    customCategory: partial.customCategory ?? business?.customCategory ?? "",
     city: partial.city ?? business?.city ?? "",
     country: partial.country ?? business?.country ?? "India",
     description: partial.description ?? business?.description ?? "",

@@ -14,15 +14,19 @@ function isValidHttpUrl(value: string): boolean {
 export function profileIsComplete(b: {
   name?: string | null;
   category?: string | null;
+  customCategory?: string | null;
   city?: string | null;
   country?: string | null;
   description?: string | null;
   targetItems?: string[] | null;
 }): boolean {
   const hasTargetItem = (b.targetItems || []).some((t) => String(t).trim().length > 0);
+  const categoryOk =
+    b.category?.trim() &&
+    (b.category.trim() !== "Other" || (b.customCategory?.trim().length ?? 0) >= 2);
   return Boolean(
     b.name?.trim() &&
-      b.category?.trim() &&
+      categoryOk &&
       b.city?.trim() &&
       b.country?.trim() &&
       (b.description?.trim().length ?? 0) >= 10 &&
@@ -43,6 +47,7 @@ export async function getMyBusiness(userId: string) {
 export type UpdateBusinessProfileInput = {
   name: string;
   category: string;
+  customCategory?: string;
   city: string;
   country: string;
   description: string;
@@ -79,6 +84,8 @@ export async function updateMyBusiness(userId: string, input: UpdateBusinessProf
 
   business.name = input.name;
   business.category = input.category;
+  business.customCategory =
+    input.category.trim() === "Other" ? input.customCategory?.trim() || "" : "";
   business.city = input.city;
   business.country = input.country;
   business.description = input.description.trim();

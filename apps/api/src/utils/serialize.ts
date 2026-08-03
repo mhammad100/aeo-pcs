@@ -8,6 +8,7 @@ export function toBusinessProfile(business: BusinessDoc | null): BusinessProfile
     id: String(business._id),
     name: business.name || "",
     category: business.category || "",
+    customCategory: business.customCategory || undefined,
     city: business.city || "",
     country: business.country || "",
     description: business.description || "",

@@ -81,14 +81,14 @@ function computeCoreScore(
 export function computeVisibilityRunInsights(
   results: PromptResult[],
   score: VisibilityScore,
-  businessName?: string,
+  ownNames: string[] = [],
   promptContext?: PromptContext
 ): VisibilityRunInsights {
   const modelStats = new Map<string, { mentions: number; total: number }>();
   const competitorCounts = new Map<string, number>();
   const domainCounts = new Map<string, number>();
   const promptStats: PromptBreakdown[] = [];
-  const ownNames = businessName ? [businessName] : [];
+  const businessName = ownNames[0]?.trim() || "";
 
   for (const r of results) {
     let promptMentions = 0;
@@ -108,7 +108,11 @@ export function computeVisibilityRunInsights(
       }
       modelStats.set(m.model, stats);
 
-      const brands = filterLocalBusinesses(m.brandsMentioned || [], citedDomains, ownNames);
+      const brands = filterLocalBusinesses(
+        (m.brandsMentioned || []).map((b) => String(b ?? "")),
+        citedDomains,
+        ownNames.map((n) => String(n ?? ""))
+      );
       for (const brand of brands) {
         competitorCounts.set(brand, (competitorCounts.get(brand) || 0) + 1);
       }

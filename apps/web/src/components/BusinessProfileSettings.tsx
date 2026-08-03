@@ -7,6 +7,7 @@ import BusinessProfileForm, {
   type BusinessProfileFormValues,
 } from "@/components/BusinessProfileForm";
 import type { BusinessProfile } from "@aeo-pcs/shared";
+import { formatCategoryLabel } from "@aeo-pcs/shared";
 
 const { Title } = Typography;
 
@@ -59,6 +60,7 @@ function sectionFilled(id: SectionId, profile: BusinessProfile | null): boolean 
       return Boolean(
         profile.name &&
           profile.category &&
+          (profile.category !== "Other" || (profile.customCategory?.trim().length ?? 0) >= 2) &&
           (profile.description?.trim().length ?? 0) >= 10 &&
           (profile.targetItems?.length ?? 0) > 0
       );
@@ -81,7 +83,7 @@ function sectionSummary(id: SectionId, profile: BusinessProfile | null): string 
           ? `${profile.description.slice(0, 72)}…`
           : profile.description;
       }
-      return profile.category || "Add category and description";
+      return formatCategoryLabel(profile.category, profile.customCategory) || "Add category and description";
     case "location": {
       const loc = [profile.city, profile.country].filter(Boolean).join(", ");
       const areas = profile.targetLocations?.length
@@ -107,7 +109,7 @@ function sectionDetail(id: SectionId, profile: BusinessProfile | null): string |
   if (!profile) return null;
   switch (id) {
     case "identity":
-      return profile.category || null;
+      return formatCategoryLabel(profile.category, profile.customCategory) || null;
     case "online":
       return profile.websiteUrl || profile.googleBusinessUrl || null;
     case "social":

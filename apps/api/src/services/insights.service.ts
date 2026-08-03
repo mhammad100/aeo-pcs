@@ -1,4 +1,5 @@
 import type { BusinessInsights, VisibilityJobSummary, VisibilityScore } from "@aeo-pcs/shared";
+import { computeVisibilityRunInsights } from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
@@ -58,7 +59,8 @@ export async function getBusinessInsights(userId: string): Promise<BusinessInsig
   const prevAnchor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15));
   const previous = monthBounds(prevAnchor);
 
-  const [recentJobs, currentMonthJobs, previousMonthJobs] = await Promise.all([
+  const [recentJobs, currentMonthJobs, previousMonthJobs, historyJobs, latestFullJob] =
+    await Promise.all([
     VisibilityJobModel.find({ businessId: business._id, status: "completed" })
       .sort({ createdAt: -1 })
       .limit(10)
@@ -80,6 +82,15 @@ export async function getBusinessInsights(userId: string): Promise<BusinessInsig
       .sort({ createdAt: -1 })
       .select("score createdAt")
       .lean(),
+    VisibilityJobModel.find({ businessId: business._id, status: "completed" })
+      .sort({ createdAt: 1 })
+      .limit(12)
+      .select("score createdAt")
+      .lean(),
+    VisibilityJobModel.findOne({ businessId: business._id, status: "completed" })
+      .sort({ createdAt: -1 })
+      .select("results score prompts business nameAliases category city targetItems targetLocations")
+      .lean(),
   ]);
 
   const latestScore = latestCompletedScore(recentJobs);
@@ -99,6 +110,48 @@ export async function getBusinessInsights(userId: string): Promise<BusinessInsig
   const checklistItems = business.checklist || [];
   const checklist = checklistProgress(checklistItems);
 
+  const scoreHistory = historyJobs
+    .map((job) => {
+      const score = asScore(job.score);
+      if (!score) return null;
+      return {
+        date: job.createdAt ? new Date(job.createdAt).toISOString() : new Date().toISOString(),
+        visibilityPct: score.visibilityPct,
+        brandVisibilityPct: score.brandVisibilityPct ?? score.visibilityPct,
+        sourceVisibilityPct: score.sourceVisibilityPct ?? 0,
+      };
+    })
+    .filter((p): p is NonNullable<typeof p> => Boolean(p));
+
+  const lastPrompts = (latestFullJob?.prompts || []).map(String).filter(Boolean);
+
+  let latestRunInsights = null;
+  if (latestFullJob?.results?.length && latestFullJob.score) {
+    const score = asScore(latestFullJob.score);
+    if (score) {
+      const bizName = String(latestFullJob.business?.name || business.name || "");
+      const aliases = (latestFullJob.nameAliases?.length
+        ? latestFullJob.nameAliases
+        : latestFullJob.business?.nameAliases || business.nameAliases || []
+      ).map(String);
+      const ownNames = [bizName, ...aliases].map((n) => String(n ?? "").trim()).filter(Boolean);
+      latestRunInsights = computeVisibilityRunInsights(
+        latestFullJob.results as Parameters<typeof computeVisibilityRunInsights>[0],
+        score,
+        ownNames,
+        {
+          description: String(latestFullJob.business?.description || business.description || ""),
+          category: String(latestFullJob.category || business.category || ""),
+          targetItems: (latestFullJob.targetItems || business.targetItems || []).map(String),
+          targetLocations: (latestFullJob.targetLocations || business.targetLocations || []).map(
+            String
+          ),
+          city: String(business.city || ""),
+        }
+      );
+    }
+  }
+
   return {
     latestScore,
     currentMonthScore,
@@ -112,5 +165,8 @@ export async function getBusinessInsights(userId: string): Promise<BusinessInsig
       createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : new Date().toISOString(),
       hasPlan: Boolean(job.plan?.automatable?.length || job.plan?.manual?.length),
     })),
+    scoreHistory,
+    lastPrompts,
+    latestRunInsights,
   };
 }

@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Alert, Button, Card, Col, Empty, Row, Spin, Table, Typography } from "antd";
+import { Alert, Button, Card, Col, Empty, Progress, Row, Spin, Table, Typography } from "antd";
 import AppShell from "@/components/AppShell";
+import { ModelBreakdownChart, VisibilityTrendChart } from "@/components/DashboardCharts";
+import StatCard from "@/components/StatCard";
 import { api, ApiError } from "@/lib/api";
 import { useAppSelector } from "@/store/hooks";
-import type { BusinessInsights } from "@aeo-pcs/shared";
+import { formatCategoryLabel, type BusinessInsights } from "@aeo-pcs/shared";
 
-const { Title, Paragraph, Text } = Typography;
+const { Paragraph, Text } = Typography;
+
+function deltaClass(delta: number | null | undefined): string {
+  if (delta == null) return "";
+  if (delta > 0) return "is-positive";
+  if (delta < 0) return "is-negative";
+  return "";
+}
 
 export default function AppDashboardPage() {
   const user = useAppSelector((s) => s.auth.user);
@@ -41,122 +50,193 @@ export default function AppDashboardPage() {
   const previous = insights?.previousMonthScore?.visibilityPct;
   const delta = insights?.scoreDelta;
   const checklist = insights?.checklist;
+  const runInsights = insights?.latestRunInsights;
+  const brandPct = insights?.latestScore?.brandVisibilityPct ?? latest;
+  const sourcePct = insights?.latestScore?.sourceVisibilityPct;
 
   return (
     <AppShell>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
-        Dashboard
-      </Title>
-      <Paragraph type="secondary">
-        Welcome{user?.email ? `, ${user.email}` : ""}. Track visibility and checklist progress for{" "}
-        {biz?.name || "your business"}.
-      </Paragraph>
+      <div className="dash-page">
+        <header className="dash-page-header">
+          <Paragraph className="dash-page-subtitle">
+            Track visibility and checklist progress for {biz?.name || "your business"}.
+          </Paragraph>
+        </header>
 
-      {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
+        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 
-      {loading ? (
-        <div style={{ display: "grid", placeItems: "center", padding: 48 }}>
-          <Spin />
-        </div>
-      ) : (
-        <>
-          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-            <Col xs={24} md={8}>
-              <Card>
-                <Text type="secondary">Latest visibility</Text>
-                <Title level={2} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
-                  {typeof latest === "number" ? `${latest}%` : "—"}
-                </Title>
-              </Card>
-            </Col>
-            <Col xs={24} md={8}>
-              <Card>
-                <Text type="secondary">Month over month</Text>
-                <Title level={2} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
-                  {typeof delta === "number" ? `${delta > 0 ? "+" : ""}${delta} pts` : "—"}
-                </Title>
-                <Text type="secondary">
-                  This month {typeof current === "number" ? `${current}%` : "—"} · Last month{" "}
-                  {typeof previous === "number" ? `${previous}%` : "—"}
-                </Text>
-              </Card>
-            </Col>
-            <Col xs={24} md={8}>
-              <Card>
-                <Text type="secondary">Checklist progress</Text>
-                <Title level={2} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
-                  {checklist ? `${checklist.percent}%` : "—"}
-                </Title>
-                <Text type="secondary">
-                  {checklist ? `${checklist.done} of ${checklist.total} done` : "No items yet"}
-                </Text>
-              </Card>
-            </Col>
-          </Row>
-
-          <Card
-            title="Recent visibility runs"
-            extra={
-              <Link href="/app/visibility">
-                <Button type="primary">New check</Button>
-              </Link>
-            }
-            style={{ marginBottom: 16 }}
-          >
-            {!insights?.recentJobs?.length ? (
-              <Empty description="No completed runs yet" />
-            ) : (
-              <Table
-                rowKey="id"
-                pagination={false}
-                dataSource={insights.recentJobs}
-                columns={[
-                  {
-                    title: "Date",
-                    dataIndex: "createdAt",
-                    render: (v: string) => new Date(v).toLocaleString(),
-                  },
-                  {
-                    title: "Score",
-                    dataIndex: ["score", "visibilityPct"],
-                    render: (v: number | undefined) => (typeof v === "number" ? `${v}%` : "—"),
-                  },
-                  {
-                    title: "Plan",
-                    dataIndex: "hasPlan",
-                    render: (v: boolean) => (v ? "Yes" : "No"),
-                  },
-                ]}
+        {loading ? (
+          <div className="dash-loading">
+            <Spin />
+          </div>
+        ) : (
+          <>
+            <div className="dash-kpi-grid">
+              <StatCard
+                label="Latest visibility"
+                value={typeof latest === "number" ? `${latest}%` : "—"}
+                footer={
+                  typeof brandPct === "number" && typeof sourcePct === "number"
+                    ? `Brand ${brandPct}% · Source cited ${sourcePct}%`
+                    : "Run a check to see brand vs source"
+                }
               />
-            )}
-          </Card>
+              <StatCard
+                label="Month over month"
+                value={
+                  typeof delta === "number" ? (
+                    <span className={deltaClass(delta)}>
+                      {delta > 0 ? "+" : ""}
+                      {delta} pts
+                    </span>
+                  ) : (
+                    "—"
+                  )
+                }
+                footer={`This month ${typeof current === "number" ? `${current}%` : "—"} · Last month ${typeof previous === "number" ? `${previous}%` : "—"}`}
+              />
+              <StatCard
+                label="Checklist progress"
+                value={checklist ? `${checklist.percent}%` : "—"}
+                footer={
+                  checklist ? (
+                    <>
+                      <Progress
+                        percent={checklist.percent}
+                        showInfo={false}
+                        strokeColor="var(--ma-accent-soft)"
+                        className="dash-stat-progress"
+                      />
+                      <span>
+                        {checklist.done} of {checklist.total} done
+                      </span>
+                    </>
+                  ) : (
+                    "No items yet"
+                  )
+                }
+              />
+            </div>
 
-          <Card title="Business profile" extra={<Link href="/app/settings">Edit</Link>}>
-            {biz ? (
-              <>
-                <Paragraph style={{ marginBottom: 4 }}>
-                  <Text strong>{biz.name}</Text>
-                  {biz.category ? ` · ${biz.category}` : ""}
-                </Paragraph>
-                <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-                  {[biz.city, biz.country].filter(Boolean).join(", ")}
-                </Paragraph>
-                {biz.websiteUrl && (
-                  <Paragraph style={{ marginBottom: 0 }}>
-                    <a href={biz.websiteUrl} target="_blank" rel="noreferrer">
-                      {biz.websiteUrl}
-                    </a>
-                  </Paragraph>
+            <Row gutter={[16, 16]} className="dash-chart-row" style={{ marginBottom: 24 }}>
+              <Col xs={24} lg={14} className="dash-stretch-col">
+                <Card title="Visibility trend" className="dash-panel-card">
+                  <VisibilityTrendChart data={insights?.scoreHistory || []} />
+                </Card>
+              </Col>
+              <Col xs={24} lg={10} className="dash-stretch-col">
+                <Card title="By AI assistant" className="dash-panel-card">
+                  <ModelBreakdownChart data={runInsights?.modelBreakdown || []} />
+                </Card>
+              </Col>
+            </Row>
+
+            {runInsights && (
+              <Row gutter={[16, 16]} className="dash-chart-row" style={{ marginBottom: 24 }}>
+                {runInsights.topCompetitors.length > 0 && (
+                  <Col xs={24} md={12} className="dash-stretch-col">
+                    <Card title="Competitors AI mentioned" className="dash-panel-card">
+                      <div className="dash-tag-list">
+                        {runInsights.topCompetitors.map((c) => (
+                          <span key={c.name} className="dash-tag">
+                            {c.name}
+                            <span className="dash-tag-count">{c.count}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </Card>
+                  </Col>
                 )}
-              </>
-            ) : (
-              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                No profile loaded
-              </Paragraph>
+                {runInsights.weakPrompts.length > 0 && (
+                  <Col xs={24} md={12} className="dash-stretch-col">
+                    <Card title="Where you're missing visibility" className="dash-panel-card">
+                      <ul className="dash-prompt-list">
+                        {runInsights.weakPrompts.map((p) => (
+                          <li key={p.prompt}>
+                            <span>{p.prompt}</span>
+                            <Text type="secondary">
+                              {p.mentions}/{p.total}
+                            </Text>
+                          </li>
+                        ))}
+                      </ul>
+                    </Card>
+                  </Col>
+                )}
+              </Row>
             )}
-          </Card>
-        </>
-      )}
+
+            <Card
+              title="Recent visibility runs"
+              className="dash-panel-card"
+              extra={
+                <Link href="/app/visibility">
+                  <Button type="primary">New check</Button>
+                </Link>
+              }
+              style={{ marginBottom: 16 }}
+            >
+              {!insights?.recentJobs?.length ? (
+                <Empty description="No completed runs yet" />
+              ) : (
+                <Table
+                  rowKey="id"
+                  pagination={false}
+                  dataSource={insights.recentJobs}
+                  columns={[
+                    {
+                      title: "Date",
+                      dataIndex: "createdAt",
+                      render: (v: string) => new Date(v).toLocaleString(),
+                    },
+                    {
+                      title: "Score",
+                      dataIndex: ["score", "visibilityPct"],
+                      render: (v: number | undefined) => (typeof v === "number" ? `${v}%` : "—"),
+                    },
+                    {
+                      title: "Plan",
+                      dataIndex: "hasPlan",
+                      render: (v: boolean) => (v ? "Yes" : "No"),
+                    },
+                  ]}
+                />
+              )}
+            </Card>
+
+            <Card
+              title="Business profile"
+              className="dash-panel-card"
+              extra={<Link href="/app/settings">Edit</Link>}
+            >
+              {biz ? (
+                <>
+                  <Paragraph style={{ marginBottom: 4 }}>
+                    <Text strong>{biz.name}</Text>
+                    {biz.category
+                      ? ` · ${formatCategoryLabel(biz.category, biz.customCategory)}`
+                      : ""}
+                  </Paragraph>
+                  <Paragraph type="secondary" style={{ marginBottom: 4 }}>
+                    {[biz.city, biz.country].filter(Boolean).join(", ")}
+                  </Paragraph>
+                  {biz.websiteUrl && (
+                    <Paragraph style={{ marginBottom: 0 }}>
+                      <a href={biz.websiteUrl} target="_blank" rel="noreferrer">
+                        {biz.websiteUrl}
+                      </a>
+                    </Paragraph>
+                  )}
+                </>
+              ) : (
+                <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                  No profile loaded
+                </Paragraph>
+              )}
+            </Card>
+          </>
+        )}
+      </div>
     </AppShell>
   );
 }

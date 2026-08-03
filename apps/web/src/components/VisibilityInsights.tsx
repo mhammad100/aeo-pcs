@@ -15,6 +15,7 @@ type Props = {
   results: PromptResult[];
   score: VisibilityScore;
   businessName?: string;
+  nameAliases?: string[];
   promptContext?: PromptContext;
 };
 
@@ -28,11 +29,17 @@ export default function VisibilityInsights({
   results,
   score,
   businessName,
+  nameAliases,
   promptContext,
 }: Props) {
+  const ownNames = useMemo(() => {
+    const names = [businessName?.trim() || "", ...(nameAliases || [])].filter(Boolean);
+    return names;
+  }, [businessName, nameAliases]);
+
   const insights = useMemo(
-    () => computeVisibilityRunInsights(results, score, businessName, promptContext),
-    [results, score, businessName, promptContext]
+    () => computeVisibilityRunInsights(results, score, ownNames, promptContext),
+    [results, score, ownNames, promptContext]
   );
 
   const brandPct = score.brandVisibilityPct ?? score.visibilityPct;
