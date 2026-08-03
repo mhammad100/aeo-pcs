@@ -1,59 +1,80 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  EnvironmentOutlined,
+  GlobalOutlined,
+  IdcardOutlined,
+  LockOutlined,
+  ShareAltOutlined,
+} from "@ant-design/icons";
 import { Alert, Button, Typography } from "antd";
-import BusinessProfileForm, {
-  type BusinessProfileFormValues,
-} from "@/components/BusinessProfileForm";
+import SettingsInlineEditor, {
+  type ProfileSectionId,
+  type SettingsSectionId,
+} from "@/components/SettingsInlineEditor";
+import type { BusinessProfileFormValues } from "@/components/BusinessProfileForm";
 import type { BusinessProfile } from "@aeo-pcs/shared";
-import { formatCategoryLabel } from "@aeo-pcs/shared";
 
 const { Title } = Typography;
 
-type SectionId = "identity" | "location" | "online" | "social";
+export type { ProfileSectionId, SettingsSectionId };
 
-const SECTIONS: {
-  id: SectionId;
+const PROFILE_SECTIONS: {
+  id: ProfileSectionId;
   title: string;
-  description: string;
   hint: string;
+  icon: React.ReactNode;
 }[] = [
   {
     id: "identity",
-    title: "Business identity",
-    description: "Name, category, pitch",
-    hint: "Powers your visibility checks and action plan.",
+    title: "Identity",
+    hint: "Name, category, and services — powers your visibility checks and action plan.",
+    icon: <IdcardOutlined />,
   },
   {
     id: "location",
     title: "Location",
-    description: "City and country",
-    hint: "Keeps visibility results relevant to your market.",
+    hint: "City, country, and areas you serve — keeps results relevant to your market.",
+    icon: <EnvironmentOutlined />,
   },
   {
     id: "online",
     title: "Online presence",
-    description: "Website and Google Business",
-    hint: "Optional links referenced in your action plan.",
+    hint: "Website and Google Business links — referenced in your action plan.",
+    icon: <GlobalOutlined />,
   },
   {
     id: "social",
     title: "Social profiles",
-    description: "Instagram, LinkedIn, etc.",
-    hint: "Optional profiles for content generation.",
+    hint: "Instagram, LinkedIn, and more — used when generating content.",
+    icon: <ShareAltOutlined />,
   },
 ];
 
-type Props = {
-  business: BusinessProfile | null;
-  saving: boolean;
-  error: string | null;
-  onClearError: () => void;
-  onSave: (values: BusinessProfileFormValues) => Promise<void>;
+const ACCOUNT_SECTION = {
+  id: "account" as const,
+  title: "Account",
+  hint: "Your login email and password.",
+  icon: <LockOutlined />,
 };
 
-function sectionFilled(id: SectionId, profile: BusinessProfile | null): boolean {
+const ALL_SECTIONS: SettingsSectionId[] = [
+  ...PROFILE_SECTIONS.map((s) => s.id),
+  "account",
+];
+
+function parseHashSection(): SettingsSectionId {
+  if (typeof window === "undefined") return "identity";
+  const hash = window.location.hash.replace("#", "");
+  if (ALL_SECTIONS.includes(hash as SettingsSectionId)) {
+    return hash as SettingsSectionId;
+  }
+  return "identity";
+}
+
+function sectionFilled(id: ProfileSectionId, profile: BusinessProfile | null): boolean {
   if (!profile) return false;
   switch (id) {
     case "identity":
@@ -73,95 +94,85 @@ function sectionFilled(id: SectionId, profile: BusinessProfile | null): boolean 
   }
 }
 
-function sectionSummary(id: SectionId, profile: BusinessProfile | null): string {
-  if (!profile) return "Not set";
-  switch (id) {
-    case "identity":
-      if (!profile.name) return "Add your business name";
-      if (profile.description) {
-        return profile.description.length > 72
-          ? `${profile.description.slice(0, 72)}…`
-          : profile.description;
-      }
-      return formatCategoryLabel(profile.category, profile.customCategory) || "Add category and description";
-    case "location": {
-      const loc = [profile.city, profile.country].filter(Boolean).join(", ");
-      const areas = profile.targetLocations?.length
-        ? ` · ${profile.targetLocations.slice(0, 2).join(", ")}`
-        : "";
-      return loc ? `${loc}${areas}` : "Add city and country";
-    }
-    case "online": {
-      const parts = [profile.websiteUrl, profile.googleBusinessUrl].filter(Boolean);
-      if (!parts.length) return "No links added";
-      return parts.length === 1 ? "1 link" : "2 links";
-    }
-    case "social": {
-      const n = profile.socialLinks?.length ?? 0;
-      if (!n) return "No profiles added";
-      const labels = profile.socialLinks!.map((s) => s.label).slice(0, 2);
-      return n > 2 ? `${labels.join(", ")} +${n - 2}` : labels.join(", ");
-    }
-  }
+function firstIncompleteSection(profile: BusinessProfile | null): ProfileSectionId {
+  const incomplete = PROFILE_SECTIONS.find((s) => !sectionFilled(s.id, profile));
+  return incomplete?.id ?? "identity";
 }
 
-function sectionDetail(id: SectionId, profile: BusinessProfile | null): string | null {
-  if (!profile) return null;
-  switch (id) {
-    case "identity":
-      return formatCategoryLabel(profile.category, profile.customCategory) || null;
-    case "online":
-      return profile.websiteUrl || profile.googleBusinessUrl || null;
-    case "social":
-      return profile.socialLinks?.[0]?.url || null;
-    default:
-      return null;
-  }
-}
+type Props = {
+  business: BusinessProfile | null;
+  email: string;
+  saving: boolean;
+  error: string | null;
+  onClearError: () => void;
+  onSave: (values: BusinessProfileFormValues) => Promise<void>;
+};
 
 export default function BusinessProfileSettings({
   business,
+  email,
   saving,
   error,
   onClearError,
   onSave,
 }: Props) {
-  const [view, setView] = useState<"overview" | "edit">("overview");
-  const [activeSection, setActiveSection] = useState<SectionId>("identity");
-  const formId = "settings-profile-form";
+  const [activeSection, setActiveSection] = useState<SettingsSectionId>("identity");
+  const [sectionHeaderAction, setSectionHeaderAction] = useState<React.ReactNode>(null);
 
   const profileComplete = Boolean(business?.profileCompletedAt);
-  const activeMeta = SECTIONS.find((s) => s.id === activeSection)!;
 
   const filledCount = useMemo(
-    () => SECTIONS.filter((s) => sectionFilled(s.id, business)).length,
+    () => PROFILE_SECTIONS.filter((s) => sectionFilled(s.id, business)).length,
     [business],
   );
 
-  function openSection(id: SectionId) {
-    setActiveSection(id);
-    setView("edit");
-  }
+  const activeMeta = useMemo(() => {
+    if (activeSection === "account") return ACCOUNT_SECTION;
+    return PROFILE_SECTIONS.find((s) => s.id === activeSection)!;
+  }, [activeSection]);
 
-  function backToOverview() {
-    setView("overview");
-  }
-
-  async function handleSave(values: BusinessProfileFormValues) {
-    try {
-      await onSave(values);
-      setView("overview");
-    } catch {
-      /* error surfaced via alert */
+  const syncHash = useCallback((section: SettingsSectionId) => {
+    if (typeof window === "undefined") return;
+    const next = `#${section}`;
+    if (window.location.hash !== next) {
+      window.history.replaceState(null, "", next);
     }
+  }, []);
+
+  useEffect(() => {
+    const hash = window.location.hash.replace("#", "");
+    if (ALL_SECTIONS.includes(hash as SettingsSectionId)) {
+      setActiveSection(hash as SettingsSectionId);
+      return;
+    }
+    const next = firstIncompleteSection(business);
+    setActiveSection(next);
+    syncHash(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- initial section only
+  }, []);
+
+  useEffect(() => {
+    function onHashChange() {
+      setActiveSection(parseHashSection());
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  function switchSection(next: SettingsSectionId) {
+    setActiveSection(next);
+    setSectionHeaderAction(null);
+    syncHash(next);
   }
 
   return (
-    <div className="settings-page">
-      <header className="app-page-header">
-        <div className="app-page-header-main">
-          <div className="vis-eyebrow">Settings</div>
-          <Title level={2} className="vis-title">
+    <div className="dash-page settings-page">
+      <header className="dash-page-header settings-page-header">
+        <div>
+          <p className="dash-page-subtitle" style={{ marginBottom: 4 }}>
+            Settings
+          </p>
+          <Title level={2} className="dash-page-title" style={{ margin: 0 }}>
             {business?.name || "Business profile"}
           </Title>
           <div className="settings-hero-meta">
@@ -171,11 +182,11 @@ export default function BusinessProfileSettings({
               {profileComplete ? "Profile complete" : "Needs attention"}
             </span>
             <span className="settings-progress-pill">
-              {filledCount}/{SECTIONS.length} sections filled
+              {filledCount}/{PROFILE_SECTIONS.length} profile sections
             </span>
           </div>
         </div>
-        <div className="app-page-header-actions">
+        <div className="settings-page-header-actions">
           <Link href="/app/visibility">
             <Button type="primary">Run visibility check</Button>
           </Link>
@@ -193,69 +204,76 @@ export default function BusinessProfileSettings({
         />
       )}
 
-      {view === "overview" ? (
-        <div className="settings-overview">
-          <p className="settings-overview-lead">
-            Your profile powers visibility checks and action plans. Edit one section at a time.
-          </p>
-          <div className="settings-card-grid">
-            {SECTIONS.map((section) => {
-              const filled = sectionFilled(section.id, business);
-              const summary = sectionSummary(section.id, business);
-              const detail = sectionDetail(section.id, business);
-
-              return (
-                <button
-                  key={section.id}
-                  type="button"
-                  className="settings-section-card"
-                  onClick={() => openSection(section.id)}
-                >
-                  <div className="settings-section-card-top">
-                    <div>
-                      <span className="settings-section-card-eyebrow">{section.title}</span>
-                      <h3>{section.description}</h3>
-                    </div>
-                    <span className={`settings-section-badge${filled ? " is-filled" : ""}`}>
+      <div className="settings-layout">
+        <aside className="settings-aside">
+          <nav className="settings-nav" aria-label="Settings sections">
+            <div className="settings-nav-group">
+              <span className="settings-nav-group-label">Profile</span>
+              {PROFILE_SECTIONS.map((section) => {
+                const filled = sectionFilled(section.id, business);
+                const isActive = activeSection === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    type="button"
+                    className={`settings-nav-item${isActive ? " is-active" : ""}`}
+                    onClick={() => switchSection(section.id)}
+                  >
+                    <span className="settings-nav-item-icon">{section.icon}</span>
+                    <span className="settings-nav-item-label">{section.title}</span>
+                    <span className={`settings-nav-item-status${filled ? " is-filled" : ""}`}>
                       {filled ? "✓" : "—"}
                     </span>
-                  </div>
-                  <p className="settings-section-card-summary">{summary}</p>
-                  {detail && <p className="settings-section-card-detail">{detail}</p>}
-                  <span className="settings-section-card-action">Edit →</span>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="settings-nav-group">
+              <span className="settings-nav-group-label">Account</span>
+              <button
+                type="button"
+                className={`settings-nav-item${activeSection === "account" ? " is-active" : ""}`}
+                onClick={() => switchSection("account")}
+              >
+                <span className="settings-nav-item-icon">{ACCOUNT_SECTION.icon}</span>
+                <span className="settings-nav-item-label">{ACCOUNT_SECTION.title}</span>
+              </button>
+            </div>
+          </nav>
+        </aside>
+
+        <div className="settings-main">
+          <div className="app-content-shell settings-panel">
+            <div className="app-content-head settings-panel-head">
+              <div className="settings-panel-head-copy">
+                <h3>{activeMeta.title}</h3>
+                <p>{activeMeta.hint}</p>
+              </div>
+              {sectionHeaderAction && (
+                <div className="settings-panel-head-action">{sectionHeaderAction}</div>
+              )}
+            </div>
+
+            <div className="app-content-body app-content-body-form">
+              <SettingsInlineEditor
+                key={`${business?.id || "new"}-${activeSection}`}
+                section={activeSection}
+                business={business}
+                email={email}
+                onSave={onSave}
+                onHeaderActionChange={setSectionHeaderAction}
+              />
+            </div>
+
+            {saving && (
+              <div className="app-content-foot settings-save-bar">
+                <span className="settings-save-hint">Saving…</span>
+              </div>
+            )}
           </div>
         </div>
-      ) : (
-        <div className="app-content-shell settings-edit-panel">
-          <div className="app-content-head">
-            <Button type="link" className="settings-back-link" onClick={backToOverview}>
-              ← All sections
-            </Button>
-            <h3>{activeMeta.title}</h3>
-            <p>{activeMeta.hint}</p>
-          </div>
-          <div className="app-content-body app-content-body-form">
-            <BusinessProfileForm
-              key={business?.id || "settings"}
-              formId={formId}
-              initial={business}
-              loading={saving}
-              activeSection={activeSection}
-              hideSubmit
-              onSubmit={handleSave}
-            />
-          </div>
-          <div className="app-content-foot">
-            <Button type="primary" size="large" htmlType="submit" form={formId} loading={saving}>
-              Save
-            </Button>
-            <Button onClick={backToOverview}>Cancel</Button>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

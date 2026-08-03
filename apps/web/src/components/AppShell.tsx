@@ -17,7 +17,6 @@ import {
 import { Button, Drawer, Dropdown, Grid, Layout, Menu, Typography } from "antd";
 import type { MenuProps } from "antd";
 import AuthGuard from "@/components/AuthGuard";
-import ChangePasswordModal from "@/components/ChangePasswordModal";
 import ProfileGate from "@/components/ProfileGate";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -127,7 +126,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const screens = Grid.useBreakpoint();
   const isDesktop = screens.lg ?? true;
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [passwordOpen, setPasswordOpen] = useState(false);
 
   const businessName = user?.business?.name;
   const title = pageTitle(pathname);
@@ -160,13 +158,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     { type: "divider" },
     {
       key: "password",
-      label: "Change password",
+      label: <Link href="/app/settings#account">Change password</Link>,
       icon: <LockOutlined />,
-      onClick: () => setPasswordOpen(true),
     },
     {
       key: "settings",
-      label: <Link href="/app/settings">Account settings</Link>,
+      label: <Link href="/app/settings">Settings</Link>,
       icon: <SettingOutlined />,
     },
     { type: "divider" },
@@ -250,8 +247,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <Content className="app-shell-content">{children}</Content>
             </Layout>
           </Layout>
-
-          <ChangePasswordModal open={passwordOpen} onClose={() => setPasswordOpen(false)} />
         </ProfileGate>
       </SubscriptionGate>
     </AuthGuard>

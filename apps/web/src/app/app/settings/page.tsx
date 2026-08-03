@@ -6,7 +6,7 @@ import AppShell from "@/components/AppShell";
 import BusinessProfileSettings from "@/components/BusinessProfileSettings";
 import { type BusinessProfileFormValues } from "@/components/BusinessProfileForm";
 import { api, ApiError } from "@/lib/api";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { setUser } from "@/store/authSlice";
 import type { BusinessProfile } from "@aeo-pcs/shared";
 
@@ -32,6 +32,7 @@ function mergeProfileValues(
 
 export default function SettingsPage() {
   const dispatch = useAppDispatch();
+  const userEmail = useAppSelector((s) => s.auth.user?.email ?? "");
   const [business, setBusiness] = useState<BusinessProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -89,6 +90,7 @@ export default function SettingsPage() {
       ) : (
         <BusinessProfileSettings
           business={business}
+          email={userEmail}
           saving={saving}
           error={error}
           onClearError={() => setError(null)}

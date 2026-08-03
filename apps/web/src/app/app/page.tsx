@@ -186,7 +186,7 @@ export default function AppDashboardPage() {
             <Card
               title="Business profile"
               className="dash-panel-card"
-              extra={<Link href="/app/settings">Edit</Link>}
+              extra={<Link href="/app/settings#identity">Edit</Link>}
             >
               {biz ? (
                 <>
