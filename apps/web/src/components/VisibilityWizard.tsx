@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Alert,
   Button,
@@ -76,6 +77,8 @@ export default function VisibilityWizard() {
   const [lastPrompts, setLastPrompts] = useState<string[]>([]);
   const [showPromptChoice, setShowPromptChoice] = useState(false);
   const [resumeChecked, setResumeChecked] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
+  const cancelConfirmCallbackRef = useRef<(() => void) | null>(null);
 
   const visibilityModelCount = runtime.visibilityModelCount;
   const modelLabels = runtime.visibilityModels.map((m) => m.label);
@@ -135,33 +138,36 @@ export default function VisibilityWizard() {
   }
 
   function confirmCancelRun(onConfirmed: () => void) {
-    Modal.confirm({
-      title: COPY.visibility.cancelConfirmTitle,
-      content: COPY.visibility.cancelConfirmBody,
-      okText: COPY.visibility.cancelConfirmOk,
-      okButtonProps: { danger: true },
-      cancelText: COPY.visibility.cancelConfirmCancel,
-      onOk: async () => {
-        if (!visibility.jobId) return;
-        dispatch(setUiBusy(true));
-        try {
-          await api.cancelVisibilityJob(visibility.jobId);
-          dispatch(
-            setJobSnapshot({
-              status: "cancelled",
-              error: COPY.visibility.cancelledMessage,
-            })
-          );
-          clearPromptDraft();
-          await refreshSubscription();
-          onConfirmed();
-        } catch (err) {
-          dispatch(setError(err instanceof ApiError ? err.message : COPY.visibility.cancelFailed));
-        } finally {
-          dispatch(setUiBusy(false));
-        }
-      },
-    });
+    cancelConfirmCallbackRef.current = onConfirmed;
+    setCancelConfirmOpen(true);
+  }
+
+  function closeCancelConfirm() {
+    setCancelConfirmOpen(false);
+    cancelConfirmCallbackRef.current = null;
+  }
+
+  async function handleConfirmCancel() {
+    if (!visibility.jobId) return;
+    dispatch(setUiBusy(true));
+    try {
+      await api.cancelVisibilityJob(visibility.jobId);
+      dispatch(
+        setJobSnapshot({
+          status: "cancelled",
+          error: COPY.visibility.cancelledMessage,
+        })
+      );
+      clearPromptDraft();
+      await refreshSubscription();
+      const onConfirmed = cancelConfirmCallbackRef.current;
+      closeCancelConfirm();
+      onConfirmed?.();
+    } catch (err) {
+      dispatch(setError(err instanceof ApiError ? err.message : COPY.visibility.cancelFailed));
+    } finally {
+      dispatch(setUiBusy(false));
+    }
   }
 
   function onStartNewCheck() {
@@ -570,6 +576,7 @@ export default function VisibilityWizard() {
     !showPromptChoice;
 
   return (
+    <>
     <div className="vis-page">
       <header className="vis-header">
         <div className="vis-header-main">
@@ -955,5 +962,33 @@ export default function VisibilityWizard() {
         </div>
       </div>
     </div>
+
+    <Modal
+      open={cancelConfirmOpen}
+      onCancel={closeCancelConfirm}
+      footer={null}
+      closable={false}
+      centered
+      className="ma-unsaved-dialog"
+      width={400}
+      destroyOnClose
+    >
+      <div className="ma-unsaved-dialog-body">
+        <div className="ma-unsaved-dialog-icon">
+          <ExclamationCircleOutlined />
+        </div>
+        <h3 className="ma-unsaved-dialog-title">{COPY.visibility.cancelConfirmTitle}</h3>
+        <p className="ma-unsaved-dialog-text">{COPY.visibility.cancelConfirmBody}</p>
+        <div className="ma-unsaved-dialog-actions">
+          <Button type="primary" danger loading={visibility.uiBusy} onClick={() => void handleConfirmCancel()}>
+            {COPY.visibility.cancelConfirmOk}
+          </Button>
+          <Button disabled={visibility.uiBusy} onClick={closeCancelConfirm}>
+            {COPY.visibility.cancelConfirmCancel}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+    </>
   );
 }

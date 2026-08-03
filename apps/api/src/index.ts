@@ -15,6 +15,8 @@ async function main() {
   await resumeInterruptedVisibilityJobs();
 
   const app = express();
+  // Behind nginx (or similar) in production; required for express-rate-limit client IPs.
+  app.set("trust proxy", 1);
   app.use(
     cors({
       origin: [env.publicSiteUrl, env.adminSiteUrl],
