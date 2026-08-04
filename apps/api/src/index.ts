@@ -44,6 +44,7 @@ async function main() {
   app.post("/api/v1/business/search", expensiveLimiter);
   app.post("/api/v1/prompts/generate", expensiveLimiter);
   app.post("/api/v1/visibility/jobs", expensiveLimiter);
+  app.post("/api/v1/visibility/jobs/start", expensiveLimiter);
   app.post("/api/v1/plans", expensiveLimiter);
   app.post("/api/v1/plans/items/generate", expensiveLimiter);
 

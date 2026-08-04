@@ -77,7 +77,16 @@ async function markJobCancelled(jobId: string) {
 async function processVisibilityJob(jobId: string) {
   const job = await VisibilityJobModel.findById(jobId);
   if (!job) return;
-  if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") return;
+  if (
+    job.status === "completed" ||
+    job.status === "failed" ||
+    job.status === "cancelled" ||
+    job.status === "generating" ||
+    job.status === "ready"
+  ) {
+    return;
+  }
+  if (job.status !== "queued" && job.status !== "running") return;
 
   if (await isJobCancelled(jobId)) {
     await markJobCancelled(jobId);

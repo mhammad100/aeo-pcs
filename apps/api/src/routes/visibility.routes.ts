@@ -3,7 +3,12 @@ import * as visibilityController from "../controllers/visibility.controller";
 import * as visibilityStreamController from "../controllers/visibilityStream.controller";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler, validate } from "../middleware/validate";
-import { createVisibilityJobValidators, jobIdParamValidators } from "../validators";
+import {
+  createVisibilityJobValidators,
+  jobIdParamValidators,
+  runVisibilityJobValidators,
+  startVisibilityJobValidators,
+} from "../validators";
 
 export const visibilityRouter = Router();
 
@@ -12,6 +17,13 @@ visibilityRouter.post(
   requireAuth,
   validate(createVisibilityJobValidators),
   asyncHandler(visibilityController.createJob)
+);
+
+visibilityRouter.post(
+  "/jobs/start",
+  requireAuth,
+  validate(startVisibilityJobValidators),
+  asyncHandler(visibilityController.startJob)
 );
 
 visibilityRouter.get("/jobs", requireAuth, asyncHandler(visibilityController.listJobs));
@@ -25,6 +37,13 @@ visibilityRouter.get(
   requireAuth,
   validate(jobIdParamValidators),
   asyncHandler(visibilityStreamController.streamJob)
+);
+
+visibilityRouter.post(
+  "/jobs/:jobId/run",
+  requireAuth,
+  validate(runVisibilityJobValidators),
+  asyncHandler(visibilityController.runJob)
 );
 
 visibilityRouter.get(

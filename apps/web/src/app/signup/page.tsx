@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Alert, Button, Card, Form, Input, Typography } from "antd";
+import { Alert, Button, Card, Form, Input, Spin, Typography } from "antd";
 import { api, ApiError } from "@/lib/api";
 import { resolvePostAuthPath } from "@/lib/authRouting";
+import { useRedirectIfAuthenticated } from "@/lib/useRedirectIfAuthenticated";
 import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/authSlice";
 
@@ -16,6 +17,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const checkingSession = useRedirectIfAuthenticated();
 
   async function onFinish(values: { email: string; password: string; confirmPassword: string }) {
     if (values.password !== values.confirmPassword) {
@@ -35,6 +37,14 @@ export default function SignupPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (checkingSession) {
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0F1A17" }}>
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (

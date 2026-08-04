@@ -114,7 +114,22 @@ export const createVisibilityJobValidators = [
   body("prompts.*").isString().trim().isLength({ min: 3, max: 300 }),
 ];
 
+export const startVisibilityJobValidators = [
+  body("category")
+    .isString()
+    .trim()
+    .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
+  body("prompts").optional().isArray({ min: 1, max: MAX_PROMPTS_PER_RUN }),
+  body("prompts.*").optional().isString().trim().isLength({ min: 3, max: 300 }),
+];
+
 export const jobIdParamValidators = [param("jobId").isMongoId()];
+
+export const runVisibilityJobValidators = [
+  param("jobId").isMongoId(),
+  body("prompts").isArray({ min: 1, max: MAX_PROMPTS_PER_RUN }),
+  body("prompts.*").isString().trim().isLength({ min: 3, max: 300 }),
+];
 
 export const buildPlanValidators = [body("jobId").isMongoId()];
 

@@ -32,7 +32,14 @@ structured answer analysis.
 - Results UI: brand vs source tags, position, sentiment per model answer
 - Backward-compatible `visibilityPct` (= weighted brandVisibilityPct)
 
-### Phase 4 — Later (P2)
+### Phase 4 — Job lifecycle (P1) ✅
+
+- Statuses: `generating` → `ready` → `queued` → `running` → terminal
+- `POST /visibility/jobs/start` creates the job and stores prompts on the server
+- `POST /visibility/jobs/:id/run` confirms edited prompts and enqueues the check
+- Active job resume includes `generating` / `ready` (cross-browser / refresh)
+
+### Phase 5 — Later (P2)
 
 - Competitor list + share of voice
 - Stable tracked prompt library per business

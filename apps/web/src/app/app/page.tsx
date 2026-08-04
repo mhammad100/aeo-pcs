@@ -156,6 +156,13 @@ export default function AppDashboardPage() {
                     </Card>
                   </Col>
                 )}
+                {runInsights.strongPrompts.length > 0 && (
+                  <Col xs={24} md={12} className="dash-stretch-col">
+                    <Card title="Where AI mentions you" className="dash-panel-card">
+                      <PromptScoreList items={runInsights.strongPrompts} variant="strong" />
+                    </Card>
+                  </Col>
+                )}
               </Row>
             )}
 

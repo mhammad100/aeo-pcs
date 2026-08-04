@@ -13,7 +13,12 @@ import {
   Spin,
   Typography,
 } from "antd";
-import { type AeoRuntimeSettings, COPY, formatCategoryLabel } from "@aeo-pcs/shared";
+import {
+  type AeoRuntimeSettings,
+  type VisibilityJob,
+  COPY,
+  formatCategoryLabel,
+} from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import VisibilityInsights from "@/components/VisibilityInsights";
@@ -41,8 +46,6 @@ const DEFAULT_RUNTIME: AeoRuntimeSettings = {
   visibilityModelCount: 3,
   visibilityModels: [],
 };
-
-const PROMPTS_DRAFT_KEY = "visibility-prompts-draft";
 
 function downloadBlob(content: BlobPart, filename: string, mime: string) {
   const blob = new Blob([content], { type: mime });
@@ -88,26 +91,21 @@ export default function VisibilityWizard() {
   const isPartialCompletion =
     visibility.status === "completed" && Boolean(visibility.error) && hasResults;
 
-  const showReview = prompts.prompts.length > 0 && !visibility.jobId && !visibility.status;
+  const jobActive =
+    visibility.status === "generating" ||
+    visibility.status === "ready" ||
+    visibility.status === "queued" ||
+    visibility.status === "running";
+  const showReview =
+    visibility.status === "ready" && prompts.prompts.length > 0 && Boolean(visibility.jobId);
   const promptsEdited =
     prompts.prompts.length === prompts.original.length &&
     prompts.prompts.some((p, i) => p !== prompts.original[i]);
 
   const derivedStep = useMemo(() => {
     if (hasPlan) return 1;
-    if (
-      visibility.jobId ||
-      visibility.results ||
-      visibility.status === "queued" ||
-      visibility.status === "running" ||
-      visibility.status === "failed" ||
-      visibility.status === "cancelled" ||
-      visibility.status === "completed"
-    ) {
-      return 0;
-    }
     return 0;
-  }, [hasPlan, visibility.jobId, visibility.results, visibility.status]);
+  }, [hasPlan]);
 
   const currentStep = stepOverride ?? derivedStep;
   const jobRunning = visibility.status === "queued" || visibility.status === "running";
@@ -116,8 +114,37 @@ export default function VisibilityWizard() {
       ? Math.round((visibility.progress.completed / visibility.progress.total) * 100)
       : 0;
   const activeModel = visibility.progress?.currentModel;
+  const currentPrompt = visibility.progress?.currentPrompt?.trim() || "";
+  const progressCompleted = visibility.progress?.completed ?? 0;
+  const progressTotal = visibility.progress?.total ?? 0;
+  const isGeneratingPrompts =
+    visibility.status === "generating" ||
+    (visibility.uiBusy && localBusyLabel === "Generating prompts");
+  const isPreparingCheck =
+    visibility.uiBusy && localBusyLabel === "Preparing visibility check";
+  const showBusyPanel = isGeneratingPrompts || isPreparingCheck;
 
-  useVisibilityJobStream(visibility.jobId);
+  useVisibilityJobStream(jobRunning ? visibility.jobId : null);
+
+  function applyJob(job: VisibilityJob & { plan?: VisibilityJob["plan"]; itemOutputs?: Record<string, string> }) {
+    dispatch(setJobId(job.id));
+    dispatch(
+      setJobSnapshot({
+        status: job.status,
+        progress: job.progress,
+        results: job.results ?? null,
+        score: job.score ?? null,
+        plan: job.plan ?? null,
+        itemOutputs: job.itemOutputs ?? {},
+        error: job.error ?? null,
+      })
+    );
+    if (job.prompts?.length) {
+      dispatch(setPrompts(job.prompts.map(String)));
+    } else if (job.status === "generating") {
+      dispatch(clearPrompts());
+    }
+  }
 
   async function refreshSubscription() {
     const { subscription } = await api.getMySubscription();
@@ -127,14 +154,6 @@ export default function VisibilityWizard() {
     setRunsUsed(used);
     setRunsLimit(limit);
     setCanRunVisibility(subscribed && used < limit);
-  }
-
-  function clearPromptDraft() {
-    sessionStorage.removeItem(PROMPTS_DRAFT_KEY);
-  }
-
-  function savePromptDraft(nextPrompts: string[]) {
-    sessionStorage.setItem(PROMPTS_DRAFT_KEY, JSON.stringify(nextPrompts));
   }
 
   function confirmCancelRun(onConfirmed: () => void) {
@@ -158,7 +177,7 @@ export default function VisibilityWizard() {
           error: COPY.visibility.cancelledMessage,
         })
       );
-      clearPromptDraft();
+      dispatch(clearPrompts());
       await refreshSubscription();
       const onConfirmed = cancelConfirmCallbackRef.current;
       closeCancelConfirm();
@@ -174,12 +193,11 @@ export default function VisibilityWizard() {
     const startFresh = () => {
       dispatch(resetVisibility());
       dispatch(clearPrompts());
-      clearPromptDraft();
       setShowPromptChoice(false);
       setStepOverride(0);
     };
 
-    if (jobRunning && visibility.jobId) {
+    if (jobActive && visibility.jobId) {
       confirmCancelRun(startFresh);
       return;
     }
@@ -235,33 +253,14 @@ export default function VisibilityWizard() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (profileLoading || visibility.jobId || resumeChecked) return;
+    if (profileLoading || resumeChecked) return;
     let cancelled = false;
     (async () => {
       try {
         const { job } = await api.getActiveVisibilityJob();
         if (cancelled) return;
         if (job) {
-          dispatch(setJobId(job.id));
-          dispatch(
-            setJobSnapshot({
-              status: job.status,
-              progress: job.progress,
-              results: job.results,
-              score: job.score,
-              plan: job.plan ?? null,
-              itemOutputs: job.itemOutputs ?? {},
-              error: job.error,
-            })
-          );
-        } else {
-          const draft = sessionStorage.getItem(PROMPTS_DRAFT_KEY);
-          if (draft) {
-            const parsed = JSON.parse(draft) as string[];
-            if (Array.isArray(parsed) && parsed.length) {
-              dispatch(setPrompts(parsed));
-            }
-          }
+          applyJob(job);
         }
       } catch {
         /* resume optional */
@@ -272,7 +271,8 @@ export default function VisibilityWizard() {
     return () => {
       cancelled = true;
     };
-  }, [profileLoading, visibility.jobId, resumeChecked, dispatch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- resume once after profile load
+  }, [profileLoading, resumeChecked, dispatch]);
 
   useEffect(() => {
     if (
@@ -352,27 +352,31 @@ export default function VisibilityWizard() {
     };
   }, [dispatch, visibility.jobId, hasResults]);
 
-  async function onGeneratePrompts() {
-    if (!business.selected) return;
-    dispatch(setUiBusy(true));
-    setLocalBusyLabel("Generating prompts");
+  async function onStartJob(reusePrompts?: string[]) {
     dispatch(setError(null));
     dispatch(resetVisibility());
     dispatch(clearPrompts());
     setShowPromptChoice(false);
+    dispatch(setUiBusy(true));
+    setLocalBusyLabel(reusePrompts?.length ? "Preparing visibility check" : "Generating prompts");
     try {
-      const { prompts: generated } = await api.generatePrompts({
-        business: business.selected,
+      const { job } = await api.startVisibilityJob({
         category: business.category,
-        city: business.city,
-        state: business.state,
-        country: business.country,
+        prompts: reusePrompts?.length ? reusePrompts : undefined,
       });
-      dispatch(setPrompts(generated));
-      savePromptDraft(generated);
+      applyJob(job);
+      if (job.prompts?.length) {
+        setLastPrompts(job.prompts.map(String));
+      }
       setStepOverride(0);
+      await refreshSubscription();
     } catch (err) {
-      dispatch(setError(err instanceof Error ? err.message : "Prompt generation failed"));
+      if (err instanceof ApiError && err.code === "VISIBILITY_IN_PROGRESS" && err.details?.jobId) {
+        const job = await api.getVisibilityJob(String(err.details.jobId));
+        applyJob(job);
+        return;
+      }
+      dispatch(setError(err instanceof ApiError ? err.message : "Could not start visibility check"));
     } finally {
       dispatch(setUiBusy(false));
       setLocalBusyLabel(null);
@@ -384,22 +388,15 @@ export default function VisibilityWizard() {
       setShowPromptChoice(true);
       return;
     }
-    void onGeneratePrompts();
+    void onStartJob();
   }
 
   function onKeepPreviousPrompts() {
-    dispatch(resetVisibility());
-    dispatch(clearPrompts());
-    dispatch(setPrompts(lastPrompts));
-    setShowPromptChoice(false);
-    setStepOverride(0);
+    void onStartJob(lastPrompts);
   }
 
   function onEditPrompt(index: number, value: string) {
     dispatch(updatePrompt({ index, value }));
-    const next = [...prompts.prompts];
-    next[index] = value;
-    savePromptDraft(next);
   }
 
   function onResetPrompts() {
@@ -408,49 +405,22 @@ export default function VisibilityWizard() {
 
   async function onConfirmAndRun() {
     const finalPrompts = prompts.prompts.map((p) => p.trim()).filter(Boolean);
-    if (!finalPrompts.length) return;
+    if (!finalPrompts.length || !visibility.jobId) return;
     dispatch(setUiBusy(true));
     setLocalBusyLabel("Preparing visibility check");
     dispatch(setError(null));
     try {
-      const { jobId } = await api.createVisibilityJob({
-        category: business.category,
+      const { job } = await api.runVisibilityJob(visibility.jobId, {
         prompts: finalPrompts,
       });
-
-      dispatch(setJobId(jobId));
+      applyJob(job);
       setLastPrompts(finalPrompts);
-      clearPromptDraft();
-      dispatch(
-        setJobSnapshot({
-          status: "queued",
-          progress: { completed: 0, total: finalPrompts.length * visibilityModelCount },
-          results: null,
-          score: null,
-          plan: null,
-          itemOutputs: {},
-          error: null,
-        })
-      );
-      dispatch(clearPrompts());
       setStepOverride(0);
       await refreshSubscription();
     } catch (err) {
       if (err instanceof ApiError && err.code === "VISIBILITY_IN_PROGRESS" && err.details?.jobId) {
-        const activeJobId = String(err.details.jobId);
-        const job = await api.getVisibilityJob(activeJobId);
-        dispatch(setJobId(activeJobId));
-        dispatch(
-          setJobSnapshot({
-            status: job.status,
-            progress: job.progress,
-            results: job.results,
-            score: job.score,
-            plan: job.plan ?? null,
-            itemOutputs: job.itemOutputs ?? {},
-            error: job.error,
-          })
-        );
+        const job = await api.getVisibilityJob(String(err.details.jobId));
+        applyJob(job);
         return;
       }
       dispatch(setError(err instanceof ApiError ? err.message : "Visibility check failed"));
@@ -570,12 +540,14 @@ export default function VisibilityWizard() {
   }
 
   const showIdle =
-    !visibility.jobId &&
-    !jobRunning &&
+    !jobActive &&
     !hasResults &&
-    !visibility.status &&
     !showReview &&
-    !showPromptChoice;
+    !showPromptChoice &&
+    !showBusyPanel &&
+    visibility.status !== "failed" &&
+    visibility.status !== "cancelled" &&
+    visibility.status !== "completed";
 
   return (
     <>
@@ -640,7 +612,7 @@ export default function VisibilityWizard() {
         </div>
       )}
 
-      {jobRunning && (
+      {jobActive && (
         <Alert
           type="info"
           showIcon
@@ -662,18 +634,25 @@ export default function VisibilityWizard() {
           {currentStep === 0 && (
             <StepShell
               hint={
-                jobRunning
-                  ? "Checking how AI assistants mention your business."
-                  : showReview
-                    ? "Review the generated prompts below. You can edit wording."
-                    : hasResults
-                      ? "Your visibility index and key insights."
-                      : stepHints[0]
+                isGeneratingPrompts
+                  ? "Building buyer-intent questions from your profile."
+                  : isPreparingCheck
+                    ? "Starting your visibility check across AI assistants."
+                    : jobRunning
+                      ? "Checking how AI assistants mention your business."
+                      : showReview
+                        ? "Review the generated prompts below. You can edit wording."
+                        : hasResults
+                          ? "Your visibility index and key insights."
+                          : stepHints[0]
               }
               foot={
                 showReview ? (
                   <>
-                    <Button onClick={onResetPrompts} disabled={!promptsEdited}>
+                    <Button danger onClick={() => confirmCancelRun(() => {})} loading={visibility.uiBusy}>
+                      Cancel check
+                    </Button>
+                    <Button onClick={onResetPrompts} disabled={!promptsEdited || visibility.uiBusy}>
                       Reset
                     </Button>
                     <Button
@@ -705,7 +684,7 @@ export default function VisibilityWizard() {
                       type="primary"
                       ghost
                       loading={visibility.uiBusy}
-                      onClick={onGeneratePrompts}
+                      onClick={() => void onStartJob()}
                     >
                       Generate new questions
                     </Button>
@@ -735,21 +714,41 @@ export default function VisibilityWizard() {
                     )}
                   </>
                 ) : !jobRunning && visibility.status === "failed" ? (
-                  <Button type="primary" onClick={onGeneratePrompts}>
+                  <Button type="primary" onClick={() => void onStartJob()}>
                     Try again
                   </Button>
                 ) : !jobRunning && visibility.status === "cancelled" ? (
-                  <Button type="primary" onClick={onGeneratePrompts}>
+                  <Button type="primary" onClick={() => void onStartJob()}>
                     Start new check
                   </Button>
-                ) : jobRunning ? (
-                  <Button danger onClick={() => confirmCancelRun(() => {})} loading={visibility.uiBusy}>
+                ) : jobActive ? (
+                  <Button
+                    danger
+                    onClick={() => confirmCancelRun(() => {})}
+                    loading={visibility.uiBusy}
+                  >
                     Cancel check
                   </Button>
                 ) : undefined
               }
             >
-              {showReview && (
+              {showBusyPanel && (
+                <div className="vis-busy" role="status" aria-live="polite">
+                  <Spin size="large" />
+                  <div className="vis-busy-copy">
+                    <Text strong style={{ color: "#EDEAE1", display: "block", marginBottom: 6 }}>
+                      {localBusyLabel || "Working…"}
+                    </Text>
+                    <Text type="secondary">
+                      {isGeneratingPrompts
+                        ? "This usually takes a few seconds while we research your offerings and craft discovery questions."
+                        : "Queuing your check — progress will appear as each AI assistant answers."}
+                    </Text>
+                  </div>
+                </div>
+              )}
+
+              {!showBusyPanel && showReview && (
                 <div className="vis-prompts-review">
                   <Space direction="vertical" style={{ width: "100%" }} size={12}>
                     {prompts.prompts.map((p, i) => (
@@ -767,7 +766,7 @@ export default function VisibilityWizard() {
                 </div>
               )}
 
-              {showPromptChoice && (
+              {!showBusyPanel && showPromptChoice && (
                 <div className="vis-prompt-choice">
                   <h4 className="vis-business-name">Search questions</h4>
                   <Paragraph type="secondary" style={{ marginBottom: 16, maxWidth: 520 }}>
@@ -785,7 +784,7 @@ export default function VisibilityWizard() {
                 </div>
               )}
 
-              {showIdle && business.selected && (
+              {!showBusyPanel && showIdle && business.selected && (
                 <div className="vis-idle">
                   <h4 className="vis-business-name">{business.selected.name}</h4>
                   <Paragraph type="secondary" style={{ marginBottom: 16, maxWidth: 520 }}>
@@ -816,12 +815,31 @@ export default function VisibilityWizard() {
                 </div>
               )}
 
-              {jobRunning && (
-                <div className="vis-running">
+              {!showBusyPanel && jobRunning && (
+                <div className="vis-running" role="status" aria-live="polite">
+                  <div className="vis-running-head">
+                    <Spin />
+                    <div>
+                      <Text strong style={{ color: "#EDEAE1", display: "block", marginBottom: 4 }}>
+                        {visibility.status === "queued"
+                          ? "Queued — starting shortly…"
+                          : `Checking ${business.selected?.name || "your business"}…`}
+                      </Text>
+                      <Text type="secondary">
+                        {progressTotal > 0
+                          ? `${progressCompleted} of ${progressTotal} AI responses`
+                          : "Connecting to AI assistants…"}
+                        {activeModel ? ` · ${activeModel}` : ""}
+                      </Text>
+                    </div>
+                  </div>
                   <Progress percent={progressPct} strokeColor="#8FBF9F" style={{ marginBottom: 12 }} />
-                  <Text type="secondary" style={{ display: "block", marginBottom: 12 }}>
-                    Checking {business.selected?.name || "your business"} across AI assistants…
-                  </Text>
+                  {currentPrompt ? (
+                    <div className="vis-running-prompt">
+                      <span className="vis-running-prompt-label">Current question</span>
+                      <p>{currentPrompt}</p>
+                    </div>
+                  ) : null}
                   {modelLabels.length > 0 && (
                     <div className="vis-running-models">
                       {modelLabels.map((label) => (

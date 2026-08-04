@@ -112,14 +112,24 @@ export default function VisibilityInsights({
 
       {insights.weakPrompts.length > 0 && (
         <section className="vis-insight-section">
-          <h4>Where you&apos;re missing visibility</h4>
+          <h4>
+            Where you&apos;re missing visibility
+            <span className="vis-insight-section-meta">
+              {insights.weakPrompts.length} of {insights.allPrompts.length}
+            </span>
+          </h4>
           <PromptScoreList items={insights.weakPrompts} variant="weak" />
         </section>
       )}
 
       {insights.strongPrompts.length > 0 && (
         <section className="vis-insight-section">
-          <h4>Where AI mentions you</h4>
+          <h4>
+            Where AI mentions you
+            <span className="vis-insight-section-meta">
+              {insights.strongPrompts.length} of {insights.allPrompts.length}
+            </span>
+          </h4>
           <PromptScoreList items={insights.strongPrompts} variant="strong" />
         </section>
       )}

@@ -11,6 +11,25 @@ export async function createJob(req: AuthedRequest, res: Response) {
   res.status(202).json(result);
 }
 
+export async function startJob(req: AuthedRequest, res: Response) {
+  const result = await visibilityJobsService.startVisibilityJob({
+    userId: req.userId!,
+    category: req.body.category,
+    prompts: Array.isArray(req.body.prompts) ? req.body.prompts : undefined,
+  });
+  res.status(201).json(result);
+}
+
+export async function runJob(req: AuthedRequest, res: Response) {
+  const result = await visibilityJobsService.runVisibilityJob({
+    userId: req.userId!,
+    userRole: req.userRole,
+    jobId: req.params.jobId,
+    prompts: req.body.prompts,
+  });
+  res.status(202).json(result);
+}
+
 export async function listJobs(req: AuthedRequest, res: Response) {
   const limitRaw = Number(req.query.limit);
   const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 20;
@@ -19,7 +38,9 @@ export async function listJobs(req: AuthedRequest, res: Response) {
     req.query.status === "failed" ||
     req.query.status === "running" ||
     req.query.status === "queued" ||
-    req.query.status === "cancelled"
+    req.query.status === "cancelled" ||
+    req.query.status === "generating" ||
+    req.query.status === "ready"
       ? req.query.status
       : undefined;
 

@@ -1379,6 +1379,16 @@ a {
   color: var(--ma-ink);
   font-size: 14px;
   font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.vis-insight-section-meta {
+  color: var(--ma-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
 
 .vis-insight-chips {
@@ -1601,8 +1611,53 @@ a {
   margin-top: 4px;
 }
 
+.vis-busy {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 28px 8px;
+  min-height: 160px;
+}
+
+.vis-busy-copy {
+  max-width: 420px;
+  padding-top: 4px;
+}
+
 .vis-running {
   padding: 8px 0;
+}
+
+.vis-running-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.vis-running-prompt {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--ma-line);
+  background: rgba(11, 20, 17, 0.45);
+}
+
+.vis-running-prompt-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ma-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.vis-running-prompt p {
+  margin: 0;
+  color: var(--ma-ink);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .vis-running-models {

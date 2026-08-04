@@ -110,7 +110,22 @@ export type ActionPlan = {
   presenceAudit?: PresenceAudit;
 };
 
-export type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
+export type JobStatus =
+  | "generating"
+  | "ready"
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+/** Job is still in the visibility-check flow (prompts or model run). */
+export const ACTIVE_VISIBILITY_JOB_STATUSES: JobStatus[] = [
+  "generating",
+  "ready",
+  "queued",
+  "running",
+];
 
 export type VisibilityJobProgress = {
   completed: number;
@@ -172,6 +187,23 @@ export type CreateVisibilityJobRequest = {
 
 export type CreateVisibilityJobResponse = {
   jobId: string;
+};
+
+export type StartVisibilityJobRequest = {
+  category: string;
+};
+
+export type StartVisibilityJobResponse = {
+  job: VisibilityJob;
+};
+
+export type RunVisibilityJobRequest = {
+  prompts: string[];
+};
+
+export type RunVisibilityJobResponse = {
+  jobId: string;
+  job: VisibilityJob;
 };
 
 export type BuildPlanRequest = {

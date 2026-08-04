@@ -35,6 +35,8 @@ export type VisibilityRunInsights = {
   score: VisibilityScore;
   coreScore: CoreVisibilityScore | null;
   modelBreakdown: ModelBreakdown[];
+  /** Every prompt from the run, in run order. */
+  allPrompts: PromptBreakdown[];
   weakPrompts: PromptBreakdown[];
   strongPrompts: PromptBreakdown[];
   topCompetitors: NamedCount[];
@@ -166,9 +168,8 @@ export function computeVisibilityRunInsights(
       }
     }
 
-    if (promptTotal > 0) {
-      promptStats.push({ prompt: r.prompt, mentions: promptMentions, total: promptTotal });
-    }
+    // Always include every prompt so the UI can show the full run (even if all models failed).
+    promptStats.push({ prompt: r.prompt, mentions: promptMentions, total: promptTotal });
   }
 
   const modelBreakdown = [...modelStats.entries()]
@@ -180,12 +181,14 @@ export function computeVisibilityRunInsights(
     }))
     .sort((a, b) => b.pct - a.pct);
 
-  const sortedPrompts = [...promptStats].sort((a, b) => a.mentions / a.total - b.mentions / b.total);
-  const weakPrompts = sortedPrompts.filter((p) => p.mentions < p.total).slice(0, 3);
-  const strongPrompts = [...promptStats]
+  const allPrompts = [...promptStats];
+  // Partition every prompt into exactly one section (no caps, no overlap) so UI totals match the run.
+  const weakPrompts = promptStats
+    .filter((p) => p.mentions === 0)
+    .sort((a, b) => b.total - a.total);
+  const strongPrompts = promptStats
     .filter((p) => p.mentions > 0)
-    .sort((a, b) => b.mentions / b.total - a.mentions / a.total)
-    .slice(0, 3);
+    .sort((a, b) => b.mentions / Math.max(b.total, 1) - a.mentions / Math.max(a.total, 1));
 
   const topCompetitors = [...competitorCounts.entries()]
     .map(([name, count]) => ({ name, count }))
@@ -216,6 +219,7 @@ export function computeVisibilityRunInsights(
     score,
     coreScore,
     modelBreakdown,
+    allPrompts,
     weakPrompts,
     strongPrompts,
     topCompetitors,

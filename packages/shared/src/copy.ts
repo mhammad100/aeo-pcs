@@ -16,12 +16,12 @@ export const COPY = {
   visibility: {
     inProgressTitle: "Visibility check in progress",
     inProgressDescription:
-      "You can leave and come back anytime — we'll keep working. To stop early, use Cancel check (this still uses one of your monthly checks).",
+      "You can leave and come back anytime — progress is saved on your account. To stop early, use Cancel check (this still uses one of your monthly checks).",
     cancelConfirmTitle: "Cancel this visibility check?",
     cancelConfirmBody:
       "Stopping now won't refund a check — this still counts toward your monthly limit. You can start a new check when you're ready.",
     cancelConfirmOk: "Cancel check",
-    cancelConfirmCancel: "Keep running",
+    cancelConfirmCancel: "Keep going",
     cancelledMessage:
       "Visibility check cancelled. This still counts toward your monthly limit.",
     alreadyInProgress:

@@ -133,6 +133,21 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  startVisibilityJob: (body: { category: string; prompts?: string[] }) =>
+    request<{ job: import("@aeo-pcs/shared").VisibilityJob }>("/visibility/jobs/start", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  runVisibilityJob: (jobId: string, body: { prompts: string[] }) =>
+    request<{
+      jobId: string;
+      job: import("@aeo-pcs/shared").VisibilityJob;
+    }>(`/visibility/jobs/${encodeURIComponent(jobId)}/run`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
   createVisibilityJob: (body: {
     category: string;
     prompts: string[];
