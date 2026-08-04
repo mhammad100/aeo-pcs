@@ -68,6 +68,45 @@ export async function cancelRazorpaySubscription(
   return rzp.subscriptions.cancel(razorpaySubscriptionId, cancelAtCycleEnd);
 }
 
+/** Convert major-unit price (e.g. 999.5) to Razorpay subunit amount (paise/cents). */
+export function toRazorpayAmount(price: number): number {
+  return Math.round(Number(price) * 100);
+}
+
+export async function createRazorpayPlan(input: {
+  name: string;
+  amountMajor: number;
+  currency: string;
+  billingPeriod: "monthly" | "yearly";
+  notes?: Record<string, string>;
+}): Promise<string> {
+  const rzp = getClient();
+  const plan = (await rzp.plans.create({
+    period: input.billingPeriod,
+    interval: 1,
+    item: {
+      name: input.name.slice(0, 255),
+      amount: toRazorpayAmount(input.amountMajor),
+      currency: input.currency.toUpperCase(),
+      description: `${input.name} (${input.billingPeriod})`,
+    },
+    notes: input.notes,
+  })) as { id: string };
+  return String(plan.id);
+}
+
+/** Schedule an existing subscription onto a new Razorpay plan at the end of the current cycle. */
+export async function updateRazorpaySubscriptionPlanAtCycleEnd(
+  razorpaySubscriptionId: string,
+  newRazorpayPlanId: string
+) {
+  const rzp = getClient();
+  return rzp.subscriptions.update(razorpaySubscriptionId, {
+    plan_id: newRazorpayPlanId,
+    schedule_change_at: "cycle_end",
+  });
+}
+
 export function verifyWebhookSignature(rawBody: Buffer | string, signature: string) {
   if (!env.razorpayWebhookSecret) {
     throw new AppError(COPY.billing.billingUnavailable, 503);

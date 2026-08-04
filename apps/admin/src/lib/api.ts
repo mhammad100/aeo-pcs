@@ -86,9 +86,12 @@ export const api = {
 
   listAdminPlans: () => request<{ plans: AdminPlan[] }>("/admin/plans"),
   createAdminPlan: (body: CreatePlanBody) =>
-    request<{ plan: AdminPlan }>("/admin/plans", { method: "POST", body: JSON.stringify(body) }),
+    request<{ plan: AdminPlan; migration: PlanMigrationResult | null }>("/admin/plans", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   updateAdminPlan: (planId: string, body: Partial<CreatePlanBody>) =>
-    request<{ plan: AdminPlan }>(`/admin/plans/${planId}`, {
+    request<{ plan: AdminPlan; migration: PlanMigrationResult | null }>(`/admin/plans/${planId}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
@@ -124,6 +127,7 @@ export type AdminPlan = {
   price: number;
   currency: string;
   priceLabel?: string;
+  billingPeriod: "monthly" | "yearly";
   blurb: string;
   features: string[];
   limits: { visibilityRunsPerMonth: number };
@@ -132,12 +136,19 @@ export type AdminPlan = {
   razorpayPlanId?: string;
 };
 
+export type PlanMigrationResult = {
+  scheduled: number;
+  failed: number;
+  errors: string[];
+};
+
 type CreatePlanBody = {
   name: string;
   slug?: string;
   price: number;
   currency?: string;
   priceLabel?: string;
+  billingPeriod?: "monthly" | "yearly";
   blurb?: string;
   features?: string[];
   visibilityRunsPerMonth?: number;

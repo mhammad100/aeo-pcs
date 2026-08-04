@@ -15,13 +15,13 @@ export async function adminListPlans(_req: AuthedRequest, res: Response) {
 }
 
 export async function adminCreatePlan(req: AuthedRequest, res: Response) {
-  const plan = await productPlansService.createProductPlan(req.body);
-  res.status(201).json({ plan });
+  const result = await productPlansService.createProductPlan(req.body);
+  res.status(201).json(result);
 }
 
 export async function adminUpdatePlan(req: AuthedRequest, res: Response) {
-  const plan = await productPlansService.updateProductPlan(req.params.planId, req.body);
-  res.json({ plan });
+  const result = await productPlansService.updateProductPlan(req.params.planId, req.body);
+  res.json(result);
 }
 
 export async function adminDeletePlan(req: AuthedRequest, res: Response) {

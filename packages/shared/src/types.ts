@@ -293,6 +293,8 @@ export type ProductPlanLimits = {
   visibilityRunsPerMonth: number;
 };
 
+export type BillingPeriod = "monthly" | "yearly";
+
 export type ProductPlan = {
   id: string;
   name: string;
@@ -300,13 +302,20 @@ export type ProductPlan = {
   price: number;
   currency: string;
   priceLabel?: string;
+  billingPeriod: BillingPeriod;
   blurb: string;
   features: string[];
   limits: ProductPlanLimits;
   active: boolean;
   sortOrder: number;
-  /** Present on admin responses; used to map catalog plans to Razorpay Plans. */
+  /** Present on admin responses; synced from Razorpay when billing is configured. */
   razorpayPlanId?: string;
+};
+
+export type PlanMigrationResult = {
+  scheduled: number;
+  failed: number;
+  errors: string[];
 };
 
 export type SubscriptionStatus =

@@ -1,4 +1,4 @@
-import type { InvoiceRecord, SubscriptionInfo } from "@aeo-pcs/shared";
+import type { InvoiceRecord, PlanMigrationResult, SubscriptionInfo } from "@aeo-pcs/shared";
 import { COPY, ENTITLED_SUBSCRIPTION_STATUSES } from "@aeo-pcs/shared";
 import { env } from "../config/env";
 import { BusinessModel } from "../models/Business";
@@ -344,6 +344,45 @@ export async function cancelSubscriptionForUser(userId: string) {
   return { subscription: await toSubscriptionInfo(doc, String(business._id)) };
 }
 
+/**
+ * Schedule existing entitled Razorpay subscriptions onto a new payment plan at cycle end.
+ * Used when admin changes catalog price or billing period.
+ */
+export async function migrateSubscribersToRazorpayPlanAtCycleEnd(
+  productPlanId: string,
+  newRazorpayPlanId: string
+): Promise<PlanMigrationResult> {
+  const result: PlanMigrationResult = { scheduled: 0, failed: 0, errors: [] };
+  if (!newRazorpayPlanId || !razorpay.isRazorpayConfigured()) return result;
+
+  const subs = await SubscriptionModel.find({
+    planId: productPlanId,
+    status: { $in: ENTITLED_SUBSCRIPTION_STATUSES },
+    razorpaySubscriptionId: { $nin: ["", null] },
+    cancelAtPeriodEnd: { $ne: true },
+  });
+
+  for (const sub of subs) {
+    if (!sub.razorpaySubscriptionId) continue;
+    try {
+      await razorpay.updateRazorpaySubscriptionPlanAtCycleEnd(
+        sub.razorpaySubscriptionId,
+        newRazorpayPlanId
+      );
+      const stamp = `Billing update scheduled → ${newRazorpayPlanId}`;
+      sub.note = sub.note ? `${sub.note}; ${stamp}` : stamp;
+      await sub.save();
+      result.scheduled += 1;
+    } catch (err) {
+      result.failed += 1;
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      result.errors.push(`${sub.razorpaySubscriptionId}: ${msg}`);
+    }
+  }
+
+  return result;
+}
+
 export async function assignSubscription(input: {
   businessId: string;
   planId: string;
@@ -490,12 +529,27 @@ export async function handleRazorpayWebhook(rawBody: Buffer, signature: string) 
     ? await SubscriptionModel.findOne({ razorpaySubscriptionId: rzpSubId })
     : null;
 
-  if (event === "subscription.activated" || event === "subscription.charged") {
+  if (
+    event === "subscription.activated" ||
+    event === "subscription.charged" ||
+    event === "subscription.updated"
+  ) {
     if (!sub) return { ok: true, ignored: true };
     const periodStart = razorpay.unixToDate(Number(subEntity?.current_start));
     const periodEnd = razorpay.unixToDate(Number(subEntity?.current_end));
     const paymentId = paymentEntity?.id ? String(paymentEntity.id) : undefined;
     const rzpInvoiceId = invoiceEntity?.id ? String(invoiceEntity.id) : undefined;
+
+    if (event === "subscription.updated") {
+      if (periodStart) sub.currentPeriodStart = periodStart;
+      if (periodEnd) sub.currentPeriodEnd = periodEnd;
+      const stamp = "Subscription updated (billing plan change)";
+      sub.note = sub.note ? `${sub.note}; ${stamp}` : stamp;
+      if (sub.status === "incomplete") sub.status = "active";
+      await sub.save();
+      return { ok: true };
+    }
+
     await activateLocalSubscription(sub, {
       periodStart,
       periodEnd,

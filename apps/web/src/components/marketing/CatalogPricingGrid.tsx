@@ -38,7 +38,10 @@ export default function CatalogPricingGrid() {
       {plans.map((t) => (
         <div key={t.id} className="ma-price">
           <h3>{t.name}</h3>
-          <p className="amount">{t.priceLabel || `${t.currency} ${t.price}`}</p>
+          <p className="amount">
+            {t.priceLabel ||
+              `${t.currency} ${t.price}/${t.billingPeriod === "yearly" ? "yr" : "mo"}`}
+          </p>
           <p style={{ color: "var(--ma-muted)", marginTop: 0, marginBottom: 16 }}>{t.blurb}</p>
           <ul>
             {t.features.map((p) => (
