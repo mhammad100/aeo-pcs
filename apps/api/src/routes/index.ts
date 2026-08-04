@@ -9,6 +9,7 @@ import { promptsRouter } from "./prompts.routes";
 import { visibilityRouter } from "./visibility.routes";
 import { plansRouter } from "./plans.routes";
 import { reportsRouter } from "./reports.routes";
+import { geoRouter } from "./geo.routes";
 import { actionPlanRouter } from "./actionPlan.routes";
 import { settingsRouter } from "./settings.routes";
 import {
@@ -21,6 +22,7 @@ import {
 export const apiRouter = Router();
 
 apiRouter.get("/health", asyncHandler(healthController.health));
+apiRouter.use("/geo", geoRouter);
 apiRouter.use("/auth", authRouter);
 apiRouter.use("/admin", adminRouter);
 apiRouter.use("/businesses", businessesRouter);

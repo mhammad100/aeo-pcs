@@ -4,7 +4,9 @@ import { Button, Form, Input, Select, Space } from "antd";
 import type { FormInstance } from "antd/es/form";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
 import SocialPlatformSelect from "@/components/SocialPlatformSelect";
-import { CATEGORIES, COPY, type BusinessProfile } from "@aeo-pcs/shared";
+import GeoLocationPicker from "@/components/GeoLocationPicker";
+import GeoLocationListEditor from "@/components/GeoLocationListEditor";
+import { CATEGORIES, COPY, headquartersLocation, type BusinessProfile, type GeoLocation } from "@aeo-pcs/shared";
 import { SOCIAL_PLATFORMS, socialPlatformPlaceholder } from "@/lib/socialPlatforms";
 
 const TARGET_ITEM_EXAMPLES = [
@@ -19,10 +21,13 @@ export type BusinessProfileFormValues = {
   category: string;
   customCategory?: string;
   city: string;
+  state: string;
   country: string;
+  countryCode?: string;
+  stateCode?: string;
   description: string;
   nameAliases?: string[];
-  targetLocations?: string[];
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
   websiteUrl?: string;
   googleBusinessUrl?: string;
@@ -76,6 +81,19 @@ export default function BusinessProfileForm({
   const category = Form.useWatch("category", form);
   const socialLinks = Form.useWatch("socialLinks", form) || [];
   const targetItems = Form.useWatch("targetItems", form) || [];
+  const watchedCity = Form.useWatch("city", form);
+  const watchedState = Form.useWatch("state", form);
+  const watchedCountry = Form.useWatch("country", form);
+  const watchedCountryCode = Form.useWatch("countryCode", form);
+  const watchedStateCode = Form.useWatch("stateCode", form);
+
+  const headquarters = headquartersLocation({
+    city: watchedCity || initial?.city || "",
+    state: watchedState || initial?.state || "",
+    country: watchedCountry || initial?.country || "India",
+    countryCode: watchedCountryCode || initial?.countryCode,
+    stateCode: watchedStateCode || initial?.stateCode,
+  });
 
   function addTargetExample(example: string) {
     const current = (form.getFieldValue("targetItems") as string[] | undefined) || [];
@@ -146,13 +164,13 @@ export default function BusinessProfileForm({
       </Form.Item>
       <Form.Item
         name="nameAliases"
-        label="Also known as (optional)"
+        label="Also known as"
         tooltip="Alternate names, abbreviations, or spellings we should count as a mention"
       >
         <Select
           mode="tags"
           tokenSeparators={[","]}
-          placeholder="e.g. PCS, Pal Consultancy"
+          placeholder="Enter alternate names, abbreviations, or spellings"
           open={false}
         />
       </Form.Item>
@@ -209,36 +227,50 @@ export default function BusinessProfileForm({
 
   const locationFields = (
     <>
-      <div className="app-form-row">
-        <Form.Item
-          name="city"
-          label="City"
-          rules={[{ required: true, message: "Required" }]}
-          className="app-form-row-item"
-        >
-          <Input placeholder="City" />
-        </Form.Item>
-        <Form.Item
-          name="country"
-          label="Country"
-          rules={[{ required: true, message: "Required" }]}
-          className="app-form-row-item"
-        >
-          <Input placeholder="Country" />
-        </Form.Item>
-      </div>
-      <Form.Item
-        name="targetLocations"
-        label="Target locations (optional)"
-        tooltip={COPY.profile.targetLocationsTooltip}
-      >
-        <Select
-          mode="tags"
-          tokenSeparators={[","]}
-          placeholder="e.g. Satellite, SG Highway, Gandhinagar"
-          open={false}
+      <section className="geo-location-section">
+        <div className="app-form-section-head">
+          <h4>Registered address</h4>
+          <p>Where your business is officially located — used as the default for visibility checks.</p>
+        </div>
+        <GeoLocationPicker
+          value={headquarters}
+          onChange={(loc) => {
+            form.setFieldsValue({
+              city: loc.city,
+              state: loc.state,
+              country: loc.country,
+              countryCode: loc.countryCode,
+              stateCode: loc.stateCode,
+            });
+            onValuesChange?.();
+          }}
         />
-      </Form.Item>
+        <Form.Item name="city" hidden rules={[{ required: true, message: "Required" }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="state" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="country" hidden rules={[{ required: true, message: "Required" }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="countryCode" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="stateCode" hidden>
+          <Input />
+        </Form.Item>
+      </section>
+
+      <section className="geo-location-section is-last">
+        <div className="app-form-section-head">
+          <h4>Target locations</h4>
+          <p>{COPY.profile.targetLocationsTooltip}</p>
+        </div>
+        <Form.Item name="targetLocations" className="geo-location-target-form-item">
+          <GeoLocationListEditor headquarters={headquarters} />
+        </Form.Item>
+      </section>
     </>
   );
 
@@ -350,14 +382,16 @@ export default function BusinessProfileForm({
       id={formId}
       form={form}
       layout="vertical"
-      requiredMark="optional"
       className={sectioned ? "app-profile-form is-sectioned" : "app-profile-form"}
       initialValues={{
         name: initial?.name || "",
         category: initial?.category || undefined,
         customCategory: initial?.customCategory || "",
         city: initial?.city || "",
+        state: initial?.state || "",
         country: initial?.country || "India",
+        countryCode: initial?.countryCode || "IN",
+        stateCode: initial?.stateCode || "",
         description: initial?.description || "",
         nameAliases: initial?.nameAliases?.length ? initial.nameAliases : [],
         targetLocations: initial?.targetLocations?.length ? initial.targetLocations : [],
@@ -409,24 +443,7 @@ export default function BusinessProfileForm({
       ) : !activeSection ? (
         <>
           {identityFields}
-          <Space style={{ display: "flex" }} align="start">
-            <Form.Item
-              name="city"
-              label="City"
-              rules={[{ required: true, message: "Required" }]}
-              style={{ flex: 1, minWidth: 160 }}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="country"
-              label="Country"
-              rules={[{ required: true, message: "Required" }]}
-              style={{ flex: 1, minWidth: 160 }}
-            >
-              <Input />
-            </Form.Item>
-          </Space>
+          {locationFields}
           {onlineFields}
           {socialFields}
           {submitButton}

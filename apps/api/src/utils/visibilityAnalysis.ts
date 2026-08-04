@@ -1,6 +1,11 @@
-import type { MentionSentiment, Source, VisibilityScore } from "@aeo-pcs/shared";
+import type { MentionSentiment, Source, VisibilityScore, GeoLocation } from "@aeo-pcs/shared";
 import type { PromptResult } from "@aeo-pcs/shared";
-import { resolvePromptLocations } from "@aeo-pcs/shared";
+import {
+  formatGeoLocation,
+  headquartersLocation,
+  normalizeGeoLocationList,
+  resolvePromptLocations,
+} from "@aeo-pcs/shared";
 import { extractMentioned } from "./llm";
 
 export type VisibilityBusinessContext = {
@@ -59,14 +64,25 @@ export function buildVisibilityUserPrompt(input: {
   prompt: string;
   category: string;
   city: string;
+  state?: string;
   country: string;
-  targetLocations?: string[];
+  countryCode?: string;
+  stateCode?: string;
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
 }): string {
-  const promptLocations = resolvePromptLocations(input.city, input.targetLocations);
+  const headquarters = headquartersLocation({
+    city: input.city,
+    state: input.state,
+    country: input.country,
+    countryCode: input.countryCode,
+    stateCode: input.stateCode,
+  });
+  const targets = normalizeGeoLocationList(input.targetLocations, headquarters);
+  const promptLocations = resolvePromptLocations(headquarters, targets);
   const locationLine = promptLocations.length
-    ? `Location context: ${promptLocations.join(", ")}, ${input.country}`
-    : `Location context: ${input.country}`;
+    ? `Location context: ${promptLocations.join("; ")}`
+    : `Location context: ${formatGeoLocation(headquarters)}`;
   const items = (input.targetItems || []).filter(Boolean);
   const itemLine = items.length ? `Relevant services/products: ${items.join(", ")}` : "";
   const categoryLine = input.category ? `Category: ${input.category}` : "";

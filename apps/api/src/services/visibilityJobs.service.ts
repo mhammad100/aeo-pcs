@@ -1,5 +1,9 @@
 import type { BusinessCandidate, UserRole } from "@aeo-pcs/shared";
-import { COPY, resolvePromptLocations } from "@aeo-pcs/shared";
+import {
+  COPY,
+  headquartersLocation,
+  normalizeGeoLocationList,
+} from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
@@ -114,6 +118,7 @@ function serializeJob(job: Record<string, unknown>) {
     business: job.business,
     category: job.category,
     city: job.city,
+    state: job.state,
     country: job.country,
     prompts: job.prompts,
     results: Array.isArray(job.results) && job.results.length ? job.results : null,
@@ -158,18 +163,23 @@ export async function createVisibilityJob(input: {
   }
 
   const models = await getEnabledVisibilityModels();
-  const promptLocations = resolvePromptLocations(
-    owned.city,
-    owned.targetLocations?.length ? owned.targetLocations.map(String) : undefined
-  );
+  const hq = headquartersLocation({
+    city: owned.city,
+    state: owned.state,
+    country: owned.country,
+    countryCode: owned.countryCode,
+    stateCode: owned.stateCode,
+  });
+  const targetLocations = normalizeGeoLocationList(owned.targetLocations, hq, 15);
+  const resolvedTargets = targetLocations.length > 0 ? targetLocations : [hq];
 
   const business: BusinessCandidate = {
     name: owned.name.trim(),
     category: input.category || owned.category || "Other",
-    address: [owned.city, owned.country].filter(Boolean).join(", "),
+    address: [hq.city, hq.state, hq.country].filter(Boolean).join(", "),
     description: owned.description || "",
     nameAliases: (owned.nameAliases || []).map(String),
-    targetLocations: promptLocations,
+    targetLocations: resolvedTargets,
     targetItems: (owned.targetItems || []).map(String),
   };
 
@@ -183,11 +193,12 @@ export async function createVisibilityJob(input: {
     },
     business,
     category: input.category || owned.category || "Other",
-    city: owned.city,
-    country: owned.country,
+    city: hq.city,
+    state: hq.state,
+    country: hq.country,
     websiteUrl: owned.websiteUrl || "",
     googleBusinessUrl: owned.googleBusinessUrl || "",
-    targetLocations: business.targetLocations,
+    targetLocations: resolvedTargets,
     targetItems: business.targetItems,
     nameAliases: business.nameAliases,
     prompts: input.prompts,
@@ -267,6 +278,7 @@ export async function buildPlanForJob(input: {
     business: job.business as never,
     category: job.category || "Other",
     city: job.city || "",
+    state: job.state || "",
     country: job.country || "",
     websiteUrl: profile?.websiteUrl || job.websiteUrl || undefined,
     googleBusinessUrl: profile?.googleBusinessUrl || job.googleBusinessUrl || undefined,
@@ -322,6 +334,7 @@ export async function generatePlanItem(input: {
     business: job.business as never,
     category: job.category || "Other",
     city: job.city || "",
+    state: job.state || "",
     country: job.country || "",
     item: { title: input.title, description: input.description },
     usage: {
@@ -357,6 +370,7 @@ export async function getReportForJob(input: {
     selected: (job.business as never) || null,
     category: job.category || "",
     city: job.city || "",
+    state: job.state || "",
     country: job.country || "",
     results: (job.results as never) || null,
     score: (job.score as never) || null,

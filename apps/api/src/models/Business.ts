@@ -8,6 +8,17 @@ const SocialLinkSchema = new Schema(
   { _id: false }
 );
 
+const GeoLocationSchema = new Schema(
+  {
+    city: { type: String, required: true, trim: true },
+    state: { type: String, default: "", trim: true },
+    country: { type: String, required: true, trim: true },
+    countryCode: { type: String, default: "", trim: true },
+    stateCode: { type: String, default: "", trim: true },
+  },
+  { _id: false }
+);
+
 const ChecklistItemSchema = new Schema(
   {
     key: { type: String, required: true, trim: true },
@@ -29,10 +40,13 @@ const BusinessSchema = new Schema(
     category: { type: String, default: "", trim: true },
     customCategory: { type: String, default: "", trim: true },
     city: { type: String, default: "", trim: true },
+    state: { type: String, default: "", trim: true },
     country: { type: String, default: "", trim: true },
+    countryCode: { type: String, default: "", trim: true },
+    stateCode: { type: String, default: "", trim: true },
     description: { type: String, default: "", trim: true },
     nameAliases: { type: [String], default: [] },
-    targetLocations: { type: [String], default: [] },
+    targetLocations: { type: [GeoLocationSchema], default: [] },
     targetItems: { type: [String], default: [] },
     websiteUrl: { type: String, default: "", trim: true },
     googleBusinessUrl: { type: String, default: "", trim: true },

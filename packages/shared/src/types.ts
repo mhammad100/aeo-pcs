@@ -1,4 +1,5 @@
 import type { Category, LlmProvider } from "./constants";
+import type { GeoLocation } from "./geo";
 import type { PresenceAudit } from "./presenceAudit";
 
 export type BusinessCandidate = {
@@ -8,7 +9,7 @@ export type BusinessCandidate = {
   address: string;
   description: string;
   nameAliases?: string[];
-  targetLocations?: string[];
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
 };
 
@@ -125,6 +126,7 @@ export type VisibilityJob = {
   business: BusinessCandidate;
   category: Category | string;
   city: string;
+  state: string;
   country: string;
   prompts: string[];
   results?: PromptResult[];
@@ -139,6 +141,7 @@ export type VisibilityJob = {
 export type SearchBusinessRequest = {
   name: string;
   city: string;
+  state?: string;
   country: string;
 };
 
@@ -150,6 +153,7 @@ export type GeneratePromptsRequest = {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
 };
 
@@ -161,6 +165,7 @@ export type CreateVisibilityJobRequest = {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
   prompts: string[];
 };

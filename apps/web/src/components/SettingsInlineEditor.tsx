@@ -6,8 +6,10 @@ import { EditOutlined } from "@ant-design/icons";
 import SettingsEditableField from "@/components/SettingsEditableField";
 import SettingsSocialSection from "@/components/SettingsSocialSection";
 import AccountSettingsSection from "@/components/AccountSettingsSection";
+import GeoLocationPicker from "@/components/GeoLocationPicker";
+import GeoLocationListEditor from "@/components/GeoLocationListEditor";
 import type { BusinessProfileFormValues } from "@/components/BusinessProfileForm";
-import { CATEGORIES, type BusinessProfile } from "@aeo-pcs/shared";
+import { CATEGORIES, formatGeoLocation, headquartersLocation, type BusinessProfile, type GeoLocation } from "@aeo-pcs/shared";
 import { formatCategoryLabel } from "@aeo-pcs/shared";
 
 export type ProfileSectionId = "identity" | "location" | "online" | "social";
@@ -41,6 +43,19 @@ function ChipList({ items }: { items: string[] }) {
   );
 }
 
+function GeoLocationChipList({ items }: { items: GeoLocation[] }) {
+  if (!items.length) return <span className="settings-view-empty">None added</span>;
+  return (
+    <div className="settings-view-chips">
+      {items.map((item) => (
+        <span key={formatGeoLocation(item)} className="settings-view-chip">
+          {formatGeoLocation(item)}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function urlValid(value: string): boolean {
   if (!value.trim()) return true;
   try {
@@ -67,9 +82,12 @@ export default function SettingsInlineEditor({
   const [draftDescription, setDraftDescription] = useState("");
   const [draftNameAliases, setDraftNameAliases] = useState<string[]>([]);
   const [draftTargetItems, setDraftTargetItems] = useState<string[]>([]);
-  const [draftCity, setDraftCity] = useState("");
-  const [draftCountry, setDraftCountry] = useState("");
-  const [draftTargetLocations, setDraftTargetLocations] = useState<string[]>([]);
+  const [draftHeadquarters, setDraftHeadquarters] = useState<GeoLocation>({
+    city: "",
+    state: "",
+    country: "",
+  });
+  const [draftTargetLocations, setDraftTargetLocations] = useState<GeoLocation[]>([]);
   const [draftWebsiteUrl, setDraftWebsiteUrl] = useState("");
   const [draftGoogleBusinessUrl, setDraftGoogleBusinessUrl] = useState("");
   const [editingPassword, setEditingPassword] = useState(false);
@@ -338,56 +356,51 @@ export default function SettingsInlineEditor({
   }
 
   if (section === "location") {
+    const headquarters = business
+      ? headquartersLocation({
+          city: business.city,
+          state: business.state,
+          country: business.country,
+          countryCode: business.countryCode,
+          stateCode: business.stateCode,
+        })
+      : { city: "", state: "", country: "" };
+
     return (
       <div className="settings-inline-section">
         <SettingsEditableField
-          label="City"
-          editing={editingKey === "city"}
-          saving={savingKey === "city"}
+          label="Business location"
+          editing={editingKey === "headquarters"}
+          saving={savingKey === "headquarters"}
           empty={!business?.city}
-          display={business?.city}
-          onEdit={() => startEdit("city", () => setDraftCity(business?.city || ""))}
+          display={formatGeoLocation(headquarters)}
+          onEdit={() =>
+            startEdit("headquarters", () => setDraftHeadquarters(headquarters))
+          }
           onCancel={cancelEdit}
           onSave={() => {
-            if (!draftCity.trim()) {
-              message.error("City is required");
+            if (!draftHeadquarters.city.trim() || !draftHeadquarters.country.trim()) {
+              message.error("Select country and city");
               return;
             }
-            void saveField("city", { city: draftCity.trim() } as BusinessProfileFormValues);
+            void saveField("headquarters", {
+              city: draftHeadquarters.city,
+              state: draftHeadquarters.state,
+              country: draftHeadquarters.country,
+              countryCode: draftHeadquarters.countryCode,
+              stateCode: draftHeadquarters.stateCode,
+            } as BusinessProfileFormValues);
           }}
         >
-          <Input value={draftCity} onChange={(e) => setDraftCity(e.target.value)} placeholder="City" />
-        </SettingsEditableField>
-
-        <SettingsEditableField
-          label="Country"
-          editing={editingKey === "country"}
-          saving={savingKey === "country"}
-          empty={!business?.country}
-          display={business?.country}
-          onEdit={() => startEdit("country", () => setDraftCountry(business?.country || "India"))}
-          onCancel={cancelEdit}
-          onSave={() => {
-            if (!draftCountry.trim()) {
-              message.error("Country is required");
-              return;
-            }
-            void saveField("country", { country: draftCountry.trim() } as BusinessProfileFormValues);
-          }}
-        >
-          <Input
-            value={draftCountry}
-            onChange={(e) => setDraftCountry(e.target.value)}
-            placeholder="Country"
-          />
+          <GeoLocationPicker value={draftHeadquarters} onChange={setDraftHeadquarters} />
         </SettingsEditableField>
 
         <SettingsEditableField
           label="Target locations"
           editing={editingKey === "targetLocations"}
           saving={savingKey === "targetLocations"}
-          display={<ChipList items={business?.targetLocations || []} />}
-          hint="Neighborhoods and areas you serve beyond your primary city."
+          display={<GeoLocationChipList items={business?.targetLocations || []} />}
+          hint="Areas you serve beyond your registered address — each with its own country."
           onEdit={() =>
             startEdit("targetLocations", () =>
               setDraftTargetLocations(
@@ -398,18 +411,16 @@ export default function SettingsInlineEditor({
           onCancel={cancelEdit}
           onSave={() => {
             void saveField("targetLocations", {
-              targetLocations: draftTargetLocations.map((s) => s.trim()).filter(Boolean),
+              targetLocations: draftTargetLocations.filter(
+                (loc) => loc.city?.trim() && loc.country?.trim(),
+              ),
             } as BusinessProfileFormValues);
           }}
         >
-          <Select
-            mode="tags"
-            tokenSeparators={[","]}
-            open={false}
+          <GeoLocationListEditor
             value={draftTargetLocations}
             onChange={setDraftTargetLocations}
-            placeholder="e.g. Satellite, SG Highway"
-            style={{ width: "100%" }}
+            headquarters={draftHeadquarters}
           />
         </SettingsEditableField>
       </div>

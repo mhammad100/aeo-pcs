@@ -1,4 +1,5 @@
 import type {
+  GeoLocation,
   PromptResult,
   Source,
   VisibilityModelConfig,
@@ -22,8 +23,11 @@ export async function runVisibilityCheck(input: {
   business: VisibilityBusinessContext;
   category: string;
   city: string;
+  state?: string;
   country: string;
-  targetLocations?: string[];
+  countryCode?: string;
+  stateCode?: string;
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
   prompts: string[];
   models: VisibilityModelConfig[];
@@ -63,7 +67,10 @@ export async function runVisibilityCheck(input: {
       prompt,
       category: input.category,
       city: input.city,
+      state: input.state,
       country: input.country,
+      countryCode: input.countryCode,
+      stateCode: input.stateCode,
       targetLocations: input.targetLocations,
       targetItems: input.targetItems,
     });

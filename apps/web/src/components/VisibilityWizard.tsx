@@ -204,6 +204,7 @@ export default function VisibilityWizard() {
             category: profile.category,
             customCategory: profile.customCategory,
             city: profile.city,
+            state: profile.state,
             country: profile.country,
             description: profile.description,
             nameAliases: profile.nameAliases,
@@ -364,6 +365,7 @@ export default function VisibilityWizard() {
         business: business.selected,
         category: business.category,
         city: business.city,
+        state: business.state,
         country: business.country,
       });
       dispatch(setPrompts(generated));
@@ -795,7 +797,7 @@ export default function VisibilityWizard() {
                     <div className="vis-detail-item">
                       <label>Location</label>
                       <span>
-                        {[business.city, business.country].filter(Boolean).join(", ") || "—"}
+                        {[business.city, business.state, business.country].filter(Boolean).join(", ") || "—"}
                       </span>
                     </div>
                     <div className="vis-detail-item">

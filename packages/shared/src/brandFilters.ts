@@ -1,3 +1,6 @@
+import type { GeoLocation } from "./geo";
+import { geoLocationSearchTerms } from "./geo";
+
 const STOP_WORDS = new Set([
   "about",
   "after",
@@ -157,7 +160,7 @@ export type PromptContext = {
   description?: string;
   category?: string;
   targetItems?: string[];
-  targetLocations?: string[];
+  targetLocations?: GeoLocation[];
   city?: string;
 };
 
@@ -183,8 +186,8 @@ export function isCoreVisibilityPrompt(prompt: string, ctx: PromptContext): bool
   for (const item of ctx.targetItems || []) {
     if (item.trim()) terms.push(item.toLowerCase());
   }
-  for (const loc of ctx.targetLocations || []) {
-    if (loc.trim()) terms.push(loc.toLowerCase());
+  for (const term of geoLocationSearchTerms(ctx.targetLocations || [])) {
+    terms.push(term);
   }
   terms.push(...extractSignificantTerms(ctx.description || ""));
 

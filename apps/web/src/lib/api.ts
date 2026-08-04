@@ -84,15 +84,33 @@ export const api = {
   getMyBusiness: () =>
     request<{ business: import("@aeo-pcs/shared").BusinessProfile }>("/businesses/me"),
 
+  getGeoCountries: () =>
+    request<{ countries: import("@aeo-pcs/shared").GeoCountryOption[] }>("/geo/countries"),
+
+  getGeoStates: (countryCode: string) =>
+    request<{ states: import("@aeo-pcs/shared").GeoStateOption[] }>(
+      `/geo/states?countryCode=${encodeURIComponent(countryCode)}`,
+    ),
+
+  getGeoCities: (countryCode: string, stateCode?: string) =>
+    request<{ cities: import("@aeo-pcs/shared").GeoCityOption[] }>(
+      `/geo/cities?countryCode=${encodeURIComponent(countryCode)}${
+        stateCode ? `&stateCode=${encodeURIComponent(stateCode)}` : ""
+      }`,
+    ),
+
   updateMyBusiness: (body: {
     name: string;
     category: string;
     customCategory?: string;
     city: string;
+    state?: string;
     country: string;
+    countryCode?: string;
+    stateCode?: string;
     description: string;
     nameAliases?: string[];
-    targetLocations?: string[];
+    targetLocations?: import("@aeo-pcs/shared").GeoLocation[];
     targetItems?: string[];
     websiteUrl?: string;
     googleBusinessUrl?: string;
@@ -107,6 +125,7 @@ export const api = {
     business: import("@aeo-pcs/shared").BusinessCandidate;
     category: string;
     city: string;
+    state?: string;
     country: string;
   }) =>
     request<{ prompts: string[] }>("/prompts/generate", {

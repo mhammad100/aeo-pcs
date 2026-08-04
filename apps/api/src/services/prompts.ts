@@ -1,8 +1,9 @@
-import type { BusinessCandidate, SocialLink } from "@aeo-pcs/shared";
+import type { BusinessCandidate, GeoLocation, SocialLink } from "@aeo-pcs/shared";
 import {
   buildVisibilityPromptSystem,
   buildVisibilityPromptUserMessage,
   filterValidVisibilityPrompts,
+  headquartersLocation,
   resolvePromptLocations,
   summarizeTargetItems,
 } from "@aeo-pcs/shared";
@@ -18,8 +19,11 @@ export async function generatePrompts(input: {
   category: string;
   customCategory?: string;
   city: string;
+  state?: string;
   country: string;
-  targetLocations?: string[];
+  countryCode?: string;
+  stateCode?: string;
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
   websiteUrl?: string;
   googleBusinessUrl?: string;
@@ -34,15 +38,20 @@ export async function generatePrompts(input: {
     throw new Error("Prompt generation is disabled in admin settings");
   }
 
-  const city = input.city.trim();
-  const country = input.country.trim();
-  const promptLocations = resolvePromptLocations(city, input.targetLocations);
+  const headquarters = headquartersLocation({
+    city: input.city,
+    state: input.state,
+    country: input.country,
+    countryCode: input.countryCode,
+    stateCode: input.stateCode,
+  });
+  const promptLocations = resolvePromptLocations(headquarters, input.targetLocations);
   const description = (input.business.description || "").trim();
 
   const enrichment = await enrichBusinessFromWeb({
     name: input.business.name,
-    city,
-    country,
+    city: headquarters.city,
+    country: headquarters.country,
     websiteUrl: input.websiteUrl,
     googleBusinessUrl: input.googleBusinessUrl,
     socialLinks: input.socialLinks,
@@ -62,8 +71,7 @@ export async function generatePrompts(input: {
     count,
     category: input.category,
     customCategory: input.customCategory,
-    headquartersCity: city || undefined,
-    country,
+    headquarters,
     promptLocations,
     targetItemsSummary,
     webContext,
@@ -73,8 +81,7 @@ export async function generatePrompts(input: {
     businessName: input.business.name,
     category: input.category,
     customCategory: input.customCategory,
-    headquartersCity: city || undefined,
-    country,
+    headquarters,
     promptLocations,
     targetItemsSummary,
     description: effectiveDescription,

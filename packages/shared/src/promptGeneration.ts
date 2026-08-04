@@ -1,4 +1,6 @@
 import { CATEGORIES, type Category } from "./constants";
+import type { GeoLocation } from "./geo";
+import { formatGeoLocation } from "./geo";
 
 const DEICTIC_PATTERN =
   /\b(this|that|the)\s+(restaurant|cafe|café|coffee shop|place|business|company|shop|store|clinic|hospital|hotel|salon|spa|institute|firm|builder|supplier|property)\b/i;
@@ -117,22 +119,11 @@ export function filterValidVisibilityPrompts(prompts: string[]): string[] {
   return prompts.filter((p) => validateVisibilityPrompt(p).valid);
 }
 
-/** Locations to use in buyer-intent prompts (target markets, not necessarily HQ). */
-export function resolvePromptLocations(city: string, targetLocations?: string[]): string[] {
-  const targets = (targetLocations || []).map((t) => t.trim()).filter(Boolean);
-  if (targets.length > 0) {
-    return [...new Set(targets)];
-  }
-  const hq = city.trim();
-  return hq ? [hq] : [];
-}
-
 export type BuildPromptSystemInput = {
   count: number;
   category: string;
   customCategory?: string;
-  country: string;
-  headquartersCity?: string;
+  headquarters: GeoLocation;
   promptLocations: string[];
   targetItemsSummary: string;
   webContext?: string;
@@ -142,24 +133,25 @@ export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): stri
   const effectiveCategory = getEffectiveCategory(input.category, input.customCategory);
   const categoryHint = getCategoryPromptHint(input.category, input.customCategory);
   const b2b = isB2BCategory(input.category);
-  const locationHint = input.promptLocations.join(", ");
+  const locationHint = input.promptLocations.join("; ");
+  const headquartersLabel = formatGeoLocation(input.headquarters);
 
   const hqNote =
-    input.headquartersCity &&
+    headquartersLabel &&
     !input.promptLocations.some(
-      (loc) => loc.toLowerCase() === input.headquartersCity!.toLowerCase()
+      (loc) => loc.toLowerCase() === headquartersLabel.toLowerCase(),
     )
-      ? `- The business is registered in ${input.headquartersCity} but does NOT serve there — NEVER mention ${input.headquartersCity} in questions`
+      ? `- The business is registered in ${headquartersLabel} but does NOT serve there — NEVER mention that address in questions`
       : "";
 
   const locationRules =
     input.promptLocations.length > 1
       ? `- Distribute location references across these service areas only: ${locationHint}
 - At least 2 questions MUST mention different areas from that list
-- Do NOT invent other cities or neighborhoods`
+- Each area includes its own city, state, and country — do NOT mix countries`
       : input.promptLocations.length === 1
-        ? `- Every question MUST reference "${input.promptLocations[0]}" or "${input.country}" — do NOT invent other areas`
-        : `- Use "${input.country}" for location context — do NOT invent specific cities`;
+        ? `- Every question MUST reference "${input.promptLocations[0]}" — do NOT invent other areas or countries`
+        : `- Use "${headquartersLabel || input.headquarters.country}" for location context — do NOT invent specific cities`;
 
   const offeringRule = input.targetItemsSummary
     ? `- Reflect these offering themes across prompts (2-3 themes total, not one question per item): ${input.targetItemsSummary}`
@@ -179,7 +171,7 @@ Each question is sent alone to an AI with no prior context. The customer does no
 
 Universal rules:
 - Return ONLY a JSON array of exactly ${input.count} short question strings
-- Every question MUST include a location reference from the allowed service areas (${locationHint || input.country}, ${input.country})
+- Every question MUST include a location reference from the allowed service areas (${locationHint || headquartersLabel})
 - NEVER use deictic phrasing: no "this restaurant", "this cafe", "this place", "this company", "the restaurant", etc.
 - ALWAYS use discovery phrasing: "Where can I…", "Are there any…", "Who offers…", "Best … in [area]", "Which … near…", etc.
 - Questions must help someone DISCOVER businesses — not ask about an unnamed "this" business
@@ -198,26 +190,26 @@ export function buildVisibilityPromptUserMessage(input: {
   businessName: string;
   category: string;
   customCategory?: string;
-  headquartersCity?: string;
-  country: string;
+  headquarters: GeoLocation;
   promptLocations: string[];
   targetItemsSummary: string;
   description: string;
   webContext?: string;
 }): string {
+  const headquartersLabel = formatGeoLocation(input.headquarters);
   const hqLine =
-    input.headquartersCity &&
+    headquartersLabel &&
     !input.promptLocations.some(
-      (loc) => loc.toLowerCase() === input.headquartersCity!.toLowerCase()
+      (loc) => loc.toLowerCase() === headquartersLabel.toLowerCase(),
     )
-      ? `Registered address (do NOT use in questions): ${input.headquartersCity}, ${input.country}`
-      : `Country: ${input.country}`;
+      ? `Registered address (do NOT use in questions): ${headquartersLabel}`
+      : `Headquarters: ${headquartersLabel || input.headquarters.country}`;
 
   return [
     `Business: ${input.businessName}`,
     `Category: ${getEffectiveCategory(input.category, input.customCategory)}`,
     hqLine,
-    `Service areas for prompts (use ONLY these): ${input.promptLocations.join(", ") || input.country}`,
+    `Service areas for prompts (use ONLY these, each with its own country): ${input.promptLocations.join("; ") || headquartersLabel}`,
     input.targetItemsSummary
       ? `Offering themes: ${input.targetItemsSummary}`
       : `Offerings: derive from description, website, and category`,

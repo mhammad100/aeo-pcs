@@ -124,10 +124,11 @@ async function processVisibilityJob(jobId: string) {
       },
       category: job.category || "",
       city: job.city || "",
+      state: job.state || "",
       country: job.country || "",
       targetLocations: (job.targetLocations?.length
         ? job.targetLocations
-        : job.business?.targetLocations) as string[] | undefined,
+        : job.business?.targetLocations) as never,
       targetItems: (job.targetItems?.length ? job.targetItems : job.business?.targetItems) as
         | string[]
         | undefined,

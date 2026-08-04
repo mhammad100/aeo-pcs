@@ -197,7 +197,7 @@ export default function AppDashboardPage() {
                       : ""}
                   </Paragraph>
                   <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-                    {[biz.city, biz.country].filter(Boolean).join(", ")}
+                    {[biz.city, biz.state, biz.country].filter(Boolean).join(", ")}
                   </Paragraph>
                   {biz.websiteUrl && (
                     <Paragraph style={{ marginBottom: 0 }}>

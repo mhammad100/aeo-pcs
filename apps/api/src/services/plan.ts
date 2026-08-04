@@ -62,6 +62,7 @@ export async function buildActionPlan(input: {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
   websiteUrl?: string;
   googleBusinessUrl?: string;
@@ -127,7 +128,7 @@ Return valid JSON only, no markdown fences, no extra text.`;
   const identityBits = [
     `Business: ${input.business.name}`,
     `Category: ${input.category}`,
-    `Location: ${input.city}, ${input.country}`,
+    `Location: ${[input.city, input.state, input.country].filter(Boolean).join(", ")}`,
     input.business.address ? `Address: ${input.business.address}` : "",
     input.websiteUrl ? `Website: ${input.websiteUrl}` : "",
     input.googleBusinessUrl ? `Google Business Profile: ${input.googleBusinessUrl}` : "",
@@ -168,12 +169,13 @@ export async function generateItemContent(input: {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
   item: Pick<AutomatableItem, "title" | "description">;
   usage?: { userId?: string | null; businessId?: string | null; refs?: Record<string, unknown> };
 }): Promise<string> {
   const system = `You are a GEO content writer producing one specific piece of ready-to-publish content for a small business, so an AI assistant is more likely to cite them. ${NO_MARKDOWN_RULE} Keep the output focused and directly usable, roughly 120 to 220 words unless the task clearly needs more.`;
-  const userMsg = `Business: ${input.business.name}, ${input.category}, ${input.city}, ${input.country}\nDescription: ${input.business.description || ""}\n\nTask: ${input.item.title}\nDetail: ${input.item.description}\n\nWrite the actual content now, ready to copy and publish.`;
+  const userMsg = `Business: ${input.business.name}, ${input.category}, ${[input.city, input.state, input.country].filter(Boolean).join(", ")}\nDescription: ${input.business.description || ""}\n\nTask: ${input.item.title}\nDetail: ${input.item.description}\n\nWrite the actual content now, ready to copy and publish.`;
   const { text } = await callClaude({
     prompt: userMsg,
     system,

@@ -27,7 +27,7 @@ const WIZARD_STEPS: {
   {
     id: "location",
     title: "Location",
-    subtitle: "City & country",
+    subtitle: "City, state & country",
     hint: "Where you operate so we can run relevant local visibility checks.",
   },
   {

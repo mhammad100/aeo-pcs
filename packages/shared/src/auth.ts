@@ -2,6 +2,8 @@ export type UserRole = "admin" | "business";
 
 export type UserStatus = "active" | "disabled";
 
+import type { GeoLocation } from "./geo";
+
 export type SocialLink = {
   label: string;
   url: string;
@@ -14,12 +16,15 @@ export type BusinessProfile = {
   /** Free-text type when category is "Other". */
   customCategory?: string;
   city: string;
+  state: string;
   country: string;
+  countryCode?: string;
+  stateCode?: string;
   description: string;
   /** Alternate names for visibility mention matching (e.g. abbreviations). */
   nameAliases: string[];
-  /** Service areas / neighborhoods beyond primary city. */
-  targetLocations: string[];
+  /** Service areas beyond headquarters — each with city, state, and country. */
+  targetLocations: GeoLocation[];
   /** Products or services to target in buyer-intent prompts. */
   targetItems: string[];
   websiteUrl: string;
