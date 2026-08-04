@@ -375,7 +375,7 @@ export async function migrateSubscribersToRazorpayPlanAtCycleEnd(
       result.scheduled += 1;
     } catch (err) {
       result.failed += 1;
-      const msg = err instanceof Error ? err.message : "Unknown error";
+      const msg = razorpay.getRazorpayErrorMessage(err);
       result.errors.push(`${sub.razorpaySubscriptionId}: ${msg}`);
     }
   }

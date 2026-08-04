@@ -71,18 +71,13 @@ async function syncRazorpayPlanId(input: {
     return "";
   }
 
-  try {
-    return await razorpay.createRazorpayPlan({
-      name: input.name,
-      amountMajor: input.price,
-      currency: input.currency,
-      billingPeriod: input.billingPeriod,
-      notes: { productPlanId: input.productPlanId },
-    });
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : "Unknown error";
-    throw new AppError(`Could not create payment plan: ${msg}`, 502);
-  }
+  return razorpay.createRazorpayPlan({
+    name: input.name,
+    amountMajor: input.price,
+    currency: input.currency,
+    billingPeriod: input.billingPeriod,
+    notes: { productPlanId: input.productPlanId },
+  });
 }
 
 export async function listActiveCatalogPlans() {

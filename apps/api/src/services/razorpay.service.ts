@@ -10,6 +10,33 @@ export function isRazorpayConfigured() {
   return Boolean(env.razorpayKeyId && env.razorpayKeySecret);
 }
 
+/** Extract a readable message from Razorpay SDK errors (often plain objects, not Error). */
+export function getRazorpayErrorMessage(err: unknown): string {
+  if (err && typeof err === "object") {
+    const e = err as {
+      error?: { description?: string; code?: string; field?: string; reason?: string };
+      message?: string;
+      statusCode?: number;
+    };
+    if (e.error?.description) {
+      const parts = [
+        e.error.code,
+        e.error.description,
+        e.error.field ? `field=${e.error.field}` : "",
+        e.error.reason ? `reason=${e.error.reason}` : "",
+      ].filter(Boolean);
+      return parts.join(" | ");
+    }
+    if (typeof e.message === "string" && e.message.trim()) return e.message;
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return "Unknown error";
+}
+
+export function logRazorpayError(context: string, err: unknown) {
+  console.error(`[razorpay] ${context}: ${getRazorpayErrorMessage(err)}`, err);
+}
+
 function getClient() {
   if (!isRazorpayConfigured()) {
     throw new AppError(COPY.billing.billingUnavailable, 503);
@@ -23,6 +50,12 @@ function getClient() {
   return client;
 }
 
+function throwPublicBillingError(context: string, err: unknown): never {
+  if (err instanceof AppError) throw err;
+  logRazorpayError(context, err);
+  throw new AppError(COPY.billing.billingUnavailable, 502);
+}
+
 export async function ensureRazorpayCustomer(input: {
   existingCustomerId?: string;
   name: string;
@@ -31,14 +64,18 @@ export async function ensureRazorpayCustomer(input: {
 }): Promise<string> {
   if (input.existingCustomerId) return input.existingCustomerId;
 
-  const rzp = getClient();
-  const customer = (await rzp.customers.create({
-    name: input.name.slice(0, 50) || input.email,
-    email: input.email,
-    fail_existing: 0,
-    notes: input.notes,
-  } as Parameters<typeof rzp.customers.create>[0])) as { id: string };
-  return String(customer.id);
+  try {
+    const rzp = getClient();
+    const customer = (await rzp.customers.create({
+      name: input.name.slice(0, 50) || input.email,
+      email: input.email,
+      fail_existing: 0,
+      notes: input.notes,
+    } as Parameters<typeof rzp.customers.create>[0])) as { id: string };
+    return String(customer.id);
+  } catch (err) {
+    throwPublicBillingError("customers.create", err);
+  }
 }
 
 export async function createRazorpaySubscription(input: {
@@ -47,25 +84,33 @@ export async function createRazorpaySubscription(input: {
   totalCount?: number;
   notes?: Record<string, string>;
 }) {
-  const rzp = getClient();
-  // customer_id is supported by the API but missing from the SDK request typings.
-  const subscription = (await rzp.subscriptions.create({
-    plan_id: input.planId,
-    customer_id: input.customerId,
-    total_count: input.totalCount ?? 120,
-    quantity: 1,
-    customer_notify: 1,
-    notes: input.notes,
-  } as Parameters<typeof rzp.subscriptions.create>[0])) as { id: string };
-  return subscription;
+  try {
+    const rzp = getClient();
+    // customer_id is supported by the API but missing from the SDK request typings.
+    const subscription = (await rzp.subscriptions.create({
+      plan_id: input.planId,
+      customer_id: input.customerId,
+      total_count: input.totalCount ?? 120,
+      quantity: 1,
+      customer_notify: 1,
+      notes: input.notes,
+    } as Parameters<typeof rzp.subscriptions.create>[0])) as { id: string };
+    return subscription;
+  } catch (err) {
+    throwPublicBillingError("subscriptions.create", err);
+  }
 }
 
 export async function cancelRazorpaySubscription(
   razorpaySubscriptionId: string,
   cancelAtCycleEnd: boolean
 ) {
-  const rzp = getClient();
-  return rzp.subscriptions.cancel(razorpaySubscriptionId, cancelAtCycleEnd);
+  try {
+    const rzp = getClient();
+    return await rzp.subscriptions.cancel(razorpaySubscriptionId, cancelAtCycleEnd);
+  } catch (err) {
+    throwPublicBillingError("subscriptions.cancel", err);
+  }
 }
 
 /** Convert major-unit price (e.g. 999.5) to Razorpay subunit amount (paise/cents). */
@@ -80,19 +125,26 @@ export async function createRazorpayPlan(input: {
   billingPeriod: "monthly" | "yearly";
   notes?: Record<string, string>;
 }): Promise<string> {
-  const rzp = getClient();
-  const plan = (await rzp.plans.create({
-    period: input.billingPeriod,
-    interval: 1,
-    item: {
-      name: input.name.slice(0, 255),
-      amount: toRazorpayAmount(input.amountMajor),
-      currency: input.currency.toUpperCase(),
-      description: `${input.name} (${input.billingPeriod})`,
-    },
-    notes: input.notes,
-  })) as { id: string };
-  return String(plan.id);
+  try {
+    const rzp = getClient();
+    const plan = (await rzp.plans.create({
+      period: input.billingPeriod,
+      interval: 1,
+      item: {
+        name: input.name.slice(0, 255),
+        amount: toRazorpayAmount(input.amountMajor),
+        currency: input.currency.toUpperCase(),
+        description: `${input.name} (${input.billingPeriod})`,
+      },
+      notes: input.notes,
+    })) as { id: string };
+    return String(plan.id);
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    logRazorpayError("plans.create", err);
+    // Admin-facing: include provider detail so operators can fix currency/keys/etc.
+    throw new AppError(`Could not create payment plan: ${getRazorpayErrorMessage(err)}`, 502);
+  }
 }
 
 /** Schedule an existing subscription onto a new Razorpay plan at the end of the current cycle. */
@@ -100,11 +152,17 @@ export async function updateRazorpaySubscriptionPlanAtCycleEnd(
   razorpaySubscriptionId: string,
   newRazorpayPlanId: string
 ) {
-  const rzp = getClient();
-  return rzp.subscriptions.update(razorpaySubscriptionId, {
-    plan_id: newRazorpayPlanId,
-    schedule_change_at: "cycle_end",
-  });
+  try {
+    const rzp = getClient();
+    return await rzp.subscriptions.update(razorpaySubscriptionId, {
+      plan_id: newRazorpayPlanId,
+      schedule_change_at: "cycle_end",
+    });
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    logRazorpayError(`subscriptions.update(${razorpaySubscriptionId})`, err);
+    throw err;
+  }
 }
 
 export function verifyWebhookSignature(rawBody: Buffer | string, signature: string) {
@@ -118,6 +176,7 @@ export function verifyWebhookSignature(rawBody: Buffer | string, signature: stri
   const a = Buffer.from(expected);
   const b = Buffer.from(signature || "");
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    console.error("[razorpay] webhook signature mismatch");
     throw new AppError("Invalid webhook signature", 400);
   }
 }
@@ -138,6 +197,9 @@ export function verifySubscriptionPaymentSignature(input: {
   const a = Buffer.from(expected);
   const b = Buffer.from(input.signature || "");
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+    console.error("[razorpay] payment signature mismatch", {
+      subscriptionId: input.subscriptionId,
+    });
     throw new AppError(COPY.billing.paymentInvalid, 400);
   }
 }
