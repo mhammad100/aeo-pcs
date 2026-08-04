@@ -132,6 +132,7 @@ async function processVisibilityJob(jobId: string) {
       targetItems: (job.targetItems?.length ? job.targetItems : job.business?.targetItems) as
         | string[]
         | undefined,
+      description: job.business?.description || "",
       prompts: job.prompts || [],
       models,
       usage: {

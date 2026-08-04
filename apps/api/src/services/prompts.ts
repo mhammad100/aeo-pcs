@@ -1,18 +1,49 @@
-import type { BusinessCandidate, GeoLocation, SocialLink } from "@aeo-pcs/shared";
+import type { BusinessCandidate, GeoLocation, PromptResult, SocialLink } from "@aeo-pcs/shared";
 import {
   buildVisibilityPromptSystem,
   buildVisibilityPromptUserMessage,
-  filterValidVisibilityPrompts,
+  extractPromptRunFeedback,
   headquartersLocation,
+  meetsCorePromptQuota,
   resolvePromptLocations,
+  selectPromptsForRun,
   summarizeTargetItems,
+  type PromptContext,
+  type PromptRunFeedback,
 } from "@aeo-pcs/shared";
+import { VisibilityJobModel } from "../models/VisibilityJob";
 import { safeParseJSON } from "../utils/llm";
 import { getAeoSettings } from "./aeoSettings.service";
 import { enrichBusinessFromWeb, formatWebEnrichment } from "./businessWebEnrichment";
 import { callTaskModel } from "./taskModelRunner";
 
 const MAX_GENERATION_ATTEMPTS = 3;
+
+async function loadPriorRunFeedback(input: {
+  businessId?: string | null;
+  business: BusinessCandidate;
+}): Promise<PromptRunFeedback | undefined> {
+  if (!input.businessId) return undefined;
+
+  const lastJob = await VisibilityJobModel.findOne({
+    businessId: input.businessId,
+    status: "completed",
+  })
+    .sort({ createdAt: -1 })
+    .select("results business nameAliases")
+    .lean();
+
+  if (!lastJob?.results?.length) return undefined;
+
+  const ownNames = [
+    input.business.name,
+    ...(input.business.nameAliases || []),
+    ...(lastJob.business?.nameAliases || []).map(String),
+    lastJob.business?.name ? String(lastJob.business.name) : "",
+  ].filter(Boolean);
+
+  return extractPromptRunFeedback(lastJob.results as PromptResult[], ownNames);
+}
 
 export async function generatePrompts(input: {
   business: BusinessCandidate;
@@ -67,6 +98,19 @@ export async function generatePrompts(input: {
   const effectiveDescription =
     description || enrichment?.description?.trim() || input.business.category || "";
 
+  const priorFeedback = await loadPriorRunFeedback({
+    businessId: input.usage?.businessId,
+    business: input.business,
+  });
+
+  const promptContext: PromptContext = {
+    description: effectiveDescription,
+    category: input.category,
+    targetItems: mergedItems,
+    targetLocations: input.targetLocations?.length ? input.targetLocations : [headquarters],
+    city: input.city,
+  };
+
   const system = buildVisibilityPromptSystem({
     count,
     category: input.category,
@@ -75,6 +119,7 @@ export async function generatePrompts(input: {
     promptLocations,
     targetItemsSummary,
     webContext,
+    priorFeedback,
   });
 
   const userMsg = buildVisibilityPromptUserMessage({
@@ -86,19 +131,29 @@ export async function generatePrompts(input: {
     targetItemsSummary,
     description: effectiveDescription,
     webContext,
+    priorFeedback,
   });
 
-  let lastInvalid: string[] = [];
+  let lastCandidates: string[] = [];
 
   for (let attempt = 0; attempt < MAX_GENERATION_ATTEMPTS; attempt++) {
-    const retryNote =
-      attempt > 0
-        ? "\n\nYour previous output included invalid prompts (used 'this restaurant/cafe/place' or non-discovery phrasing). Regenerate ALL prompts following discovery-only rules."
-        : "";
+    const retryParts: string[] = [];
+    if (attempt > 0) {
+      retryParts.push(
+        "Your previous output included invalid or too-generic prompts. Regenerate ALL prompts following discovery-only rules and niche/offering requirements.",
+      );
+    }
+    if (attempt > 0 && lastCandidates.length) {
+      if (!meetsCorePromptQuota(lastCandidates, count, promptContext)) {
+        retryParts.push(
+          `At least ${Math.ceil(count * 0.6)} prompts must reference specific offerings or distinct traits — avoid generic category-only questions.`,
+        );
+      }
+    }
 
     const { text } = await callTaskModel({
       model,
-      prompt: userMsg + retryNote,
+      prompt: userMsg + (retryParts.length ? `\n\n${retryParts.join("\n")}` : ""),
       system,
       usage: {
         userId: input.usage?.userId,
@@ -112,22 +167,21 @@ export async function generatePrompts(input: {
       continue;
     }
 
-    const candidates = parsed.slice(0, count).map(String);
-    const valid = filterValidVisibilityPrompts(candidates);
+    const candidates = parsed.slice(0, count * 2).map(String);
+    lastCandidates = candidates;
+    const selected = selectPromptsForRun(candidates, count, promptContext);
 
-    if (valid.length >= count) {
-      return valid.slice(0, count);
+    if (selected.length >= count && meetsCorePromptQuota(selected, count, promptContext)) {
+      return selected.slice(0, count);
     }
 
-    lastInvalid = candidates;
-
-    if (valid.length > 0 && attempt === MAX_GENERATION_ATTEMPTS - 1) {
-      return valid;
+    if (selected.length > 0 && attempt === MAX_GENERATION_ATTEMPTS - 1) {
+      return selected.slice(0, count);
     }
   }
 
-  if (lastInvalid.length) {
-    const partial = filterValidVisibilityPrompts(lastInvalid);
+  if (lastCandidates.length) {
+    const partial = selectPromptsForRun(lastCandidates, count, promptContext);
     if (partial.length) return partial;
   }
 

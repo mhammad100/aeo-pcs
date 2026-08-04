@@ -1,12 +1,19 @@
 import { CATEGORIES, type Category } from "./constants";
 import type { GeoLocation } from "./geo";
 import { formatGeoLocation } from "./geo";
+import { isCoreVisibilityPrompt, type PromptContext } from "./brandFilters";
+
+/** Minimum share of prompts that must be niche/core (not generic category-only). */
+export const MIN_CORE_PROMPT_RATIO = 0.6;
+
+/** Weight multiplier for core prompts in composite visibility scoring. */
+export const CORE_PROMPT_SCORE_WEIGHT = 2;
 
 const DEICTIC_PATTERN =
   /\b(this|that|the)\s+(restaurant|cafe|café|coffee shop|place|business|company|shop|store|clinic|hospital|hotel|salon|spa|institute|firm|builder|supplier|property)\b/i;
 
 const DISCOVERY_PATTERN =
-  /\b(where can i|where do i|where to|where is|who (offers|provides|should|can)|what are|which|are there|is there|can i find|looking for|recommend|suggest|best|top|good|any|near me|in \w+)/i;
+  /\b(where can i|where do i|where to|where is|who (offers|provides|should|can)|what are|which|are there|is there|can i find|looking for|recommend|suggest|best|top|good|any|near me|nearby|i need|help me find|who can|open late|delivery|in \w+)/i;
 
 const CATEGORY_HINTS: Record<Category, string> = {
   "Restaurant / Food & Beverage":
@@ -119,6 +126,59 @@ export function filterValidVisibilityPrompts(prompts: string[]): string[] {
   return prompts.filter((p) => validateVisibilityPrompt(p).valid);
 }
 
+export function countCoreVisibilityPrompts(prompts: string[], ctx: PromptContext): number {
+  return prompts.filter((p) => isCoreVisibilityPrompt(p, ctx)).length;
+}
+
+/** Prefer niche/core prompts; fill remainder with other valid discovery prompts. */
+export function selectPromptsForRun(
+  candidates: string[],
+  count: number,
+  ctx: PromptContext,
+): string[] {
+  const valid = filterValidVisibilityPrompts(candidates);
+  const seen = new Set<string>();
+  const core: string[] = [];
+  const other: string[] = [];
+
+  for (const p of valid) {
+    const key = p.trim().toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (isCoreVisibilityPrompt(p, ctx)) core.push(p);
+    else other.push(p);
+  }
+
+  const minCore = Math.max(1, Math.ceil(count * MIN_CORE_PROMPT_RATIO));
+  const selected: string[] = [];
+
+  for (const p of core) {
+    if (selected.length >= count) break;
+    selected.push(p);
+  }
+  for (const p of other) {
+    if (selected.length >= count) break;
+    if (!selected.includes(p)) selected.push(p);
+  }
+  for (const p of valid) {
+    if (selected.length >= count) break;
+    if (!selected.includes(p)) selected.push(p);
+  }
+
+  return selected.slice(0, count);
+}
+
+export function meetsCorePromptQuota(prompts: string[], count: number, ctx: PromptContext): boolean {
+  if (!prompts.length) return false;
+  const minCore = Math.max(1, Math.ceil(count * MIN_CORE_PROMPT_RATIO));
+  return countCoreVisibilityPrompts(prompts, ctx) >= minCore;
+}
+
+export type PromptRunFeedback = {
+  weakPrompts: string[];
+  competitors: string[];
+};
+
 export type BuildPromptSystemInput = {
   count: number;
   category: string;
@@ -127,6 +187,7 @@ export type BuildPromptSystemInput = {
   promptLocations: string[];
   targetItemsSummary: string;
   webContext?: string;
+  priorFeedback?: PromptRunFeedback;
 };
 
 export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): string {
@@ -146,12 +207,34 @@ export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): stri
 
   const locationRules =
     input.promptLocations.length > 1
-      ? `- Distribute location references across these service areas only: ${locationHint}
-- At least 2 questions MUST mention different areas from that list
-- Each area includes its own city, state, and country — do NOT mix countries`
+      ? `- Service areas (use ONLY these — never invent other cities): ${locationHint}
+- Spread explicit/neighborhood prompts across different areas; include at least one prompt per area when count allows
+- Location mix across all ${input.count} questions (realistic AI usage — assistants often know user location):
+  * ~35% explicit area ("Best X in [neighborhood/city]")
+  * ~30% "near me" or "nearby" (no city name in the question)
+  * ~20% neighborhood or landmark style within service areas
+  * ~15% need-only (no location words — specialty/offering focused; geo is inferred by the AI)`
       : input.promptLocations.length === 1
-        ? `- Every question MUST reference "${input.promptLocations[0]}" — do NOT invent other areas or countries`
-        : `- Use "${headquartersLabel || input.headquarters.country}" for location context — do NOT invent specific cities`;
+        ? `- Primary service area: "${input.promptLocations[0]}"
+- Location mix: combine explicit area references, "near me"/"nearby", and need-only questions without city names
+- Do NOT invent other cities or countries`
+        : `- Use "${headquartersLabel || input.headquarters.country}" for explicit-area questions only
+- Also include "near me" and need-only questions without invented cities`;
+
+  const intentRules = `- Mix intent types across all prompts:
+  * Discovery ("Where can I find…")
+  * Recommendation ("Best X for [occasion/need]")
+  * Constraint ("open late", "delivery", "walk-in", "budget-friendly")
+  * Problem-solution ("I need X that does Y", "Who can help with…")
+- At least ${Math.ceil(input.count * MIN_CORE_PROMPT_RATIO)} of ${input.count} questions MUST reference a specific offering theme or distinct business trait — NOT generic "best [category] in [city]" alone`;
+
+  const feedbackRule = input.priorFeedback?.weakPrompts.length
+    ? `- Prior run had weak visibility on these prompts — generate DIFFERENT angles (same intent, new wording/offerings), do NOT copy them verbatim: ${input.priorFeedback.weakPrompts.slice(0, 3).join(" | ")}`
+    : "";
+
+  const competitorRule = input.priorFeedback?.competitors.length
+    ? `- AI often named these competitors instead — craft prompts where this business could compete on niche strengths: ${input.priorFeedback.competitors.slice(0, 5).join(", ")}`
+    : "";
 
   const offeringRule = input.targetItemsSummary
     ? `- Reflect these offering themes across prompts (2-3 themes total, not one question per item): ${input.targetItemsSummary}`
@@ -167,22 +250,23 @@ export function buildVisibilityPromptSystem(input: BuildPromptSystemInput): stri
 
   return `You generate realistic buyer-intent questions that potential customers would type into an AI assistant when looking for a business like the one described — never naming the business itself.
 
-Each question is sent alone to an AI with no prior context. The customer does not know this business yet.
+Each question is sent alone to an AI with no prior context. The customer does not know this business yet. Real users often ask "near me" or omit location because the AI already knows where they are.
 
 Universal rules:
 - Return ONLY a JSON array of exactly ${input.count} short question strings
-- Every question MUST include a location reference from the allowed service areas (${locationHint || headquartersLabel})
 - NEVER use deictic phrasing: no "this restaurant", "this cafe", "this place", "this company", "the restaurant", etc.
-- ALWAYS use discovery phrasing: "Where can I…", "Are there any…", "Who offers…", "Best … in [area]", "Which … near…", etc.
+- ALWAYS use discovery phrasing: "Where can I…", "Are there any…", "Who offers…", "Best … in [area]", "Which … near me", "I need…", etc.
 - Questions must help someone DISCOVER businesses — not ask about an unnamed "this" business
 - Reflect what makes THIS business distinct (description + offerings), not generic category-only searches
 ${hqNote}
 ${locationRules}
+${intentRules}
 ${offeringRule}
 ${webRule}
+${feedbackRule}
+${competitorRule}
 ${b2bRule}
 - Category guidance: ${categoryHint}
-- Mix discovery and recommendation intents tied to this business niche
 - No markdown, no prose outside the JSON array`;
 }
 
@@ -195,6 +279,7 @@ export function buildVisibilityPromptUserMessage(input: {
   targetItemsSummary: string;
   description: string;
   webContext?: string;
+  priorFeedback?: PromptRunFeedback;
 }): string {
   const headquartersLabel = formatGeoLocation(input.headquarters);
   const hqLine =
@@ -215,6 +300,12 @@ export function buildVisibilityPromptUserMessage(input: {
       : `Offerings: derive from description, website, and category`,
     `What makes this business distinct: ${input.description || input.category}`,
     input.webContext ? `From website/social: ${input.webContext}` : "",
+    input.priorFeedback?.weakPrompts.length
+      ? `Avoid repeating these low-performing prompts from the last run: ${input.priorFeedback.weakPrompts.join(" | ")}`
+      : "",
+    input.priorFeedback?.competitors.length
+      ? `Competitors often mentioned by AI: ${input.priorFeedback.competitors.join(", ")}`
+      : "",
   ]
     .filter(Boolean)
     .join("\n");

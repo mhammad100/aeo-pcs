@@ -1,5 +1,6 @@
 export * from "./constants";
 export * from "./geo";
+export * from "./promptLocation";
 export * from "./presenceAudit";
 export * from "./types";
 export * from "./auth";

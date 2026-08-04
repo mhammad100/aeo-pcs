@@ -4,6 +4,7 @@ import {
   isCoreVisibilityPrompt,
   type PromptContext,
 } from "./brandFilters";
+import type { PromptRunFeedback } from "./promptGeneration";
 
 export type ModelBreakdown = {
   model: string;
@@ -48,6 +49,47 @@ function sentimentLabelFromScore(score: number | null): VisibilityRunInsights["s
   if (score >= 60) return "Neutral";
   if (score >= 40) return "Mixed";
   return "Negative";
+}
+
+/** Extract weak prompts and top competitors from a prior visibility run for prompt regeneration. */
+export function extractPromptRunFeedback(
+  results: PromptResult[],
+  ownNames: string[] = [],
+): PromptRunFeedback {
+  const weakPrompts: string[] = [];
+  const competitorCounts = new Map<string, number>();
+
+  for (const r of results) {
+    let promptMentions = 0;
+    let promptTotal = 0;
+
+    for (const m of r.perModel) {
+      if (!m.answer?.trim()) continue;
+      promptTotal += 1;
+      if (m.mentioned) promptMentions += 1;
+
+      const citedDomains = m.sources.map((s) => (s.domain || "").trim()).filter(Boolean);
+      const brands = filterLocalBusinesses(
+        (m.brandsMentioned || []).map((b) => String(b ?? "")),
+        citedDomains,
+        ownNames.map((n) => String(n ?? "")),
+      );
+      for (const brand of brands) {
+        competitorCounts.set(brand, (competitorCounts.get(brand) || 0) + 1);
+      }
+    }
+
+    if (promptTotal > 0 && promptMentions === 0) {
+      weakPrompts.push(r.prompt);
+    }
+  }
+
+  const competitors = [...competitorCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name]) => name);
+
+  return { weakPrompts: weakPrompts.slice(0, 5), competitors };
 }
 
 function computeCoreScore(
