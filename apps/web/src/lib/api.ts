@@ -298,6 +298,43 @@ export const api = {
       body: JSON.stringify({ planId }),
     }),
 
+  checkoutSubscription: (planId: string) =>
+    request<
+      | {
+          mode: "stub";
+          subscription: import("@aeo-pcs/shared").SubscriptionInfo;
+          invoice: import("@aeo-pcs/shared").InvoiceRecord | null;
+        }
+      | {
+          mode: "razorpay";
+          keyId: string;
+          razorpaySubscriptionId: string;
+          subscription: import("@aeo-pcs/shared").SubscriptionInfo;
+          planName: string;
+          amount: number;
+          currency: string;
+        }
+    >("/subscriptions/checkout", {
+      method: "POST",
+      body: JSON.stringify({ planId }),
+    }),
+
+  verifyCheckout: (body: {
+    razorpayPaymentId: string;
+    razorpaySubscriptionId: string;
+    razorpaySignature: string;
+  }) =>
+    request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/verify", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+
+  cancelSubscription: () =>
+    request<{ subscription: import("@aeo-pcs/shared").SubscriptionInfo }>("/subscriptions/cancel", {
+      method: "POST",
+      body: "{}",
+    }),
+
   getMyInvoices: () =>
     request<{ invoices: import("@aeo-pcs/shared").InvoiceRecord[] }>("/billing/invoices"),
 

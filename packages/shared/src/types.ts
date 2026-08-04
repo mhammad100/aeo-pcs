@@ -305,9 +305,16 @@ export type ProductPlan = {
   limits: ProductPlanLimits;
   active: boolean;
   sortOrder: number;
+  /** Present on admin responses; used to map catalog plans to Razorpay Plans. */
+  razorpayPlanId?: string;
 };
 
-export type SubscriptionStatus = "active" | "canceled" | "past_due" | "trialing";
+export type SubscriptionStatus =
+  | "active"
+  | "canceled"
+  | "past_due"
+  | "trialing"
+  | "incomplete";
 
 export type SubscriptionInfo = {
   id: string;
@@ -318,6 +325,8 @@ export type SubscriptionInfo = {
   plan: ProductPlan | null;
   runsUsedThisPeriod: number;
   runsLimit: number;
+  cancelAtPeriodEnd?: boolean;
+  canceledAt?: string;
 };
 
 export type InvoiceRecord = {
@@ -328,6 +337,7 @@ export type InvoiceRecord = {
   periodLabel: string;
   note?: string;
   createdAt: string;
+  razorpayPaymentId?: string;
 };
 
 export type CostRate = {

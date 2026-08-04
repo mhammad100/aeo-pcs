@@ -22,7 +22,18 @@ async function main() {
       origin: [env.publicSiteUrl, env.adminSiteUrl],
     })
   );
-  app.use(express.json({ limit: "1mb" }));
+  app.use(
+    express.json({
+      limit: "1mb",
+      verify: (req, _res, buf) => {
+        // Preserve raw bytes for Razorpay webhook signature checks.
+        const url = "originalUrl" in req ? String((req as { originalUrl?: string }).originalUrl) : "";
+        if (url.includes("/billing/webhooks/razorpay")) {
+          (req as express.Request & { rawBody?: Buffer }).rawBody = Buffer.from(buf);
+        }
+      },
+    })
+  );
   app.use(requestLogger);
 
   const generalLimiter = rateLimit({

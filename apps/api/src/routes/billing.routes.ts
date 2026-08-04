@@ -7,6 +7,7 @@ import {
   createProductPlanValidators,
   planIdParamValidators,
   subscribeValidators,
+  verifyCheckoutValidators,
   updateProductPlanValidators,
   upsertCostRateValidators,
 } from "../validators";
@@ -16,6 +17,7 @@ catalogRouter.get("/plans", asyncHandler(billingController.listCatalogPlans));
 
 export const billingRouter = Router();
 billingRouter.get("/invoices", requireAuth, asyncHandler(billingController.myInvoices));
+billingRouter.post("/webhooks/razorpay", asyncHandler(billingController.razorpayWebhook));
 
 export const subscriptionsRouter = Router();
 subscriptionsRouter.get("/me", requireAuth, asyncHandler(billingController.mySubscription));
@@ -24,6 +26,23 @@ subscriptionsRouter.post(
   requireAuth,
   validate(subscribeValidators),
   asyncHandler(billingController.subscribeToPlan)
+);
+subscriptionsRouter.post(
+  "/checkout",
+  requireAuth,
+  validate(subscribeValidators),
+  asyncHandler(billingController.checkoutSubscription)
+);
+subscriptionsRouter.post(
+  "/verify",
+  requireAuth,
+  validate(verifyCheckoutValidators),
+  asyncHandler(billingController.verifyCheckout)
+);
+subscriptionsRouter.post(
+  "/cancel",
+  requireAuth,
+  asyncHandler(billingController.cancelSubscription)
 );
 
 export const usageRouter = Router();

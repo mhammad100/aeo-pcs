@@ -53,6 +53,7 @@ const BusinessSchema = new Schema(
     socialLinks: { type: [SocialLinkSchema], default: [] },
     checklist: { type: [ChecklistItemSchema], default: [] },
     profileCompletedAt: { type: Date, default: null },
+    razorpayCustomerId: { type: String, default: "", trim: true },
   },
   { timestamps: true }
 );

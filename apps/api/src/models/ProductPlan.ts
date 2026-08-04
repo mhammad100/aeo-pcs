@@ -19,6 +19,7 @@ const ProductPlanSchema = new Schema(
     active: { type: Boolean, default: true },
     sortOrder: { type: Number, default: 0 },
     priceLabel: { type: String, default: "", trim: true },
+    razorpayPlanId: { type: String, default: "", trim: true },
   },
   { timestamps: true }
 );

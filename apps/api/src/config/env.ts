@@ -22,6 +22,17 @@ function optional(name: string): string {
   return process.env[name]?.trim() || "";
 }
 
+const razorpayKeyId = optional("RAZORPAY_KEY_ID");
+const razorpayKeySecret = optional("RAZORPAY_KEY_SECRET");
+const billingStubEnv = optional("BILLING_STUB").toLowerCase();
+
+function resolveBillingStub(): boolean {
+  if (billingStubEnv === "true" || billingStubEnv === "1") return true;
+  if (billingStubEnv === "false" || billingStubEnv === "0") return false;
+  // Default: stub when Razorpay is not configured.
+  return !razorpayKeyId || !razorpayKeySecret;
+}
+
 export const env = {
   port: Number(required("PORT")),
   mongoUri: required("MONGODB_URI"),
@@ -34,4 +45,9 @@ export const env = {
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: required("JWT_EXPIRES_IN"),
   SIGNUP_ENABLED: requiredBool("SIGNUP_ENABLED"),
+  razorpayKeyId,
+  razorpayKeySecret,
+  razorpayWebhookSecret: optional("RAZORPAY_WEBHOOK_SECRET"),
+  /** When true, subscribe activates without payment. Defaults to true if Razorpay keys are missing. */
+  billingStub: resolveBillingStub(),
 };

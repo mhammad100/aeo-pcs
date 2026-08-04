@@ -4,19 +4,23 @@ import { ProductPlanModel } from "../models/ProductPlan";
 import { SubscriptionModel } from "../models/Subscription";
 import { AppError } from "../utils/AppError";
 
-function serializePlan(doc: {
-  _id: { toString(): string };
-  name: string;
-  slug: string;
-  price: number;
-  currency: string;
-  priceLabel?: string | null;
-  blurb?: string | null;
-  features?: string[] | null;
-  limits?: { visibilityRunsPerMonth?: number | null } | null;
-  active?: boolean | null;
-  sortOrder?: number | null;
-}): ProductPlan {
+function serializePlan(
+  doc: {
+    _id: { toString(): string };
+    name: string;
+    slug: string;
+    price: number;
+    currency: string;
+    priceLabel?: string | null;
+    blurb?: string | null;
+    features?: string[] | null;
+    limits?: { visibilityRunsPerMonth?: number | null } | null;
+    active?: boolean | null;
+    sortOrder?: number | null;
+    razorpayPlanId?: string | null;
+  },
+  opts?: { includeRazorpayPlanId?: boolean }
+): ProductPlan {
   return {
     id: String(doc._id),
     name: doc.name,
@@ -31,6 +35,9 @@ function serializePlan(doc: {
     },
     active: Boolean(doc.active),
     sortOrder: doc.sortOrder ?? 0,
+    ...(opts?.includeRazorpayPlanId
+      ? { razorpayPlanId: doc.razorpayPlanId || "" }
+      : {}),
   };
 }
 
@@ -45,12 +52,12 @@ function slugify(name: string) {
 
 export async function listActiveCatalogPlans() {
   const plans = await ProductPlanModel.find({ active: true }).sort({ sortOrder: 1, price: 1 }).lean();
-  return plans.map(serializePlan);
+  return plans.map((p) => serializePlan(p));
 }
 
 export async function listAllProductPlans() {
   const plans = await ProductPlanModel.find().sort({ sortOrder: 1, name: 1 }).lean();
-  return plans.map(serializePlan);
+  return plans.map((p) => serializePlan(p, { includeRazorpayPlanId: true }));
 }
 
 export async function createProductPlan(input: {
@@ -64,6 +71,7 @@ export async function createProductPlan(input: {
   visibilityRunsPerMonth?: number;
   active?: boolean;
   sortOrder?: number;
+  razorpayPlanId?: string;
 }) {
   if (input.price <= 0) {
     throw new AppError("Price must be greater than zero", 400);
@@ -83,8 +91,9 @@ export async function createProductPlan(input: {
     limits: { visibilityRunsPerMonth: input.visibilityRunsPerMonth ?? 3 },
     active: input.active ?? true,
     sortOrder: input.sortOrder ?? 0,
+    razorpayPlanId: (input.razorpayPlanId || "").trim(),
   });
-  return serializePlan(plan);
+  return serializePlan(plan, { includeRazorpayPlanId: true });
 }
 
 export async function updateProductPlan(
@@ -100,6 +109,7 @@ export async function updateProductPlan(
     visibilityRunsPerMonth: number;
     active: boolean;
     sortOrder: number;
+    razorpayPlanId: string;
   }>
 ) {
   const plan = await ProductPlanModel.findById(planId);
@@ -125,9 +135,10 @@ export async function updateProductPlan(
   }
   if (input.active !== undefined) plan.active = input.active;
   if (input.sortOrder !== undefined) plan.sortOrder = input.sortOrder;
+  if (input.razorpayPlanId !== undefined) plan.razorpayPlanId = input.razorpayPlanId.trim();
 
   await plan.save();
-  return serializePlan(plan);
+  return serializePlan(plan, { includeRazorpayPlanId: true });
 }
 
 export async function deleteProductPlan(planId: string) {

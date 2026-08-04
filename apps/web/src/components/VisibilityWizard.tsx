@@ -591,8 +591,8 @@ export default function VisibilityWizard() {
               showIcon
               message={
                 runsLimit > 0 && runsUsed >= runsLimit
-                  ? "Monthly run limit reached."
-                  : "Select a plan to run checks."
+                  ? "You've used all visibility checks for this billing period."
+                  : COPY.billing.selectPlanPrompt
               }
               action={
                 <Link

@@ -54,7 +54,7 @@ export default function PlanCatalog({
                 {plan.features.map((feature) => (
                   <li key={feature}>{feature}</li>
                 ))}
-                <li>{plan.limits.visibilityRunsPerMonth} visibility runs / month</li>
+                <li>{plan.limits.visibilityRunsPerMonth} visibility checks / month</li>
               </ul>
             </Card>
           </Col>

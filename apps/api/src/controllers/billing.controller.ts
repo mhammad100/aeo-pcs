@@ -1,4 +1,4 @@
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import type { AuthedRequest } from "../middleware/auth";
 import * as productPlansService from "../services/productPlans.service";
 import * as subscriptionsService from "../services/subscriptions.service";
@@ -68,6 +68,34 @@ export async function mySubscription(req: AuthedRequest, res: Response) {
 export async function subscribeToPlan(req: AuthedRequest, res: Response) {
   const result = await subscriptionsService.subscribeUserToPlan(req.userId!, req.body.planId);
   res.status(201).json(result);
+}
+
+export async function checkoutSubscription(req: AuthedRequest, res: Response) {
+  const result = await subscriptionsService.checkoutSubscription(req.userId!, req.body.planId);
+  res.status(201).json(result);
+}
+
+export async function verifyCheckout(req: AuthedRequest, res: Response) {
+  const result = await subscriptionsService.verifyCheckoutPayment(req.userId!, {
+    razorpayPaymentId: req.body.razorpayPaymentId,
+    razorpaySubscriptionId: req.body.razorpaySubscriptionId,
+    razorpaySignature: req.body.razorpaySignature,
+  });
+  res.json(result);
+}
+
+export async function cancelSubscription(req: AuthedRequest, res: Response) {
+  const result = await subscriptionsService.cancelSubscriptionForUser(req.userId!);
+  res.json(result);
+}
+
+export async function razorpayWebhook(req: Request, res: Response) {
+  const signature = String(req.headers["x-razorpay-signature"] || "");
+  const rawBody =
+    (req as Request & { rawBody?: Buffer }).rawBody ||
+    Buffer.from(JSON.stringify(req.body || {}));
+  const result = await subscriptionsService.handleRazorpayWebhook(rawBody, signature);
+  res.json(result);
 }
 
 export async function myInvoices(req: AuthedRequest, res: Response) {

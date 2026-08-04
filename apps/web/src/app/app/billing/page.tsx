@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Alert, Card, Empty, Spin, Table, Typography } from "antd";
+import { COPY } from "@aeo-pcs/shared";
 import AppShell from "@/components/AppShell";
 import { api, ApiError } from "@/lib/api";
 import type { InvoiceRecord } from "@aeo-pcs/shared";
@@ -21,7 +22,7 @@ export default function BillingPage() {
         if (!cancelled) setInvoices(res.invoices);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Failed to load billing");
+          setError(err instanceof ApiError ? err.message : COPY.billing.loadBillingFailed);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -38,7 +39,7 @@ export default function BillingPage() {
         Billing
       </Title>
       <Paragraph type="secondary">
-        Invoice history
+        Invoices and payment history for your subscription.
       </Paragraph>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
       <Card>
@@ -47,7 +48,7 @@ export default function BillingPage() {
             <Spin />
           </div>
         ) : invoices.length === 0 ? (
-          <Empty description="No invoices yet" />
+          <Empty description={COPY.billing.invoiceEmpty} />
         ) : (
           <Table
             rowKey="id"
@@ -64,8 +65,18 @@ export default function BillingPage() {
                 title: "Amount",
                 render: (_, r) => `${r.currency} ${r.amount.toFixed(2)}`,
               },
-              { title: "Status", dataIndex: "status" },
-              { title: "Note", dataIndex: "note" },
+              {
+                title: "Status",
+                dataIndex: "status",
+                render: (v: InvoiceRecord["status"]) =>
+                  v === "paid" ? "Paid" : v === "open" ? "Open" : v === "void" ? "Void" : v,
+              },
+              { title: "Description", dataIndex: "note" },
+              {
+                title: COPY.billing.paymentReference,
+                dataIndex: "razorpayPaymentId",
+                render: (v?: string) => v || "—",
+              },
             ]}
           />
         )}

@@ -163,6 +163,7 @@ export const createProductPlanValidators = [
   body("visibilityRunsPerMonth").optional().isInt({ min: 0, max: 10000 }),
   body("active").optional().isBoolean(),
   body("sortOrder").optional().isInt({ min: 0, max: 1000 }),
+  body("razorpayPlanId").optional().isString().trim().isLength({ max: 64 }),
 ];
 
 export const updateProductPlanValidators = [
@@ -177,6 +178,7 @@ export const updateProductPlanValidators = [
   body("visibilityRunsPerMonth").optional().isInt({ min: 0, max: 10000 }),
   body("active").optional().isBoolean(),
   body("sortOrder").optional().isInt({ min: 0, max: 1000 }),
+  body("razorpayPlanId").optional().isString().trim().isLength({ max: 64 }),
 ];
 
 export const createInvoiceValidators = [
@@ -232,6 +234,12 @@ export const updateAeoSettingsValidators = [
 ];
 
 export const subscribeValidators = [body("planId").isMongoId()];
+
+export const verifyCheckoutValidators = [
+  body("razorpayPaymentId").isString().trim().isLength({ min: 1, max: 64 }),
+  body("razorpaySubscriptionId").isString().trim().isLength({ min: 1, max: 64 }),
+  body("razorpaySignature").isString().trim().isLength({ min: 1, max: 128 }),
+];
 
 export const geoStatesValidators = [
   query("countryCode").isString().trim().isLength({ min: 2, max: 3 }),

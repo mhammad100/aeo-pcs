@@ -51,11 +51,11 @@ export default function RefundPage() {
           <p>Refunds are typically not available for:</p>
           <ul>
             <li>
-              Change of mind after purchase or after using visibility runs, reports, or generated
+              Change of mind after purchase or after using visibility checks, reports, or generated
               plans
             </li>
             <li>
-              Unused remaining quota (e.g., unused visibility runs in a billing period)
+              Unused remaining quota (for example, unused visibility checks in a billing period)
             </li>
             <li>
               Dissatisfaction with AI outputs, scores, or business outcomes (leads, rankings,
@@ -76,17 +76,20 @@ export default function RefundPage() {
 
           <h2>Cancellations</h2>
           <ul>
-            <li>You may cancel a subscription to stop future renewals.</li>
+            <li>
+              You may cancel a subscription from{" "}
+              <a href="/app/subscription">Subscription</a> in your account to stop future renewals.
+            </li>
             <li>
               Cancellation generally takes effect at the end of the current paid period unless
-              otherwise stated.
+              otherwise stated. You keep access until that date.
             </li>
             <li>
               Canceling does not automatically entitle you to a refund for the current period.
             </li>
           </ul>
           <p>
-            To cancel or request help:{" "}
+            Need help with billing?{" "}
             <a href="mailto:hello@masteraeo.com">hello@masteraeo.com</a>
           </p>
 

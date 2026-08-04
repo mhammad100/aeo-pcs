@@ -129,6 +129,7 @@ export type AdminPlan = {
   limits: { visibilityRunsPerMonth: number };
   active: boolean;
   sortOrder: number;
+  razorpayPlanId?: string;
 };
 
 type CreatePlanBody = {
@@ -142,4 +143,5 @@ type CreatePlanBody = {
   visibilityRunsPerMonth?: number;
   active?: boolean;
   sortOrder?: number;
+  razorpayPlanId?: string;
 };

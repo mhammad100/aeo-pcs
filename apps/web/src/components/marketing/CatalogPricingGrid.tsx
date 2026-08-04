@@ -44,7 +44,7 @@ export default function CatalogPricingGrid() {
             {t.features.map((p) => (
               <li key={p}>{p}</li>
             ))}
-            <li>{t.limits.visibilityRunsPerMonth} visibility runs / month</li>
+            <li>{t.limits.visibilityRunsPerMonth} visibility checks / month</li>
           </ul>
         </div>
       ))}

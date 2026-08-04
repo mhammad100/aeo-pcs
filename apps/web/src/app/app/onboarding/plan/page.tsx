@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, Spin, message } from "antd";
+import { COPY } from "@aeo-pcs/shared";
 import AuthGuard from "@/components/AuthGuard";
 import OnboardingShell from "@/components/OnboardingShell";
 import PlanCatalog from "@/components/PlanCatalog";
 import { api, ApiError } from "@/lib/api";
+import { CHECKOUT_DISMISSED, checkoutPlan } from "@/lib/checkoutSubscription";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import type { ProductPlan } from "@aeo-pcs/shared";
 
@@ -32,7 +34,7 @@ export default function OnboardingPlanPage() {
         if (!cancelled) setPlans(catalog);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Failed to load plans");
+          setError(err instanceof ApiError ? err.message : COPY.billing.loadSubscriptionFailed);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -48,11 +50,18 @@ export default function OnboardingPlanPage() {
     setSubscribingId(planId);
     setError(null);
     try {
-      await api.subscribeToPlan(planId);
-      message.success("Plan selected");
+      await checkoutPlan(planId);
+      message.success(COPY.billing.subscribeSuccess);
       router.replace("/app/onboarding/profile");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not update plan");
+      if (err instanceof Error && err.message === CHECKOUT_DISMISSED) {
+        return;
+      }
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : COPY.billing.updatePlanFailed
+      );
     } finally {
       setSubscribingId(null);
     }
@@ -64,7 +73,7 @@ export default function OnboardingPlanPage() {
         step={0}
         wide
         title="Choose a plan"
-        subtitle="Pick the plan that fits your business. You can change it later."
+        subtitle="Select the plan that fits your business. You can change or cancel anytime from your account."
       >
         {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 
@@ -74,10 +83,15 @@ export default function OnboardingPlanPage() {
           </div>
         ) : plans.length === 0 ? (
           <div className="onboarding-card onboarding-card-empty">
-            <p>No plans are available right now. Check back soon.</p>
+            <p>{COPY.billing.noPlans}</p>
           </div>
         ) : (
-          <PlanCatalog plans={plans} subscribingId={subscribingId} onSelect={onSelectPlan} />
+          <PlanCatalog
+            plans={plans}
+            subscribingId={subscribingId}
+            onSelect={onSelectPlan}
+            selectLabel="Subscribe"
+          />
         )}
       </OnboardingShell>
     </AuthGuard>

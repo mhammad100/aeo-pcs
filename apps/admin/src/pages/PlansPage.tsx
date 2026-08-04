@@ -69,6 +69,7 @@ export default function PlansPage() {
           visibilityRunsPerMonth: values.visibilityRunsPerMonth as number | undefined,
           active: values.active as boolean | undefined,
           sortOrder: values.sortOrder as number | undefined,
+          razorpayPlanId: values.razorpayPlanId as string | undefined,
         });
         message.success("Plan updated");
       } else {
@@ -86,6 +87,7 @@ export default function PlansPage() {
           visibilityRunsPerMonth: (values.visibilityRunsPerMonth as number) ?? 3,
           active: (values.active as boolean) ?? true,
           sortOrder: (values.sortOrder as number) ?? 0,
+          razorpayPlanId: (values.razorpayPlanId as string) || undefined,
         });
         message.success("Plan created");
       }
@@ -114,7 +116,8 @@ export default function PlansPage() {
         Plans
       </Title>
       <Paragraph type="secondary">
-        Product plan catalog and limits. Businesses choose a plan during onboarding.
+        Catalog plans shown to businesses. For paid checkout, set each plan&apos;s payment plan ID
+        from your Razorpay dashboard.
       </Paragraph>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
       <Space style={{ marginBottom: 16 }}>
@@ -147,6 +150,11 @@ export default function PlansPage() {
           {
             title: "Runs/mo",
             dataIndex: ["limits", "visibilityRunsPerMonth"],
+          },
+          {
+            title: "Payment plan ID",
+            dataIndex: "razorpayPlanId",
+            render: (v?: string) => v || "—",
           },
           {
             title: "Active",
@@ -241,6 +249,13 @@ export default function PlansPage() {
           </Form.Item>
           <Form.Item name="sortOrder" label="Sort order">
             <InputNumber min={0} style={{ width: "100%" }} />
+          </Form.Item>
+          <Form.Item
+            name="razorpayPlanId"
+            label="Payment plan ID"
+            extra="Required for live checkout. Create the matching plan in Razorpay, then paste its ID here (e.g. plan_…)."
+          >
+            <Input placeholder="plan_…" />
           </Form.Item>
           <Form.Item name="active" label="Active" valuePropName="checked">
             <Switch />
