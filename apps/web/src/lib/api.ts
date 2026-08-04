@@ -313,6 +313,7 @@ export const api = {
           planName: string;
           amount: number;
           currency: string;
+          prefill?: { email?: string; name?: string };
         }
     >("/subscriptions/checkout", {
       method: "POST",

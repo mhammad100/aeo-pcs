@@ -80,24 +80,36 @@ export async function ensureRazorpayCustomer(input: {
 
 export async function createRazorpaySubscription(input: {
   planId: string;
-  customerId: string;
   totalCount?: number;
   notes?: Record<string, string>;
 }) {
   try {
     const rzp = getClient();
-    // customer_id is supported by the API but missing from the SDK request typings.
-    const subscription = (await rzp.subscriptions.create({
+    // Do not pass customer_id — Razorpay docs: customer is linked after authorisation payment.
+    // Extra fields on create are rejected (400 Validation failed).
+    const subscription = await rzp.subscriptions.create({
       plan_id: input.planId,
-      customer_id: input.customerId,
       total_count: input.totalCount ?? 120,
       quantity: 1,
-      customer_notify: 1,
+      customer_notify: true,
       notes: input.notes,
-    } as Parameters<typeof rzp.subscriptions.create>[0])) as { id: string };
-    return subscription;
+    });
+    return subscription as { id: string; customer_id?: string | null };
   } catch (err) {
     throwPublicBillingError("subscriptions.create", err);
+  }
+}
+
+export async function fetchRazorpaySubscription(razorpaySubscriptionId: string) {
+  try {
+    const rzp = getClient();
+    return (await rzp.subscriptions.fetch(razorpaySubscriptionId)) as {
+      id: string;
+      customer_id?: string | null;
+      status?: string;
+    };
+  } catch (err) {
+    throwPublicBillingError("subscriptions.fetch", err);
   }
 }
 

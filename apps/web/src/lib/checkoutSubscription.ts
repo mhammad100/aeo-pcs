@@ -27,6 +27,7 @@ export async function checkoutPlan(planId: string): Promise<SubscriptionInfo> {
       subscription_id: result.razorpaySubscriptionId,
       name: "Master AEO",
       description: result.planName,
+      prefill: result.prefill,
       theme: { color: "#C45C26" },
       handler: (response) => {
         void (async () => {

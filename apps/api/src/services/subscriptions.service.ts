@@ -160,6 +160,7 @@ export type CheckoutResult =
       planName: string;
       amount: number;
       currency: string;
+      prefill?: { email?: string; name?: string };
     };
 
 /** Start checkout (Razorpay) or activate immediately in billing-stub mode. */
@@ -214,20 +215,8 @@ export async function checkoutSubscription(userId: string, planId: string): Prom
     await s.save();
   }
 
-  const customerId = await razorpay.ensureRazorpayCustomer({
-    existingCustomerId: business.razorpayCustomerId || undefined,
-    name: business.name || user.email,
-    email: user.email,
-    notes: { businessId: String(business._id), userId },
-  });
-  if (!business.razorpayCustomerId) {
-    business.razorpayCustomerId = customerId;
-    await business.save();
-  }
-
   const rzpSub = await razorpay.createRazorpaySubscription({
     planId: plan.razorpayPlanId,
-    customerId,
     notes: {
       businessId: String(business._id),
       planId: String(plan._id),
@@ -244,7 +233,7 @@ export async function checkoutSubscription(userId: string, planId: string): Prom
     currentPeriodEnd: end,
     note: existing ? "Plan change checkout" : "Subscription checkout",
     razorpaySubscriptionId: String(rzpSub.id),
-    razorpayCustomerId: customerId,
+    razorpayCustomerId: business.razorpayCustomerId || "",
     cancelAtPeriodEnd: false,
   });
 
@@ -256,6 +245,10 @@ export async function checkoutSubscription(userId: string, planId: string): Prom
     planName: plan.name,
     amount: plan.price,
     currency: plan.currency,
+    prefill: {
+      email: user.email,
+      name: business.name || undefined,
+    },
   };
 }
 
@@ -309,6 +302,20 @@ export async function verifyCheckoutPayment(
     razorpaySubscriptionId: input.razorpaySubscriptionId,
   });
   if (!sub) throw new AppError(COPY.billing.subscriptionNotFound, 404);
+
+  // Customer is attached by Razorpay after authorisation — persist when available.
+  try {
+    const remote = await razorpay.fetchRazorpaySubscription(input.razorpaySubscriptionId);
+    if (remote.customer_id) {
+      sub.razorpayCustomerId = String(remote.customer_id);
+      if (!business.razorpayCustomerId) {
+        business.razorpayCustomerId = String(remote.customer_id);
+        await business.save();
+      }
+    }
+  } catch {
+    // Non-fatal: activation can proceed without customer id.
+  }
 
   await activateLocalSubscription(sub, {
     paymentId: input.razorpayPaymentId,
