@@ -149,7 +149,6 @@ export function selectPromptsForRun(
     else other.push(p);
   }
 
-  const minCore = Math.max(1, Math.ceil(count * MIN_CORE_PROMPT_RATIO));
   const selected: string[] = [];
 
   for (const p of core) {
