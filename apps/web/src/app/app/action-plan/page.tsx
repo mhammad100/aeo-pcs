@@ -25,7 +25,7 @@ export default function ActionPlanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
-  const [generatingKey, setGeneratingKey] = useState<string | null>(null);
+  const [generatingByKey, setGeneratingByKey] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<ActionPlanTab>("ready-made");
   const [readyFilter, setReadyFilter] = useState<ActionPlanFilter>("pending");
   const [manualFilter, setManualFilter] = useState<ActionPlanFilter>("pending");
@@ -102,7 +102,9 @@ export default function ActionPlanPage() {
       message.error("Run a visibility check and build an action plan first");
       return;
     }
-    setGeneratingKey(item.key);
+    if (itemOutputs[itemId] || generatingByKey[item.key]) return;
+
+    setGeneratingByKey((prev) => ({ ...prev, [item.key]: true }));
     try {
       const { content } = await api.generateItem({
         jobId: item.sourceJobId,
@@ -115,7 +117,11 @@ export default function ActionPlanPage() {
     } catch (err) {
       message.error(err instanceof ApiError ? err.message : "Generation failed");
     } finally {
-      setGeneratingKey(null);
+      setGeneratingByKey((prev) => {
+        const next = { ...prev };
+        delete next[item.key];
+        return next;
+      });
     }
   }
 
@@ -164,7 +170,7 @@ export default function ActionPlanPage() {
               onReadyFilterChange={setReadyFilter}
               onManualFilterChange={setManualFilter}
               savingKey={savingKey}
-              generatingKey={generatingKey}
+              generatingByKey={generatingByKey}
               itemOutputs={itemOutputs}
               onToggle={toggleDone}
               onNote={saveNote}

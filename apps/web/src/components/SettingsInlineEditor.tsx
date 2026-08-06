@@ -400,7 +400,7 @@ export default function SettingsInlineEditor({
           editing={editingKey === "targetLocations"}
           saving={savingKey === "targetLocations"}
           display={<GeoLocationChipList items={business?.targetLocations || []} />}
-          hint="Areas you serve beyond your registered address — each with its own country."
+          hint="Areas you serve beyond your registered address — country required; state and city optional."
           onEdit={() =>
             startEdit("targetLocations", () =>
               setDraftTargetLocations(
@@ -411,9 +411,7 @@ export default function SettingsInlineEditor({
           onCancel={cancelEdit}
           onSave={() => {
             void saveField("targetLocations", {
-              targetLocations: draftTargetLocations.filter(
-                (loc) => loc.city?.trim() && loc.country?.trim(),
-              ),
+              targetLocations: draftTargetLocations.filter((loc) => loc.country?.trim()),
             } as BusinessProfileFormValues);
           }}
         >

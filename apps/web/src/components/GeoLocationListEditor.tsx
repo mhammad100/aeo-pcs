@@ -34,8 +34,8 @@ export default function GeoLocationListEditor({ value = [], onChange, headquarte
       {value.length === 0 ? (
         <div className="geo-location-empty">
           <p>
-            Optional — add areas where you want AI visibility. Each location needs its own country,
-            so we can tell domestic vs international markets apart.
+            Optional — add areas where you want AI visibility. Country is enough; state and city
+            are optional so you can target a whole country, a state, or a city.
           </p>
         </div>
       ) : null}
@@ -65,6 +65,7 @@ export default function GeoLocationListEditor({ value = [], onChange, headquarte
             <GeoLocationPicker
               value={loc}
               showSummary={false}
+              depthOptional
               onChange={(next) => updateAt(index, next)}
             />
           </div>

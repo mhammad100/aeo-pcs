@@ -75,9 +75,9 @@ export function normalizeProfilePayload(values: BusinessProfileFormValues) {
     ...values,
     nameAliases: (values.nameAliases || []).map((s) => s.trim()).filter(Boolean),
     targetLocations: (values.targetLocations || [])
-      .filter((loc) => loc.city?.trim() && loc.country?.trim())
+      .filter((loc) => loc.country?.trim())
       .map((loc) => ({
-        city: loc.city.trim(),
+        city: loc.city?.trim() || "",
         state: loc.state?.trim() || "",
         country: loc.country.trim(),
         countryCode: loc.countryCode?.trim() || undefined,

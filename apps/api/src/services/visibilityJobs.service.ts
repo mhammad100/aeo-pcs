@@ -509,6 +509,9 @@ export async function buildPlanForJob(input: {
     city: job.city || "",
     state: job.state || "",
     country: job.country || "",
+    targetLocations: job.targetLocations?.length
+      ? job.targetLocations
+      : (job.business as { targetLocations?: unknown } | undefined)?.targetLocations,
     websiteUrl: profile?.websiteUrl || job.websiteUrl || undefined,
     googleBusinessUrl: profile?.googleBusinessUrl || job.googleBusinessUrl || undefined,
     socialLinks: (profile?.socialLinks?.length
@@ -565,6 +568,9 @@ export async function generatePlanItem(input: {
     city: job.city || "",
     state: job.state || "",
     country: job.country || "",
+    targetLocations: job.targetLocations?.length
+      ? job.targetLocations
+      : (job.business as { targetLocations?: unknown } | undefined)?.targetLocations,
     item: { title: input.title, description: input.description },
     usage: {
       userId: input.userId,

@@ -30,7 +30,7 @@ export const COPY = {
   },
   profile: {
     targetLocationsTooltip:
-      "Cities or areas where you want to appear in AI search results. Pick country, state, and city for each — we use only these in visibility checks, not your registered business address.",
+      "Areas where you want to appear in AI search results. Country is required; state and city are optional (country, country + state, or country + state + city). We use only these in visibility checks, not your registered business address.",
   },
   billing: {
     subscribeRequired: "Choose a plan to use this feature.",

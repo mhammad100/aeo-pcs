@@ -28,13 +28,15 @@ export function normalizeGeoLocation(
     };
   }
 
-  const city = String(value.city || "").trim();
+  // Target markets may be country-only, country+state, or country+state+city.
+  // Do not fill state/city from HQ fallback — empty means intentionally broader.
   const country = String(value.country || fallback?.country || "").trim();
-  if (!city || !country) return null;
+  if (!country) return null;
 
-  const state = String(value.state || fallback?.state || "").trim();
+  const city = String(value.city || "").trim();
+  const state = String(value.state || "").trim();
   const countryCode = String(value.countryCode || fallback?.countryCode || "").trim();
-  const stateCode = String(value.stateCode || fallback?.stateCode || "").trim();
+  const stateCode = String(value.stateCode || "").trim();
 
   return {
     city,

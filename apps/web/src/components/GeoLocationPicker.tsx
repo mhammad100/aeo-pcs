@@ -14,6 +14,8 @@ type Props = {
   disabled?: boolean;
   showLabels?: boolean;
   showSummary?: boolean;
+  /** When true (target markets), state and city may be left empty. HQ should leave this false. */
+  depthOptional?: boolean;
   className?: string;
 };
 
@@ -23,6 +25,7 @@ export default function GeoLocationPicker({
   disabled,
   showLabels = true,
   showSummary = true,
+  depthOptional = false,
   className,
 }: Props) {
   const current = value || emptyGeoLocation();
@@ -116,12 +119,20 @@ export default function GeoLocationPicker({
   const cityDisabled = disabled || !countryCode || (hasStates && !stateCode);
   const selectedCountry = countries.find((c) => c.code === countryCode);
 
-  const cityPlaceholder = hasStates && !stateCode ? "Select state first" : "Select city";
+  const cityPlaceholder = hasStates && !stateCode
+    ? depthOptional
+      ? "Select state first (optional)"
+      : "Select state first"
+    : depthOptional
+      ? "Select city (optional)"
+      : "Select city";
   const summary = useMemo(() => {
-    if (isGeoLocationComplete(current)) return formatGeoLocation(current);
+    if (depthOptional ? isGeoLocationComplete(current) : Boolean(current.city?.trim() && current.country?.trim())) {
+      return formatGeoLocation(current);
+    }
     const parts = [current.city, current.state, current.country].filter((p) => p?.trim());
     return parts.length ? parts.join(", ") : "";
-  }, [current]);
+  }, [current, depthOptional]);
 
   const rootClass = ["geo-location-picker", className].filter(Boolean).join(" ");
 
@@ -149,31 +160,50 @@ export default function GeoLocationPicker({
 
         {showStateField ? (
           <div className="geo-location-field">
-            {showLabels ? <span className="geo-location-field-label">State / region</span> : null}
+            {showLabels ? (
+              <span className="geo-location-field-label">
+                {depthOptional ? "State / region (optional)" : "State / region"}
+              </span>
+            ) : null}
             <Select
               showSearch
+              allowClear={depthOptional}
               size="large"
               className="geo-location-select"
-              placeholder={loadingStates ? "Loading states…" : "Select state"}
+              placeholder={
+                loadingStates
+                  ? "Loading states…"
+                  : depthOptional
+                    ? "Select state (optional)"
+                    : "Select state"
+              }
               disabled={disabled || !countryCode}
               loading={loadingStates}
               value={stateCode || undefined}
               optionFilterProp="label"
               options={states.map((s) => ({ value: s.code, label: s.name }))}
               onChange={(code) => {
-                const state = states.find((s) => s.code === code);
-                if (selectedCountry && state) {
-                  onChange?.(geoLocationFromSelection(selectedCountry, state));
+                if (!selectedCountry) return;
+                if (!code) {
+                  onChange?.(geoLocationFromSelection(selectedCountry));
+                  return;
                 }
+                const state = states.find((s) => s.code === code);
+                if (state) onChange?.(geoLocationFromSelection(selectedCountry, state));
               }}
             />
           </div>
         ) : null}
 
         <div className="geo-location-field">
-          {showLabels ? <span className="geo-location-field-label">City</span> : null}
+          {showLabels ? (
+            <span className="geo-location-field-label">
+              {depthOptional ? "City (optional)" : "City"}
+            </span>
+          ) : null}
           <Select
             showSearch
+            allowClear={depthOptional}
             size="large"
             className="geo-location-select"
             placeholder={cityPlaceholder}
@@ -183,9 +213,13 @@ export default function GeoLocationPicker({
             optionFilterProp="label"
             options={cities.map((c) => ({ value: c.name, label: c.name }))}
             onChange={(cityName) => {
-              const city = cities.find((c) => c.name === cityName);
               if (!selectedCountry) return;
               const state = hasStates ? states.find((s) => s.code === stateCode) : undefined;
+              if (!cityName) {
+                onChange?.(geoLocationFromSelection(selectedCountry, state));
+                return;
+              }
+              const city = cities.find((c) => c.name === cityName);
               onChange?.(
                 geoLocationFromSelection(selectedCountry, state, city || { name: cityName }),
               );

@@ -10,7 +10,8 @@ const SocialLinkSchema = new Schema(
 
 const GeoLocationSchema = new Schema(
   {
-    city: { type: String, required: true, trim: true },
+    // Target locations: country required; state and city optional (broader markets).
+    city: { type: String, default: "", trim: true },
     state: { type: String, default: "", trim: true },
     country: { type: String, required: true, trim: true },
     countryCode: { type: String, default: "", trim: true },

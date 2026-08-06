@@ -31,7 +31,7 @@ import { clearPrompts, resetPrompts, setPrompts, updatePrompt } from "@/store/pr
 import {
   resetVisibility,
   setError,
-  setGeneratingItemId,
+  setItemGenerating,
   setItemOutput,
   setJobId,
   setJobSnapshot,
@@ -449,7 +449,8 @@ export default function VisibilityWizard() {
 
   async function onGenerateItem(item: { id: string; title: string; description: string }) {
     if (!visibility.jobId) return;
-    dispatch(setGeneratingItemId(item.id));
+    if (visibility.itemOutputs[item.id] || visibility.generatingByItemId[item.id]) return;
+    dispatch(setItemGenerating({ id: item.id, generating: true }));
     dispatch(setError(null));
     try {
       const { content } = await api.generateItem({
@@ -462,7 +463,7 @@ export default function VisibilityWizard() {
     } catch (err) {
       dispatch(setError(err instanceof Error ? err.message : "Generation failed"));
     } finally {
-      dispatch(setGeneratingItemId(null));
+      dispatch(setItemGenerating({ id: item.id, generating: false }));
     }
   }
 
@@ -924,14 +925,16 @@ export default function VisibilityWizard() {
                       <Text strong style={{ color: "#EDEAE1" }}>
                         {item.title}
                       </Text>
-                      <Button
-                        type="primary"
-                        size="small"
-                        loading={visibility.generatingItemId === item.id}
-                        onClick={() => onGenerateItem(item)}
-                      >
-                        {visibility.itemOutputs[item.id] ? "Regenerate" : "Generate"}
-                      </Button>
+                      {!visibility.itemOutputs[item.id] ? (
+                        <Button
+                          type="primary"
+                          size="small"
+                          loading={Boolean(visibility.generatingByItemId[item.id])}
+                          onClick={() => onGenerateItem(item)}
+                        >
+                          Generate
+                        </Button>
+                      ) : null}
                     </div>
                     <Paragraph type="secondary" style={{ marginBottom: 8 }}>
                       {item.description}

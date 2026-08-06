@@ -45,6 +45,7 @@ export function geoLocationFromSelection(
   };
 }
 
+/** Target location is valid with country only; state and city are optional. */
 export function isGeoLocationComplete(loc: GeoLocation): boolean {
-  return Boolean(loc.city?.trim() && loc.country?.trim());
+  return Boolean(loc.country?.trim());
 }
