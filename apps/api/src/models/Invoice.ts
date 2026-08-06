@@ -14,6 +14,8 @@ const InvoiceSchema = new Schema(
     },
     periodLabel: { type: String, default: "", trim: true },
     note: { type: String, default: "", trim: true },
+    razorpayPaymentId: { type: String, default: "", trim: true, index: true },
+    razorpayInvoiceId: { type: String, default: "", trim: true },
   },
   { timestamps: true }
 );

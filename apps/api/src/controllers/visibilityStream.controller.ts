@@ -29,7 +29,7 @@ export async function streamJob(req: AuthedRequest, res: Response) {
 
   writeSse(res, "snapshot", toStreamPayload(job));
 
-  if (job.status === "completed" || job.status === "failed") {
+  if (job.status === "completed" || job.status === "failed" || job.status === "cancelled") {
     res.end();
     return;
   }
@@ -40,7 +40,7 @@ export async function streamJob(req: AuthedRequest, res: Response) {
 
   const unsubscribe = subscribeToJob(jobId, (payload) => {
     writeSse(res, "update", payload);
-    if (payload.status === "completed" || payload.status === "failed") {
+    if (payload.status === "completed" || payload.status === "failed" || payload.status === "cancelled") {
       clearInterval(heartbeat);
       unsubscribe();
       res.end();

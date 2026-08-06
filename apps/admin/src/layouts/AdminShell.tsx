@@ -1,6 +1,7 @@
 import { Outlet, useLocation, useNavigate, Link } from "react-router-dom";
 import { Button, Layout, Menu, Typography } from "antd";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { api } from "@/lib/api";
 import { logout } from "@/store/authSlice";
 
 const { Header, Sider, Content } = Layout;
@@ -53,8 +54,15 @@ export default function AdminShell() {
           <Text type="secondary">{user?.email}</Text>
           <Button
             onClick={() => {
-              dispatch(logout());
-              navigate("/login");
+              void (async () => {
+                try {
+                  await api.logout();
+                } catch {
+                  /* proceed with local logout */
+                }
+                dispatch(logout());
+                navigate("/login");
+              })();
             }}
           >
             Log out

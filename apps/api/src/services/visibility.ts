@@ -1,4 +1,5 @@
 import type {
+  GeoLocation,
   PromptResult,
   Source,
   VisibilityModelConfig,
@@ -22,9 +23,13 @@ export async function runVisibilityCheck(input: {
   business: VisibilityBusinessContext;
   category: string;
   city: string;
+  state?: string;
   country: string;
-  targetLocations?: string[];
+  countryCode?: string;
+  stateCode?: string;
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
+  description?: string;
   prompts: string[];
   models: VisibilityModelConfig[];
   usage?: Omit<LlmUsageContext, "feature">;
@@ -34,6 +39,7 @@ export async function runVisibilityCheck(input: {
     currentPrompt: string;
     currentModel: string;
   }) => Promise<void> | void;
+  shouldAbort?: () => Promise<boolean>;
 }): Promise<{ results: PromptResult[]; score: VisibilityScore; partialWarning: string | null }> {
   if (!input.models.length) {
     throw new Error("No visibility models configured");
@@ -44,7 +50,7 @@ export async function runVisibilityCheck(input: {
   let failedChecks = 0;
   const allResults: PromptResult[] = [];
 
-  const system = `You are an AI assistant answering a real user's question, grounded in actual current web search results. Search the web, then answer naturally, naming specific real businesses relevant to the query and the location context provided. Keep it to 4-6 sentences and name at least 2-3 businesses if the search results support it. ${NO_MARKDOWN_RULE}`;
+  const system = `You are an AI assistant answering a real user's question, grounded in actual current web search results. Search the web, then answer naturally, naming specific real businesses relevant to the query. When a user location is provided, treat it as where the user currently is (like "near me" queries). Keep it to 4-6 sentences and name at least 2-3 businesses if the search results support it. ${NO_MARKDOWN_RULE}`;
 
   const bizCtx: VisibilityBusinessContext = {
     name: input.business.name,
@@ -53,18 +59,39 @@ export async function runVisibilityCheck(input: {
     googleBusinessUrl: input.business.googleBusinessUrl,
   };
 
-  for (const prompt of input.prompts) {
+  const promptContext = {
+    description: input.description,
+    category: input.category,
+    targetItems: input.targetItems,
+    targetLocations: input.targetLocations,
+    city: input.city,
+  };
+
+  for (let promptIndex = 0; promptIndex < input.prompts.length; promptIndex++) {
+    const prompt = input.prompts[promptIndex]!;
+    if (input.shouldAbort && (await input.shouldAbort())) {
+      throw new Error("Visibility check cancelled");
+    }
+
     const userPrompt = buildVisibilityUserPrompt({
       prompt,
       category: input.category,
       city: input.city,
+      state: input.state,
       country: input.country,
+      countryCode: input.countryCode,
+      stateCode: input.stateCode,
       targetLocations: input.targetLocations,
       targetItems: input.targetItems,
+      promptIndex,
     });
 
     const perModel: PromptResult["perModel"] = [];
     for (const model of input.models) {
+      if (input.shouldAbort && (await input.shouldAbort())) {
+        throw new Error("Visibility check cancelled");
+      }
+
       if (input.onProgress) {
         await input.onProgress({
           completed,
@@ -180,7 +207,7 @@ export async function runVisibilityCheck(input: {
 
   return {
     results: allResults,
-    score: computeScore(allResults, input.models.length),
+    score: computeScore(allResults, input.models.length, promptContext),
     partialWarning,
   };
 }

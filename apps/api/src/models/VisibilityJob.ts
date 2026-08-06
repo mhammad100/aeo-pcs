@@ -31,6 +31,17 @@ const PromptResultSchema = new Schema(
   { _id: false }
 );
 
+const GeoLocationSchema = new Schema(
+  {
+    city: String,
+    state: String,
+    country: String,
+    countryCode: String,
+    stateCode: String,
+  },
+  { _id: false }
+);
+
 const BusinessSchema = new Schema(
   {
     name: String,
@@ -38,7 +49,7 @@ const BusinessSchema = new Schema(
     address: String,
     description: String,
     nameAliases: [String],
-    targetLocations: [String],
+    targetLocations: [GeoLocationSchema],
     targetItems: [String],
   },
   { _id: false }
@@ -67,7 +78,7 @@ const VisibilityJobSchema = new Schema(
     businessId: { type: Schema.Types.ObjectId, ref: "Business", index: true },
     status: {
       type: String,
-      enum: ["queued", "running", "completed", "failed"],
+      enum: ["generating", "ready", "queued", "running", "completed", "failed", "cancelled"],
       default: "queued",
     },
     progress: {
@@ -79,6 +90,7 @@ const VisibilityJobSchema = new Schema(
     business: BusinessSchema,
     category: String,
     city: String,
+    state: String,
     country: String,
     prompts: [String],
     results: [PromptResultSchema],
@@ -94,7 +106,7 @@ const VisibilityJobSchema = new Schema(
     },
     websiteUrl: String,
     googleBusinessUrl: String,
-    targetLocations: [String],
+    targetLocations: [GeoLocationSchema],
     targetItems: [String],
     nameAliases: [String],
     plan: {

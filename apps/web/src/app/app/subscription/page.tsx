@@ -1,10 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Alert, Card, Progress, Spin, Typography, message } from "antd";
+import { Alert, Button, Card, Popconfirm, Progress, Spin, Typography, message } from "antd";
+import { COPY } from "@aeo-pcs/shared";
 import AppShell from "@/components/AppShell";
 import PlanCatalog from "@/components/PlanCatalog";
 import { api, ApiError } from "@/lib/api";
+import { CHECKOUT_DISMISSED, checkoutPlan } from "@/lib/checkoutSubscription";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import type { ProductPlan, SubscriptionInfo } from "@aeo-pcs/shared";
 
@@ -15,6 +17,7 @@ export default function SubscriptionPage() {
   const [plans, setPlans] = useState<ProductPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [subscribingId, setSubscribingId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -28,7 +31,7 @@ export default function SubscriptionPage() {
       setSubscription(subRes.subscription);
       setPlans(plansRes.plans);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to load subscription");
+      setError(err instanceof ApiError ? err.message : COPY.billing.loadSubscriptionFailed);
     } finally {
       setLoading(false);
     }
@@ -42,14 +45,36 @@ export default function SubscriptionPage() {
     setSubscribingId(planId);
     setError(null);
     try {
-      const res = await api.subscribeToPlan(planId);
-      setSubscription(res.subscription);
-      message.success("Plan updated");
+      const next = await checkoutPlan(planId);
+      setSubscription(next);
+      message.success(COPY.billing.planChangeSuccess);
       await load();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not update plan");
+      if (err instanceof Error && err.message === CHECKOUT_DISMISSED) {
+        return;
+      }
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : COPY.billing.updatePlanFailed
+      );
     } finally {
       setSubscribingId(null);
+    }
+  }
+
+  async function onCancel() {
+    setCancelling(true);
+    setError(null);
+    try {
+      const res = await api.cancelSubscription();
+      setSubscription(res.subscription);
+      message.success(COPY.billing.cancelSuccess);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : COPY.billing.cancelFailed);
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -57,6 +82,9 @@ export default function SubscriptionPage() {
   const used = subscription?.runsUsedThisPeriod ?? 0;
   const limit = subscription?.runsLimit ?? 0;
   const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const periodEnd = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+    : null;
 
   return (
     <AppShell>
@@ -70,14 +98,19 @@ export default function SubscriptionPage() {
         </div>
       ) : !subscribed ? (
         <Card>
-          <Text>Select a plan to run visibility checks.</Text>
+          <Text>{COPY.billing.selectPlanPrompt}</Text>
           {plans.length > 0 ? (
             <div style={{ marginTop: 16 }}>
-              <PlanCatalog plans={plans} subscribingId={subscribingId} onSelect={onChangePlan} />
+              <PlanCatalog
+                plans={plans}
+                subscribingId={subscribingId}
+                onSelect={onChangePlan}
+                selectLabel="Subscribe"
+              />
             </div>
           ) : (
             <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
-              No plans are available right now.
+              {COPY.billing.noPlans}
             </Text>
           )}
         </Card>
@@ -89,9 +122,30 @@ export default function SubscriptionPage() {
               <Text type="secondary"> · {subscription.plan.priceLabel}</Text>
             ) : null}
             <div style={{ marginTop: 12 }}>
-              Visibility runs: {used} / {limit}
+              Visibility checks this period: {used} / {limit}
             </div>
             <Progress percent={pct} style={{ marginTop: 8 }} />
+            {periodEnd ? (
+              <Text type="secondary" style={{ display: "block", marginTop: 12 }}>
+                {subscription?.cancelAtPeriodEnd
+                  ? COPY.billing.cancelScheduled(periodEnd)
+                  : COPY.billing.periodEnds(periodEnd)}
+              </Text>
+            ) : null}
+            {!subscription?.cancelAtPeriodEnd ? (
+              <Popconfirm
+                title={COPY.billing.cancelConfirmTitle}
+                description={COPY.billing.cancelConfirmBody}
+                okText={COPY.billing.cancelConfirmOk}
+                cancelText={COPY.billing.cancelConfirmKeep}
+                okButtonProps={{ danger: true }}
+                onConfirm={() => void onCancel()}
+              >
+                <Button danger style={{ marginTop: 16 }} loading={cancelling}>
+                  {COPY.billing.cancelConfirmOk}
+                </Button>
+              </Popconfirm>
+            ) : null}
           </Card>
           {plans.length > 1 ? (
             <>
@@ -103,7 +157,7 @@ export default function SubscriptionPage() {
                 currentPlanId={subscription?.plan?.id}
                 subscribingId={subscribingId}
                 onSelect={onChangePlan}
-                selectLabel="Switch"
+                selectLabel="Switch plan"
               />
             </>
           ) : null}

@@ -2,15 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Alert, Card, Spin, Typography, message } from "antd";
+import { Alert, Spin, message } from "antd";
+import { COPY } from "@aeo-pcs/shared";
 import AuthGuard from "@/components/AuthGuard";
-import OnboardingSteps from "@/components/OnboardingSteps";
+import OnboardingShell from "@/components/OnboardingShell";
 import PlanCatalog from "@/components/PlanCatalog";
 import { api, ApiError } from "@/lib/api";
+import { CHECKOUT_DISMISSED, checkoutPlan } from "@/lib/checkoutSubscription";
 import { hasActiveSubscription } from "@/lib/authRouting";
 import type { ProductPlan } from "@aeo-pcs/shared";
-
-const { Title, Text } = Typography;
 
 export default function OnboardingPlanPage() {
   const router = useRouter();
@@ -34,7 +34,7 @@ export default function OnboardingPlanPage() {
         if (!cancelled) setPlans(catalog);
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiError ? err.message : "Failed to load plans");
+          setError(err instanceof ApiError ? err.message : COPY.billing.loadSubscriptionFailed);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -50,11 +50,18 @@ export default function OnboardingPlanPage() {
     setSubscribingId(planId);
     setError(null);
     try {
-      await api.subscribeToPlan(planId);
-      message.success("Plan updated");
+      await checkoutPlan(planId);
+      message.success(COPY.billing.subscribeSuccess);
       router.replace("/app/onboarding/profile");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not update plan");
+      if (err instanceof Error && err.message === CHECKOUT_DISMISSED) {
+        return;
+      }
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : COPY.billing.updatePlanFailed
+      );
     } finally {
       setSubscribingId(null);
     }
@@ -62,33 +69,31 @@ export default function OnboardingPlanPage() {
 
   return (
     <AuthGuard>
-      <div style={{ minHeight: "100vh", background: "#0F1A17", padding: "40px 24px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-            Master AEO
-          </Text>
-          <Title level={2} style={{ color: "#EDEAE1", marginTop: 8 }}>
-            Choose a plan
-          </Title>
-          <OnboardingSteps current={0} />
+      <OnboardingShell
+        step={0}
+        wide
+        title="Choose a plan"
+        subtitle="Select the plan that fits your business. You can change or cancel anytime from your account."
+      >
+        {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 
-          {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
-
-          {loading ? (
-            <div style={{ display: "grid", placeItems: "center", padding: 48 }}>
-              <Spin />
-            </div>
-          ) : plans.length === 0 ? (
-            <Card>No plans are available right now. Check back soon.</Card>
-          ) : (
-            <PlanCatalog
-              plans={plans}
-              subscribingId={subscribingId}
-              onSelect={onSelectPlan}
-            />
-          )}
-        </div>
-      </div>
+        {loading ? (
+          <div className="onboarding-loading">
+            <Spin size="large" />
+          </div>
+        ) : plans.length === 0 ? (
+          <div className="onboarding-card onboarding-card-empty">
+            <p>{COPY.billing.noPlans}</p>
+          </div>
+        ) : (
+          <PlanCatalog
+            plans={plans}
+            subscribingId={subscribingId}
+            onSelect={onSelectPlan}
+            selectLabel="Subscribe"
+          />
+        )}
+      </OnboardingShell>
     </AuthGuard>
   );
 }

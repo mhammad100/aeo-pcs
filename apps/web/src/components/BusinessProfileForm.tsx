@@ -1,18 +1,33 @@
 "use client";
 
 import { Button, Form, Input, Select, Space } from "antd";
+import type { FormInstance } from "antd/es/form";
 import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
-import { CATEGORIES, type BusinessProfile } from "@aeo-pcs/shared";
+import SocialPlatformSelect from "@/components/SocialPlatformSelect";
+import GeoLocationPicker from "@/components/GeoLocationPicker";
+import GeoLocationListEditor from "@/components/GeoLocationListEditor";
+import { CATEGORIES, COPY, headquartersLocation, type BusinessProfile, type GeoLocation } from "@aeo-pcs/shared";
+import { SOCIAL_PLATFORMS, socialPlatformPlaceholder } from "@/lib/socialPlatforms";
+
+const TARGET_ITEM_EXAMPLES = [
+  "dental implants",
+  "teeth whitening",
+  "wedding catering",
+  "home renovation",
+];
 
 export type BusinessProfileFormValues = {
   name: string;
   category: string;
   customCategory?: string;
   city: string;
+  state: string;
   country: string;
+  countryCode?: string;
+  stateCode?: string;
   description: string;
   nameAliases?: string[];
-  targetLocations?: string[];
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
   websiteUrl?: string;
   googleBusinessUrl?: string;
@@ -29,6 +44,8 @@ type Props = {
   activeSection?: SectionId;
   hideSubmit?: boolean;
   formId?: string;
+  form?: FormInstance<BusinessProfileFormValues>;
+  onValuesChange?: () => void;
   onSubmit: (values: BusinessProfileFormValues) => Promise<void> | void;
 };
 
@@ -55,10 +72,45 @@ export default function BusinessProfileForm({
   activeSection,
   hideSubmit = false,
   formId,
+  form: externalForm,
+  onValuesChange,
   onSubmit,
 }: Props) {
-  const [form] = Form.useForm<BusinessProfileFormValues>();
+  const [internalForm] = Form.useForm<BusinessProfileFormValues>();
+  const form = externalForm ?? internalForm;
   const category = Form.useWatch("category", form);
+  const socialLinks = Form.useWatch("socialLinks", form) || [];
+  const targetItems = Form.useWatch("targetItems", form) || [];
+  const watchedCity = Form.useWatch("city", form);
+  const watchedState = Form.useWatch("state", form);
+  const watchedCountry = Form.useWatch("country", form);
+  const watchedCountryCode = Form.useWatch("countryCode", form);
+  const watchedStateCode = Form.useWatch("stateCode", form);
+
+  const headquarters = headquartersLocation({
+    city: watchedCity || initial?.city || "",
+    state: watchedState || initial?.state || "",
+    country: watchedCountry || initial?.country || "India",
+    countryCode: watchedCountryCode || initial?.countryCode,
+    stateCode: watchedStateCode || initial?.stateCode,
+  });
+
+  function addTargetExample(example: string) {
+    const current = (form.getFieldValue("targetItems") as string[] | undefined) || [];
+    const normalized = example.trim();
+    if (!normalized || current.some((item) => item.toLowerCase() === normalized.toLowerCase())) {
+      return;
+    }
+    form.setFieldsValue({ targetItems: [...current, normalized] });
+    onValuesChange?.();
+  }
+
+  const quickAddPlatforms = SOCIAL_PLATFORMS.filter(
+    (platform) =>
+      !(socialLinks as { label?: string }[]).some(
+        (link) => link?.label?.toLowerCase() === platform.label.toLowerCase(),
+      ),
+  );
 
   const identityFields = (
     <>
@@ -112,91 +164,113 @@ export default function BusinessProfileForm({
       </Form.Item>
       <Form.Item
         name="nameAliases"
-        label="Also known as (optional)"
+        label="Also known as"
         tooltip="Alternate names, abbreviations, or spellings we should count as a mention"
       >
         <Select
           mode="tags"
           tokenSeparators={[","]}
-          placeholder="e.g. PCS, Pal Consultancy"
+          placeholder="Enter alternate names, abbreviations, or spellings"
           open={false}
         />
       </Form.Item>
-      <Form.List
-        name="targetItems"
-        rules={[
-          {
-            validator: async (_, items) => {
-              if (!items || items.length < 1) {
-                throw new Error("Add at least one service or product");
-              }
+      <div className="app-form-field-block">
+        <Form.Item
+          name="targetItems"
+          label="Target services / products"
+          rules={[
+            {
+              validator: async (_, items: string[] | undefined) => {
+                const cleaned = (items || []).map((item) => item.trim()).filter(Boolean);
+                if (!cleaned.length) {
+                  throw new Error("Add at least one service or product");
+                }
+              },
             },
-          },
-        ]}
-      >
-        {(fields, { add, remove }, { errors }) => (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ marginBottom: 8, fontWeight: 600 }}>
-              Target services / products <span style={{ color: "#c9773d" }}>*</span>
-            </div>
-            <p className="app-form-hint" style={{ marginBottom: 8 }}>
-              Key services or products customers search for. List your main offerings — the terms
-              people use when asking an AI assistant for recommendations.
-            </p>
-            {fields.map((field) => (
-              <Space key={field.key} align="baseline" style={{ display: "flex", marginBottom: 8 }}>
-                <Form.Item
-                  {...field}
-                  rules={[{ required: true, message: "Required" }]}
-                  style={{ flex: 1, marginBottom: 0 }}
-                >
-                  <Input placeholder="e.g. dental implants, wedding catering" />
-                </Form.Item>
-                <MinusCircleOutlined onClick={() => remove(field.name)} />
-              </Space>
-            ))}
-            <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} block>
-              Add service or product
-            </Button>
-            <Form.ErrorList errors={errors} />
-          </div>
-        )}
-      </Form.List>
+          ]}
+          extra="Type each service and press Enter, or paste a comma-separated list."
+        >
+          <Select
+            mode="tags"
+            tokenSeparators={[","]}
+            placeholder="e.g. dental implants, teeth whitening, wedding catering"
+            open={false}
+            className="app-target-items-select"
+          />
+        </Form.Item>
+        <div className="app-form-examples">
+          <span className="app-form-examples-label">Try an example:</span>
+          {TARGET_ITEM_EXAMPLES.map((example) => {
+            const isAdded = (targetItems as string[]).some(
+              (item) => item.toLowerCase() === example.toLowerCase(),
+            );
+            return (
+              <button
+                key={example}
+                type="button"
+                className={`app-form-example-chip${isAdded ? " is-added" : ""}`}
+                disabled={isAdded}
+                onClick={() => addTargetExample(example)}
+              >
+                {example}
+              </button>
+            );
+          })}
+        </div>
+        <p className="app-form-field-note">
+          These are the terms customers use when asking AI for recommendations — they shape your
+          visibility prompts.
+        </p>
+      </div>
     </>
   );
 
   const locationFields = (
     <>
-      <div className="app-form-row">
-        <Form.Item
-          name="city"
-          label="City"
-          rules={[{ required: true, message: "Required" }]}
-          className="app-form-row-item"
-        >
-          <Input placeholder="City" />
-        </Form.Item>
-        <Form.Item
-          name="country"
-          label="Country"
-          rules={[{ required: true, message: "Required" }]}
-          className="app-form-row-item"
-        >
-          <Input placeholder="Country" />
-        </Form.Item>
-      </div>
-      <Form.Item
-        name="targetLocations"
-        label="Target locations (optional)"
-        tooltip="Neighborhoods and areas you serve, in addition to your primary city"
-      >
-        <Select
-          mode="tags"
-          tokenSeparators={[","]}
-          placeholder="e.g. Satellite, SG Highway, Gandhinagar"
-          open={false}
+      <section className="geo-location-section">
+        <div className="app-form-section-head">
+          <h4>Registered address</h4>
+          <p>Where your business is officially located — used as the default for visibility checks.</p>
+        </div>
+        <GeoLocationPicker
+          value={headquarters}
+          onChange={(loc) => {
+            form.setFieldsValue({
+              city: loc.city,
+              state: loc.state,
+              country: loc.country,
+              countryCode: loc.countryCode,
+              stateCode: loc.stateCode,
+            });
+            onValuesChange?.();
+          }}
         />
-      </Form.Item>
+        <Form.Item name="city" hidden rules={[{ required: true, message: "Required" }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="state" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="country" hidden rules={[{ required: true, message: "Required" }]}>
+          <Input />
+        </Form.Item>
+        <Form.Item name="countryCode" hidden>
+          <Input />
+        </Form.Item>
+        <Form.Item name="stateCode" hidden>
+          <Input />
+        </Form.Item>
+      </section>
+
+      <section className="geo-location-section is-last">
+        <div className="app-form-section-head">
+          <h4>Target locations</h4>
+          <p>{COPY.profile.targetLocationsTooltip}</p>
+        </div>
+        <Form.Item name="targetLocations" className="geo-location-target-form-item">
+          <GeoLocationListEditor headquarters={headquarters} />
+        </Form.Item>
+      </section>
     </>
   );
 
@@ -215,39 +289,82 @@ export default function BusinessProfileForm({
     <Form.List name="socialLinks">
       {(fields, { add, remove }) => (
         <div className="app-social-list">
-          {fields.length === 0 && (
-            <p className="app-form-hint">Add Instagram, Facebook, LinkedIn, or other profiles.</p>
-          )}
-          {fields.map((field) => (
-            <div key={field.key} className="app-social-row">
-              <Form.Item
-                {...field}
-                name={[field.name, "label"]}
-                rules={[{ required: true, message: "Label" }]}
-                className="app-social-label"
-              >
-                <Input placeholder="Instagram / Facebook / …" />
-              </Form.Item>
-              <Form.Item
-                {...field}
-                name={[field.name, "url"]}
-                rules={[{ required: true, message: "URL" }, urlRule()]}
-                className="app-social-url"
-              >
-                <Input placeholder="https://…" />
-              </Form.Item>
-              <button
-                type="button"
-                className="app-social-remove"
-                onClick={() => remove(field.name)}
-                aria-label="Remove link"
-              >
-                <MinusCircleOutlined />
-              </button>
+          {quickAddPlatforms.length > 0 && (
+            <div className="app-social-quick-add">
+              <span className="app-form-examples-label">Quick add:</span>
+              {quickAddPlatforms.map((platform) => (
+                <button
+                  key={platform.id}
+                  type="button"
+                  className="app-form-example-chip app-social-quick-chip"
+                  onClick={() => {
+                    add({ label: platform.label, url: "" });
+                    onValuesChange?.();
+                  }}
+                >
+                  <span className="app-social-quick-chip-icon">{platform.icon}</span>
+                  {platform.label}
+                </button>
+              ))}
             </div>
-          ))}
-          <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} block className="app-social-add">
-            Add social link
+          )}
+
+          {fields.length === 0 ? (
+            <p className="app-form-hint">
+              Add Instagram, Facebook, LinkedIn, or another platform you use.
+            </p>
+          ) : (
+            fields.map((field) => {
+              const currentLabel =
+                (socialLinks as { label?: string }[])?.[field.name]?.label || "";
+              const usedLabels = (socialLinks as { label?: string }[])
+                .map((link, index) => (index === field.name ? null : link?.label))
+                .filter((label): label is string => Boolean(label));
+
+              return (
+                <div key={field.key} className="app-social-row">
+                  <Form.Item
+                    {...field}
+                    name={[field.name, "label"]}
+                    label="Platform"
+                    rules={[{ required: true, message: "Select or enter a platform" }]}
+                    className="app-social-label"
+                  >
+                    <SocialPlatformSelect usedLabels={usedLabels} />
+                  </Form.Item>
+                  <Form.Item
+                    {...field}
+                    name={[field.name, "url"]}
+                    label="Profile URL"
+                    rules={[{ required: true, message: "Enter the profile URL" }, urlRule()]}
+                    className="app-social-url"
+                  >
+                    <Input placeholder={socialPlatformPlaceholder(currentLabel)} />
+                  </Form.Item>
+                  <button
+                    type="button"
+                    className="app-social-remove"
+                    onClick={() => remove(field.name)}
+                    aria-label="Remove link"
+                  >
+                    <MinusCircleOutlined />
+                  </button>
+                </div>
+              );
+            })
+          )}
+
+          <Button
+            type="dashed"
+            onClick={() => {
+              add({ label: "", url: "" });
+              onValuesChange?.();
+            }}
+            icon={<PlusOutlined />}
+            block
+            className="app-social-add"
+          >
+            Add another platform
           </Button>
         </div>
       )}
@@ -265,22 +382,25 @@ export default function BusinessProfileForm({
       id={formId}
       form={form}
       layout="vertical"
-      requiredMark="optional"
       className={sectioned ? "app-profile-form is-sectioned" : "app-profile-form"}
       initialValues={{
         name: initial?.name || "",
         category: initial?.category || undefined,
         customCategory: initial?.customCategory || "",
         city: initial?.city || "",
+        state: initial?.state || "",
         country: initial?.country || "India",
+        countryCode: initial?.countryCode || "IN",
+        stateCode: initial?.stateCode || "",
         description: initial?.description || "",
         nameAliases: initial?.nameAliases?.length ? initial.nameAliases : [],
         targetLocations: initial?.targetLocations?.length ? initial.targetLocations : [],
-        targetItems: initial?.targetItems?.length ? initial.targetItems : [""],
+        targetItems: initial?.targetItems?.length ? initial.targetItems : [],
         websiteUrl: initial?.websiteUrl || "",
         googleBusinessUrl: initial?.googleBusinessUrl || "",
         socialLinks: initial?.socialLinks?.length ? initial.socialLinks : [],
       }}
+      onValuesChange={onValuesChange}
       onFinish={onSubmit}
     >
       {activeSection === "identity" && identityFields}
@@ -323,54 +443,9 @@ export default function BusinessProfileForm({
       ) : !activeSection ? (
         <>
           {identityFields}
-          <Space style={{ display: "flex" }} align="start">
-            <Form.Item
-              name="city"
-              label="City"
-              rules={[{ required: true, message: "Required" }]}
-              style={{ flex: 1, minWidth: 160 }}
-            >
-              <Input />
-            </Form.Item>
-            <Form.Item
-              name="country"
-              label="Country"
-              rules={[{ required: true, message: "Required" }]}
-              style={{ flex: 1, minWidth: 160 }}
-            >
-              <Input />
-            </Form.Item>
-          </Space>
+          {locationFields}
           {onlineFields}
-          <Form.List name="socialLinks">
-            {(fields, { add, remove }) => (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ marginBottom: 8, fontWeight: 600 }}>Social media links</div>
-                {fields.map((field) => (
-                  <Space key={field.key} align="baseline" style={{ display: "flex", marginBottom: 8 }}>
-                    <Form.Item
-                      {...field}
-                      name={[field.name, "label"]}
-                      rules={[{ required: true, message: "Label" }]}
-                    >
-                      <Input placeholder="Instagram / Facebook / …" style={{ width: 160 }} />
-                    </Form.Item>
-                    <Form.Item
-                      {...field}
-                      name={[field.name, "url"]}
-                      rules={[{ required: true, message: "URL" }, urlRule()]}
-                    >
-                      <Input placeholder="https://…" style={{ width: 280 }} />
-                    </Form.Item>
-                    <MinusCircleOutlined onClick={() => remove(field.name)} />
-                  </Space>
-                ))}
-                <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />} block>
-                  Add social link
-                </Button>
-              </div>
-            )}
-          </Form.List>
+          {socialFields}
           {submitButton}
         </>
       ) : null}

@@ -1,8 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { BusinessCandidate } from "@aeo-pcs/shared";
+import type { BusinessCandidate, GeoLocation } from "@aeo-pcs/shared";
 
 type BusinessState = {
   city: string;
+  state: string;
   country: string;
   selected: BusinessCandidate | null;
   category: string;
@@ -12,6 +13,7 @@ type BusinessState = {
 
 const initialState: BusinessState = {
   city: "",
+  state: "",
   country: "",
   selected: null,
   category: "",
@@ -29,11 +31,12 @@ const businessSlice = createSlice({
         name: string;
         category: string;
         city: string;
+        state?: string;
         country: string;
         description?: string;
         customCategory?: string;
         nameAliases?: string[];
-        targetLocations?: string[];
+        targetLocations?: GeoLocation[];
         targetItems?: string[];
         websiteUrl?: string;
       }>
@@ -42,7 +45,7 @@ const businessSlice = createSlice({
       state.selected = {
         name: p.name,
         category: p.category || "Other",
-        address: [p.city, p.country].filter(Boolean).join(", "),
+        address: [p.city, p.state, p.country].filter(Boolean).join(", "),
         description: p.description || "",
         customCategory: p.customCategory,
         nameAliases: p.nameAliases || [],
@@ -51,6 +54,7 @@ const businessSlice = createSlice({
       };
       state.category = p.category || "Other";
       state.city = p.city || "";
+      state.state = p.state || "";
       state.country = p.country || "";
       state.websiteUrl = p.websiteUrl || "";
       state.profileLoaded = true;

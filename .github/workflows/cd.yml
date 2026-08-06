@@ -24,6 +24,7 @@ env:
   DEPLOY_PATH: /var/www/aeo-pcs
   # Bake production API base into static frontends at build time.
   NEXT_PUBLIC_API_URL: https://api.masteraeo.com/api/v1
+  NEXT_PUBLIC_RAZORPAY_KEY_ID: rzp_test_TLa5MUo5apEaJd
   VITE_API_URL: https://api.masteraeo.com/api/v1
   API_PORT: "4000"
 
@@ -60,6 +61,7 @@ jobs:
         run: npm run build:web
         env:
           NEXT_PUBLIC_API_URL: ${{ env.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_RAZORPAY_KEY_ID: ${{ env.NEXT_PUBLIC_RAZORPAY_KEY_ID }}
 
       - name: Build admin
         run: npm run build:admin

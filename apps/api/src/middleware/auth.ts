@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import type { UserRole } from "@aeo-pcs/shared";
+import { COPY } from "@aeo-pcs/shared";
 import { UserModel } from "../models/User";
 import { extractBearerToken, verifyAccessToken } from "../utils/auth";
 
@@ -18,6 +19,14 @@ export async function requireAuth(req: AuthedRequest, res: Response, next: NextF
     const user = await UserModel.findById(payload.sub);
     if (!user || user.status !== "active") {
       return res.status(401).json({ error: "Invalid or disabled account" });
+    }
+    if (user.sessionId) {
+      if (!payload.sid || payload.sid !== user.sessionId) {
+        return res.status(401).json({
+          error: COPY.auth.sessionRevoked,
+          code: "SESSION_REVOKED",
+        });
+      }
     }
     req.userId = String(user._id);
     req.userRole = user.role as UserRole;

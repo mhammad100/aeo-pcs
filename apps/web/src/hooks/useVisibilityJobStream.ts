@@ -45,7 +45,7 @@ export function useVisibilityJobStream(jobId: string | null) {
         try {
           const payload = JSON.parse((event as MessageEvent).data) as StreamPayload;
           applyPayload(dispatch, payload);
-          if (payload.status === "completed" || payload.status === "failed") {
+          if (payload.status === "completed" || payload.status === "failed" || payload.status === "cancelled") {
             closed = true;
             source?.close();
           }
@@ -58,7 +58,7 @@ export function useVisibilityJobStream(jobId: string | null) {
         try {
           const payload = JSON.parse((event as MessageEvent).data) as StreamPayload;
           applyPayload(dispatch, payload);
-          if (payload.status === "completed" || payload.status === "failed") {
+          if (payload.status === "completed" || payload.status === "failed" || payload.status === "cancelled") {
             closed = true;
             source?.close();
           }

@@ -17,7 +17,7 @@ type VisibilityState = {
   itemOutputs: Record<string, string>;
   error: string | null;
   uiBusy: boolean;
-  generatingItemId: string | null;
+  generatingByItemId: Record<string, boolean>;
 };
 
 const initialState: VisibilityState = {
@@ -30,7 +30,7 @@ const initialState: VisibilityState = {
   itemOutputs: {},
   error: null,
   uiBusy: false,
-  generatingItemId: null,
+  generatingByItemId: {},
 };
 
 const visibilitySlice = createSlice({
@@ -93,8 +93,16 @@ const visibilitySlice = createSlice({
     setItemOutput(state, action: PayloadAction<{ id: string; content: string }>) {
       state.itemOutputs[action.payload.id] = action.payload.content;
     },
-    setGeneratingItemId(state, action: PayloadAction<string | null>) {
-      state.generatingItemId = action.payload;
+    setItemGenerating(
+      state,
+      action: PayloadAction<{ id: string; generating: boolean }>,
+    ) {
+      const { id, generating } = action.payload;
+      if (generating) {
+        state.generatingByItemId[id] = true;
+      } else {
+        delete state.generatingByItemId[id];
+      }
     },
     resetVisibility() {
       return initialState;
@@ -109,7 +117,7 @@ export const {
   setJobSnapshot,
   setPlan,
   setItemOutput,
-  setGeneratingItemId,
+  setItemGenerating,
   resetVisibility,
 } = visibilitySlice.actions;
 

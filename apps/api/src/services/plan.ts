@@ -2,11 +2,18 @@ import type {
   ActionPlan,
   AutomatableItem,
   BusinessCandidate,
+  GeoLocation,
   ManualItem,
   PresenceAudit,
   PromptResult,
   SocialLink,
   VisibilityScore,
+} from "@aeo-pcs/shared";
+import {
+  formatGeoLocation,
+  headquartersLocation,
+  normalizeGeoLocationList,
+  resolvePromptLocations,
 } from "@aeo-pcs/shared";
 import { callClaude } from "./claude";
 import {
@@ -58,11 +65,27 @@ function mergeManualItems(presenceItems: ManualItem[], llmItems: ManualItem[]): 
   return merged.slice(0, 8);
 }
 
+function resolvePlanTargetLabels(input: {
+  city: string;
+  state?: string;
+  country: string;
+  targetLocations?: GeoLocation[] | unknown;
+}): string[] {
+  const hq = headquartersLocation({
+    city: input.city,
+    state: input.state,
+    country: input.country,
+  });
+  return resolvePromptLocations(hq, normalizeGeoLocationList(input.targetLocations, hq, 15));
+}
+
 export async function buildActionPlan(input: {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
+  targetLocations?: GeoLocation[] | unknown;
   websiteUrl?: string;
   googleBusinessUrl?: string;
   socialLinks?: SocialLink[];
@@ -70,6 +93,13 @@ export async function buildActionPlan(input: {
   score?: VisibilityScore | null;
   usage?: { userId?: string | null; businessId?: string | null; refs?: Record<string, unknown> };
 }): Promise<ActionPlan> {
+  const targetLabels = resolvePlanTargetLabels(input);
+  const targetMarketsLine = targetLabels.join(" | ") || formatGeoLocation({
+    city: input.city,
+    state: input.state || "",
+    country: input.country,
+  });
+
   const presenceAudit = await buildPresenceAudit({
     business: {
       name: input.business.name,
@@ -84,7 +114,7 @@ export async function buildActionPlan(input: {
     socialLinks: input.socialLinks,
   });
 
-  const presenceManual = buildPresenceManualItems(presenceAudit);
+  const presenceManual = buildPresenceManualItems(presenceAudit, { targetMarkets: targetMarketsLine });
 
   const allSourceDomains = dedupeSources(
     input.results.flatMap((r) => r.perModel.flatMap((m) => m.sources))
@@ -108,26 +138,29 @@ export async function buildActionPlan(input: {
 
   const auditBlock = formatAuditForPrompt(presenceAudit);
 
-  const system = `You are an AI visibility consultant. You will receive a verified online presence audit and visibility check results. Your job is to recommend content and actions that improve how AI assistants mention and cite this business.
+  const system = `You are an AI visibility consultant. You will receive a verified online presence audit and visibility check results. Your job is to recommend content and actions that improve how AI assistants mention and cite this business in their target markets.
 
 Hard rules — never break these:
 - If the audit shows Google Business Profile is on file (verified or needs_improvement), never suggest creating, claiming, or registering a new Google Business Profile.
 - If the audit shows a website is on file, never suggest building or launching a new website from scratch.
 - Do not repeat manual tasks already listed in the presence audit section unless you add distinct new detail.
-- Focus on citation gaps, competitor visibility, content opportunities, reviews, directories, and forum or local press presence.
+- Circle every recommendation around the Target markets listed in the user message. Prefer location pages, local directories, local press, reviews, FAQs, and content for those markets — not only the registered business address.
+- When target markets are broader (country or state only) or more specific (city), match the geographic depth of the recommendation to each market.
+- Focus on citation gaps, competitor visibility, content opportunities, reviews, directories, and forum or local press presence in those markets.
 
 Treat directories, review sites, marketplaces, and social platforms as citation sources to get listed on — NOT as business competitors. Manual items should focus on real visibility gaps: business listings, reviews, editorial features, owned website, and forum presence.
 
 Produce ONLY a JSON object with two arrays: automatable and manual.
-- Each automatable item: id (short slug), title (five words max), description (one plain sentence). Include 3 to 5 items such as FAQ content, a comparison paragraph, structured data guidance, forum-ready answers, or profile copy where appropriate.
-- Each manual item: title (five words max), guidance (two to three plain sentences, no markdown). Include 2 to 4 items that complement—not duplicate—the verified presence findings. Prioritize directories cited in AI answers, review generation, and content distribution.
+- Each automatable item: id (short slug), title (five words max), description (one plain sentence that names or implies the relevant target market when useful). Include 3 to 5 items such as FAQ content, a comparison paragraph, structured data guidance, forum-ready answers, or profile copy where appropriate.
+- Each manual item: title (five words max), guidance (two to three plain sentences, no markdown). Include 2 to 4 items that complement—not duplicate—the verified presence findings. Prioritize directories cited in AI answers, review generation, and content distribution for the target markets.
 
 Return valid JSON only, no markdown fences, no extra text.`;
 
   const identityBits = [
     `Business: ${input.business.name}`,
     `Category: ${input.category}`,
-    `Location: ${input.city}, ${input.country}`,
+    `Registered address: ${[input.city, input.state, input.country].filter(Boolean).join(", ")}`,
+    `Target markets: ${targetMarketsLine}`,
     input.business.address ? `Address: ${input.business.address}` : "",
     input.websiteUrl ? `Website: ${input.websiteUrl}` : "",
     input.googleBusinessUrl ? `Google Business Profile: ${input.googleBusinessUrl}` : "",
@@ -168,12 +201,25 @@ export async function generateItemContent(input: {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
+  targetLocations?: GeoLocation[] | unknown;
   item: Pick<AutomatableItem, "title" | "description">;
   usage?: { userId?: string | null; businessId?: string | null; refs?: Record<string, unknown> };
 }): Promise<string> {
-  const system = `You are a GEO content writer producing one specific piece of ready-to-publish content for a small business, so an AI assistant is more likely to cite them. ${NO_MARKDOWN_RULE} Keep the output focused and directly usable, roughly 120 to 220 words unless the task clearly needs more.`;
-  const userMsg = `Business: ${input.business.name}, ${input.category}, ${input.city}, ${input.country}\nDescription: ${input.business.description || ""}\n\nTask: ${input.item.title}\nDetail: ${input.item.description}\n\nWrite the actual content now, ready to copy and publish.`;
+  const targetLabels = resolvePlanTargetLabels(input);
+  const targetMarketsLine = targetLabels.join(" | ") || [input.city, input.state, input.country].filter(Boolean).join(", ");
+
+  const system = `You are a GEO content writer producing one specific piece of ready-to-publish content for a small business, so an AI assistant is more likely to cite them in their target markets. Anchor the writing to the Target markets provided (country, state, and/or city as listed) — do not default to the registered address alone when targets differ. ${NO_MARKDOWN_RULE} Keep the output focused and directly usable, roughly 120 to 220 words unless the task clearly needs more.`;
+  const userMsg = `Business: ${input.business.name}, ${input.category}
+Registered address: ${[input.city, input.state, input.country].filter(Boolean).join(", ")}
+Target markets: ${targetMarketsLine}
+Description: ${input.business.description || ""}
+
+Task: ${input.item.title}
+Detail: ${input.item.description}
+
+Write the actual content now, ready to copy and publish. Explicitly reflect the target markets where natural.`;
   const { text } = await callClaude({
     prompt: userMsg,
     system,

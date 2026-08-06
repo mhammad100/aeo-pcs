@@ -1,5 +1,5 @@
 import type { BusinessInsights, VisibilityJobSummary, VisibilityScore } from "@aeo-pcs/shared";
-import { computeVisibilityRunInsights } from "@aeo-pcs/shared";
+import { computeVisibilityRunInsights, normalizeGeoLocationList } from "@aeo-pcs/shared";
 import { BusinessModel } from "../models/Business";
 import { VisibilityJobModel } from "../models/VisibilityJob";
 import { AppError } from "../utils/AppError";
@@ -151,8 +151,12 @@ export async function getBusinessInsights(userId: string): Promise<BusinessInsig
           description: String(latestFullJob.business?.description || business.description || ""),
           category: String(latestFullJob.category || business.category || ""),
           targetItems: (latestFullJob.targetItems || business.targetItems || []).map(String),
-          targetLocations: (latestFullJob.targetLocations || business.targetLocations || []).map(
-            String
+          targetLocations: normalizeGeoLocationList(
+            latestFullJob.targetLocations || business.targetLocations,
+            {
+              state: business.state || "",
+              country: business.country || "",
+            },
           ),
           city: String(business.city || ""),
         }

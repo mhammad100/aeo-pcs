@@ -1,5 +1,10 @@
 import { BusinessModel } from "../models/Business";
 import { AppError } from "../utils/AppError";
+import type { GeoLocation } from "@aeo-pcs/shared";
+import {
+  headquartersLocation,
+  normalizeGeoLocationList,
+} from "@aeo-pcs/shared";
 import { toBusinessProfile } from "../utils/serialize";
 
 function isValidHttpUrl(value: string): boolean {
@@ -49,10 +54,13 @@ export type UpdateBusinessProfileInput = {
   category: string;
   customCategory?: string;
   city: string;
+  state?: string;
   country: string;
+  countryCode?: string;
+  stateCode?: string;
   description: string;
   nameAliases?: string[];
-  targetLocations?: string[];
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
   websiteUrl?: string;
   googleBusinessUrl?: string;
@@ -82,16 +90,32 @@ export async function updateMyBusiness(userId: string, input: UpdateBusinessProf
         }))
     : [];
 
+  const hq = headquartersLocation({
+    city: input.city,
+    state: input.state,
+    country: input.country,
+    countryCode: input.countryCode,
+    stateCode: input.stateCode,
+  });
+
   business.name = input.name;
   business.category = input.category;
   business.customCategory =
     input.category.trim() === "Other" ? input.customCategory?.trim() || "" : "";
-  business.city = input.city;
-  business.country = input.country;
+  business.city = hq.city;
+  business.state = hq.state;
+  business.country = hq.country;
+  business.countryCode = hq.countryCode || "";
+  business.stateCode = hq.stateCode || "";
   business.description = input.description.trim();
   business.nameAliases = normalizeStringList(input.nameAliases, 10);
-  const targetLocations = normalizeStringList(input.targetLocations, 15);
-  business.targetLocations = targetLocations.length ? targetLocations : [input.city.trim()];
+
+  const targetLocations = normalizeGeoLocationList(input.targetLocations, hq, 15);
+  business.set(
+    "targetLocations",
+    targetLocations.length > 0 ? targetLocations : [{ ...hq }],
+  );
+
   business.targetItems = normalizeStringList(input.targetItems, 20);
   business.websiteUrl = input.websiteUrl?.trim() || "";
   business.googleBusinessUrl = input.googleBusinessUrl || "";

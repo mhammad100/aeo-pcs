@@ -93,7 +93,7 @@ function ActionPlanItemCard({
           </span>
         </div>
         <div className="action-plan-item__actions">
-          {isAutomatable && onGenerate && (
+          {isAutomatable && onGenerate && !itemOutput && (
             <Button
               type="primary"
               size="small"
@@ -101,7 +101,7 @@ function ActionPlanItemCard({
               disabled={!item.sourceJobId || saving}
               onClick={() => onGenerate(item)}
             >
-              {itemOutput ? "Regenerate" : "Generate"}
+              Generate
             </Button>
           )}
           {item.done && <CheckCircleFilled className="action-plan-item__done-icon" />}
@@ -211,7 +211,7 @@ type TabPanelProps = {
   filter: ActionPlanFilter;
   onFilterChange: (filter: ActionPlanFilter) => void;
   savingKey: string | null;
-  generatingKey: string | null;
+  generatingByKey: Record<string, boolean>;
   itemOutputs: Record<string, string>;
   onToggle: (item: ChecklistItem, done: boolean) => void;
   onNote: (item: ChecklistItem, note: string) => void;
@@ -224,7 +224,7 @@ function ActionPlanTabPanel({
   filter,
   onFilterChange,
   savingKey,
-  generatingKey,
+  generatingByKey,
   itemOutputs,
   onToggle,
   onNote,
@@ -259,7 +259,7 @@ function ActionPlanTabPanel({
                 key={item.key}
                 item={item}
                 saving={savingKey === item.key}
-                generating={generatingKey === item.key}
+                generating={Boolean(generatingByKey[item.key])}
                 itemOutput={itemId ? itemOutputs[itemId] : undefined}
                 onToggle={onToggle}
                 onNote={onNote}
@@ -285,7 +285,7 @@ type TabsProps = {
   onReadyFilterChange: (filter: ActionPlanFilter) => void;
   onManualFilterChange: (filter: ActionPlanFilter) => void;
   savingKey: string | null;
-  generatingKey: string | null;
+  generatingByKey: Record<string, boolean>;
   itemOutputs: Record<string, string>;
   onToggle: (item: ChecklistItem, done: boolean) => void;
   onNote: (item: ChecklistItem, note: string) => void;
@@ -304,7 +304,7 @@ export function ActionPlanTabs({
   onReadyFilterChange,
   onManualFilterChange,
   savingKey,
-  generatingKey,
+  generatingByKey,
   itemOutputs,
   onToggle,
   onNote,
@@ -320,7 +320,7 @@ export function ActionPlanTabs({
           filter={readyFilter}
           onFilterChange={onReadyFilterChange}
           savingKey={savingKey}
-          generatingKey={generatingKey}
+          generatingByKey={generatingByKey}
           itemOutputs={itemOutputs}
           onToggle={onToggle}
           onNote={onNote}
@@ -338,7 +338,7 @@ export function ActionPlanTabs({
           filter={manualFilter}
           onFilterChange={onManualFilterChange}
           savingKey={savingKey}
-          generatingKey={generatingKey}
+          generatingByKey={generatingByKey}
           itemOutputs={itemOutputs}
           onToggle={onToggle}
           onNote={onNote}

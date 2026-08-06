@@ -255,7 +255,7 @@ Versions can ship as internal milestones before public launch.
 ---
 
 ### Phase G — Later (v1.x+)
-- Stripe (or local PSP) real billing
+- [x] Razorpay Subscriptions (checkout, webhooks, cancel at period end) — see billing routes
 - Email transactional (receipts, invites)
 - Real OpenAI / Gemini / Perplexity providers (replace or supplement simulation)
 - Team seats, agencies, white-label
@@ -401,7 +401,7 @@ Update this table as work completes.
 | Auth token storage | Access JWT in memory + refresh httpOnly cookie (or localStorage MVP) | Before v1.0 |
 | Signup | Disabled | v1.0 flag |
 | Multi-model | Simulated via Claude | v1.x |
-| Payments | Admin-assigned plan + billing stub | v1.x Stripe |
+| Payments | Razorpay Subscriptions (+ local BILLING_STUB) | v1.x |
 | Business search step | Drop from main path; profile is source of truth | Optional “enrich from web” later |
 
 ---

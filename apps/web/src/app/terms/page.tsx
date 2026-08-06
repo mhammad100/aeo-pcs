@@ -38,7 +38,7 @@ export default function TermsPage() {
             <li>Subscription-based access according to your plan</li>
           </ul>
           <p>
-            Features, limits (such as visibility runs per month), and pricing may change over time.
+              Features, limits (such as visibility checks per month), and pricing may change over time.
           </p>
 
           <h2>Accounts</h2>
@@ -77,11 +77,16 @@ export default function TermsPage() {
               Paid plans grant access for a billing period subject to plan limits and features.
             </li>
             <li>
-              Fees, currency, and entitlements are shown at purchase or assignment and may be updated
-              for future periods.
+              Fees, currency, and entitlements are shown at purchase and may be updated for future
+              periods.
             </li>
             <li>
               Unless otherwise stated, subscriptions renew for successive periods until canceled.
+            </li>
+            <li>
+              You may cancel from Subscription in your account. Cancellation stops future renewals
+              and typically takes effect at the end of the current paid period; you keep access until
+              then unless we state otherwise.
             </li>
             <li>Failure to pay may result in suspension, past-due status, or cancellation.</li>
             <li>Taxes may apply where required.</li>

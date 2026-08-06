@@ -7,6 +7,7 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
+  Select,
   Space,
   Switch,
   Table,
@@ -16,7 +17,7 @@ import {
 } from "antd";
 import { api, type AdminPlan, ApiError } from "@/lib/api";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 export default function PlansPage() {
   const [plans, setPlans] = useState<AdminPlan[]>([]);
@@ -54,40 +55,42 @@ export default function PlansPage() {
 
   async function savePlan(values: Record<string, unknown>) {
     try {
+      const body = {
+        name: values.name as string,
+        slug: values.slug as string | undefined,
+        price: values.price as number,
+        currency: (values.currency as string) || "INR",
+        priceLabel: values.priceLabel as string | undefined,
+        billingPeriod: (values.billingPeriod as "monthly" | "yearly") || "monthly",
+        blurb: values.blurb as string | undefined,
+        features: String(values.featuresText || "")
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean),
+        visibilityRunsPerMonth: values.visibilityRunsPerMonth as number | undefined,
+        active: values.active as boolean | undefined,
+        sortOrder: values.sortOrder as number | undefined,
+      };
+
       if (editing) {
-        await api.updateAdminPlan(editing.id, {
-          name: values.name as string,
-          slug: values.slug as string | undefined,
-          price: values.price as number,
-          currency: values.currency as string | undefined,
-          priceLabel: values.priceLabel as string | undefined,
-          blurb: values.blurb as string | undefined,
-          features: String(values.featuresText || "")
-            .split("\n")
-            .map((s) => s.trim())
-            .filter(Boolean),
-          visibilityRunsPerMonth: values.visibilityRunsPerMonth as number | undefined,
-          active: values.active as boolean | undefined,
-          sortOrder: values.sortOrder as number | undefined,
-        });
-        message.success("Plan updated");
+        const res = await api.updateAdminPlan(editing.id, body);
+        const m = res.migration;
+        if (m && (m.scheduled > 0 || m.failed > 0)) {
+          message.success(
+            `Plan updated. ${m.scheduled} subscriber(s) scheduled for the new price/period at next renewal` +
+              (m.failed ? `; ${m.failed} failed` : "")
+          );
+        } else {
+          message.success("Plan updated");
+        }
       } else {
         await api.createAdminPlan({
-          name: values.name as string,
-          slug: values.slug as string | undefined,
-          price: values.price as number,
-          currency: (values.currency as string) || "USD",
-          priceLabel: values.priceLabel as string | undefined,
-          blurb: values.blurb as string | undefined,
-          features: String(values.featuresText || "")
-            .split("\n")
-            .map((s) => s.trim())
-            .filter(Boolean),
+          ...body,
           visibilityRunsPerMonth: (values.visibilityRunsPerMonth as number) ?? 3,
           active: (values.active as boolean) ?? true,
           sortOrder: (values.sortOrder as number) ?? 0,
         });
-        message.success("Plan created");
+        message.success("Plan created and synced to payment provider");
       }
       setPlanModal(false);
       setEditing(null);
@@ -114,7 +117,9 @@ export default function PlansPage() {
         Plans
       </Title>
       <Paragraph type="secondary">
-        Product plan catalog and limits. Businesses choose a plan during onboarding.
+        Catalog plans shown to businesses. When Razorpay is configured, saving a plan creates the
+        matching payment plan. Changing price or billing period schedules existing subscribers onto
+        the new plan at their next renewal.
       </Paragraph>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
       <Space style={{ marginBottom: 16 }}>
@@ -123,7 +128,12 @@ export default function PlansPage() {
           onClick={() => {
             setEditing(null);
             planForm.resetFields();
-            planForm.setFieldsValue({ currency: "USD", active: true, visibilityRunsPerMonth: 5 });
+            planForm.setFieldsValue({
+              currency: "INR",
+              billingPeriod: "monthly",
+              active: true,
+              visibilityRunsPerMonth: 5,
+            });
             setPlanModal(true);
           }}
         >
@@ -145,8 +155,18 @@ export default function PlansPage() {
             render: (_, r) => r.priceLabel || `${r.currency} ${r.price}`,
           },
           {
-            title: "Runs/mo",
+            title: "Period",
+            dataIndex: "billingPeriod",
+            render: (v?: string) => (v === "yearly" ? "Yearly" : "Monthly"),
+          },
+          {
+            title: "Checks/mo",
             dataIndex: ["limits", "visibilityRunsPerMonth"],
+          },
+          {
+            title: "Payment plan ID",
+            dataIndex: "razorpayPlanId",
+            render: (v?: string) => v || "—",
           },
           {
             title: "Active",
@@ -163,6 +183,7 @@ export default function PlansPage() {
                     setEditing(r);
                     planForm.setFieldsValue({
                       ...r,
+                      billingPeriod: r.billingPeriod || "monthly",
                       featuresText: (r.features || []).join("\n"),
                       visibilityRunsPerMonth: r.limits.visibilityRunsPerMonth,
                     });
@@ -209,8 +230,18 @@ export default function PlansPage() {
         onCancel={() => setPlanModal(false)}
         onOk={() => planForm.submit()}
         destroyOnClose
+        width={560}
       >
         <Form form={planForm} layout="vertical" onFinish={savePlan}>
+          {editing ? (
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message="Price or period changes"
+              description="Saving a new price or billing period creates a new payment plan and schedules active subscribers to move to it at their next renewal. The current period is unchanged."
+            />
+          ) : null}
           <Form.Item name="name" label="Name" rules={[{ required: true }]}>
             <Input />
           </Form.Item>
@@ -220,15 +251,31 @@ export default function PlansPage() {
           <Form.Item
             name="price"
             label="Price"
-            rules={[{ required: true }, { type: "number", min: 0.01, message: "Price must be greater than zero" }]}
+            rules={[
+              { required: true },
+              { type: "number", min: 0.01, message: "Price must be greater than zero" },
+            ]}
           >
             <InputNumber min={0.01} step={0.01} style={{ width: "100%" }} />
           </Form.Item>
-          <Form.Item name="currency" label="Currency">
-            <Input maxLength={3} />
+          <Form.Item name="currency" label="Currency" rules={[{ required: true }]}>
+            <Input maxLength={3} placeholder="INR" />
+          </Form.Item>
+          <Form.Item
+            name="billingPeriod"
+            label="Billing period"
+            rules={[{ required: true }]}
+            extra="How often subscribers are charged."
+          >
+            <Select
+              options={[
+                { value: "monthly", label: "Monthly" },
+                { value: "yearly", label: "Yearly" },
+              ]}
+            />
           </Form.Item>
           <Form.Item name="priceLabel" label="Display label">
-            <Input placeholder="$99/mo" />
+            <Input placeholder="₹999/mo" />
           </Form.Item>
           <Form.Item name="blurb" label="Blurb">
             <Input.TextArea rows={2} />
@@ -236,12 +283,19 @@ export default function PlansPage() {
           <Form.Item name="featuresText" label="Features (one per line)">
             <Input.TextArea rows={4} />
           </Form.Item>
-          <Form.Item name="visibilityRunsPerMonth" label="Visibility runs / month">
+          <Form.Item name="visibilityRunsPerMonth" label="Visibility checks / month">
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="sortOrder" label="Sort order">
             <InputNumber min={0} style={{ width: "100%" }} />
           </Form.Item>
+          {editing?.razorpayPlanId ? (
+            <Form.Item label="Payment plan ID">
+              <Text type="secondary" copyable>
+                {editing.razorpayPlanId}
+              </Text>
+            </Form.Item>
+          ) : null}
           <Form.Item name="active" label="Active" valuePropName="checked">
             <Switch />
           </Form.Item>

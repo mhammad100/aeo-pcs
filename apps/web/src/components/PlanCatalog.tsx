@@ -43,7 +43,8 @@ export default function PlanCatalog({
               ]}
             >
               <Paragraph strong style={{ fontSize: 20, marginBottom: 8 }}>
-                {plan.priceLabel || `${plan.currency} ${plan.price}`}
+                {plan.priceLabel ||
+                  `${plan.currency} ${plan.price}/${plan.billingPeriod === "yearly" ? "yr" : "mo"}`}
               </Paragraph>
               {plan.blurb ? (
                 <Paragraph type="secondary" style={{ minHeight: 48 }}>
@@ -54,7 +55,7 @@ export default function PlanCatalog({
                 {plan.features.map((feature) => (
                   <li key={feature}>{feature}</li>
                 ))}
-                <li>{plan.limits.visibilityRunsPerMonth} visibility runs / month</li>
+                <li>{plan.limits.visibilityRunsPerMonth} visibility checks / month</li>
               </ul>
             </Card>
           </Col>

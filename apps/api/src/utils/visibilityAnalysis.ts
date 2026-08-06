@@ -1,5 +1,13 @@
-import type { MentionSentiment, Source, VisibilityScore } from "@aeo-pcs/shared";
+import type { MentionSentiment, Source, VisibilityScore, GeoLocation } from "@aeo-pcs/shared";
 import type { PromptResult } from "@aeo-pcs/shared";
+import {
+  buildVisibilityLocationContext,
+  CORE_PROMPT_SCORE_WEIGHT,
+  headquartersLocation,
+  isCoreVisibilityPrompt,
+  normalizeGeoLocationList,
+  type PromptContext,
+} from "@aeo-pcs/shared";
 import { extractMentioned } from "./llm";
 
 export type VisibilityBusinessContext = {
@@ -58,19 +66,40 @@ export function buildVisibilityUserPrompt(input: {
   prompt: string;
   category: string;
   city: string;
+  state?: string;
   country: string;
-  targetLocations?: string[];
+  countryCode?: string;
+  stateCode?: string;
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
+  promptIndex?: number;
 }): string {
-  const locations = [...new Set([input.city, ...(input.targetLocations || [])].filter(Boolean))];
-  const locationLine = locations.length
-    ? `Location context: ${locations.join(", ")}, ${input.country}`
-    : `Location context: ${input.country}`;
+  const headquarters = headquartersLocation({
+    city: input.city,
+    state: input.state,
+    country: input.country,
+    countryCode: input.countryCode,
+    stateCode: input.stateCode,
+  });
+  const targets = normalizeGeoLocationList(input.targetLocations, headquarters);
+  const locationLine = buildVisibilityLocationContext({
+    prompt: input.prompt,
+    headquarters,
+    targetLocations: targets.length ? targets : undefined,
+    promptIndex: input.promptIndex,
+  });
   const items = (input.targetItems || []).filter(Boolean);
   const itemLine = items.length ? `Relevant services/products: ${items.join(", ")}` : "";
   const categoryLine = input.category ? `Category: ${input.category}` : "";
 
   return [input.prompt, locationLine, categoryLine, itemLine].filter(Boolean).join("\n");
+}
+
+function mentionPositionWeight(position: number | null | undefined): number {
+  if (!position || position <= 0) return 1;
+  if (position === 1) return 1;
+  if (position === 2) return 0.85;
+  return 0.7;
 }
 
 export function normalizeVisibilityScore(
@@ -105,19 +134,30 @@ export function normalizeVisibilityScore(
 
 export function computeScore(
   results: PromptResult[],
-  _modelCount: number
+  _modelCount: number,
+  promptContext?: PromptContext,
 ): VisibilityScore {
   let totalChecks = 0;
   let totalMentions = 0;
   let totalSourceMentions = 0;
+  let weightedChecks = 0;
+  let weightedMentions = 0;
   const positions: number[] = [];
   const sentiments: number[] = [];
 
   for (const r of results) {
+    const isCore = promptContext ? isCoreVisibilityPrompt(r.prompt, promptContext) : true;
+    const promptWeight = isCore ? CORE_PROMPT_SCORE_WEIGHT : 1;
+
     for (const m of r.perModel) {
       if (!m.answer?.trim()) continue;
       totalChecks += 1;
-      if (m.mentioned) totalMentions += 1;
+      weightedChecks += promptWeight;
+
+      if (m.mentioned) {
+        totalMentions += 1;
+        weightedMentions += promptWeight * mentionPositionWeight(m.position);
+      }
       if (m.sourceMentioned) totalSourceMentions += 1;
       if (m.mentioned && typeof m.position === "number" && m.position > 0) {
         positions.push(m.position);
@@ -128,8 +168,8 @@ export function computeScore(
     }
   }
 
-  const brandVisibilityPct = totalChecks
-    ? Math.round((totalMentions / totalChecks) * 100)
+  const brandVisibilityPct = weightedChecks
+    ? Math.round((weightedMentions / weightedChecks) * 100)
     : 0;
   const sourceVisibilityPct = totalChecks
     ? Math.round((totalSourceMentions / totalChecks) * 100)

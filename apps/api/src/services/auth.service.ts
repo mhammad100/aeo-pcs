@@ -1,10 +1,18 @@
 import type { UserRole } from "@aeo-pcs/shared";
+import { COPY } from "@aeo-pcs/shared";
+import { randomUUID } from "crypto";
 import { env } from "../config/env";
 import { BusinessModel } from "../models/Business";
 import { UserModel } from "../models/User";
 import { AppError } from "../utils/AppError";
-import { hashPassword, signAccessToken, verifyPassword } from "../utils/auth";
+import {
+  createSessionId,
+  hashPassword,
+  signAccessToken,
+  verifyPassword,
+} from "../utils/auth";
 import { toAuthUser } from "../utils/serialize";
+import { findActiveVisibilityJobForBusiness } from "./visibilityJobs.service";
 
 function normalizeOrigin(value: string): string {
   return value.trim().replace(/\/$/, "");
@@ -20,10 +28,26 @@ export function expectedRoleForOrigin(originRaw: string | undefined): UserRole {
   throw new AppError("Unknown login origin", 403);
 }
 
+async function issueSession(
+  user: { _id: unknown; role: string; sessionId?: string | null; save: () => Promise<unknown> },
+  business: unknown
+) {
+  const sessionId = createSessionId();
+  user.sessionId = sessionId;
+  await user.save();
+  const token = signAccessToken({
+    sub: String(user._id),
+    role: user.role as UserRole,
+    sid: sessionId,
+  });
+  return { token, user: toAuthUser(user as never, business as never) };
+}
+
 export async function loginUser(
   emailRaw: string,
   password: string,
-  expectedRole: UserRole
+  expectedRole: UserRole,
+  options?: { revokeOtherSession?: boolean }
 ) {
   const email = emailRaw.toLowerCase();
   const user = await UserModel.findOne({ email });
@@ -44,15 +68,29 @@ export async function loginUser(
   }
 
   const business = await BusinessModel.findOne({ ownerUserId: user._id });
-  const token = signAccessToken({
-    sub: String(user._id),
-    role: user.role as UserRole,
-  });
-  return { token, user: toAuthUser(user, business) };
+
+  if (user.sessionId && !options?.revokeOtherSession) {
+    let visibilityRunInProgress = false;
+    let activeJobId: string | undefined;
+    if (business) {
+      const active = await findActiveVisibilityJobForBusiness(String(business._id));
+      if (active) {
+        visibilityRunInProgress = true;
+        activeJobId = String(active._id);
+      }
+    }
+    throw new AppError(
+      COPY.auth.sessionActive,
+      409,
+      "SESSION_ACTIVE",
+      { visibilityRunInProgress, activeJobId }
+    );
+  }
+
+  return issueSession(user, business);
 }
 
 export async function signupUser(emailRaw: string, password: string) {
-
   const email = emailRaw.toLowerCase();
   const existing = await UserModel.findOne({ email });
   if (existing) {
@@ -65,6 +103,7 @@ export async function signupUser(emailRaw: string, password: string) {
     passwordHash,
     role: "business",
     status: "active",
+    sessionId: randomUUID(),
   });
   const business = await BusinessModel.create({
     ownerUserId: user._id,
@@ -79,7 +118,11 @@ export async function signupUser(emailRaw: string, password: string) {
     profileCompletedAt: null,
   });
 
-  const token = signAccessToken({ sub: String(user._id), role: "business" });
+  const token = signAccessToken({
+    sub: String(user._id),
+    role: "business",
+    sid: String(user.sessionId),
+  });
   return { token, user: toAuthUser(user, business) };
 }
 
@@ -110,4 +153,14 @@ export async function changePassword(
   }
   user.passwordHash = await hashPassword(newPassword);
   await user.save();
+}
+
+export async function logoutUser(userId: string) {
+  const user = await UserModel.findById(userId);
+  if (!user) {
+    throw new AppError("User not found", 401);
+  }
+  user.sessionId = null;
+  await user.save();
+  return { ok: true as const };
 }

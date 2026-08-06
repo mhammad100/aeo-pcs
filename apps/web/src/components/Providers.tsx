@@ -2,7 +2,7 @@
 
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
-import { ConfigProvider, theme } from "antd";
+import { App, ConfigProvider, theme } from "antd";
 import { store, persistor } from "@/store";
 import AntdRegistry from "./AntdRegistry";
 
@@ -30,7 +30,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
               },
             }}
           >
-            {children}
+            <App>{children}</App>
           </ConfigProvider>
         </PersistGate>
       </Provider>

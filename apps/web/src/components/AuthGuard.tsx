@@ -26,7 +26,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         const { user } = await api.me();
         if (!cancelled) {
           if (user.role !== "business" || user.status !== "active") {
-            void dispatch(logoutAndReset());
+            void dispatch(logoutAndReset({ revokeServer: false }));
             router.replace("/login");
             return;
           }
@@ -35,7 +35,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
         }
       } catch {
         if (!cancelled) {
-          void dispatch(logoutAndReset());
+          void dispatch(logoutAndReset({ revokeServer: false }));
           router.replace("/login");
         }
       }

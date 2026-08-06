@@ -4,6 +4,7 @@ import {
   isCoreVisibilityPrompt,
   type PromptContext,
 } from "./brandFilters";
+import type { PromptRunFeedback } from "./promptGeneration";
 
 export type ModelBreakdown = {
   model: string;
@@ -34,6 +35,8 @@ export type VisibilityRunInsights = {
   score: VisibilityScore;
   coreScore: CoreVisibilityScore | null;
   modelBreakdown: ModelBreakdown[];
+  /** Every prompt from the run, in run order. */
+  allPrompts: PromptBreakdown[];
   weakPrompts: PromptBreakdown[];
   strongPrompts: PromptBreakdown[];
   topCompetitors: NamedCount[];
@@ -48,6 +51,47 @@ function sentimentLabelFromScore(score: number | null): VisibilityRunInsights["s
   if (score >= 60) return "Neutral";
   if (score >= 40) return "Mixed";
   return "Negative";
+}
+
+/** Extract weak prompts and top competitors from a prior visibility run for prompt regeneration. */
+export function extractPromptRunFeedback(
+  results: PromptResult[],
+  ownNames: string[] = [],
+): PromptRunFeedback {
+  const weakPrompts: string[] = [];
+  const competitorCounts = new Map<string, number>();
+
+  for (const r of results) {
+    let promptMentions = 0;
+    let promptTotal = 0;
+
+    for (const m of r.perModel) {
+      if (!m.answer?.trim()) continue;
+      promptTotal += 1;
+      if (m.mentioned) promptMentions += 1;
+
+      const citedDomains = m.sources.map((s) => (s.domain || "").trim()).filter(Boolean);
+      const brands = filterLocalBusinesses(
+        (m.brandsMentioned || []).map((b) => String(b ?? "")),
+        citedDomains,
+        ownNames.map((n) => String(n ?? "")),
+      );
+      for (const brand of brands) {
+        competitorCounts.set(brand, (competitorCounts.get(brand) || 0) + 1);
+      }
+    }
+
+    if (promptTotal > 0 && promptMentions === 0) {
+      weakPrompts.push(r.prompt);
+    }
+  }
+
+  const competitors = [...competitorCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([name]) => name);
+
+  return { weakPrompts: weakPrompts.slice(0, 5), competitors };
 }
 
 function computeCoreScore(
@@ -124,9 +168,8 @@ export function computeVisibilityRunInsights(
       }
     }
 
-    if (promptTotal > 0) {
-      promptStats.push({ prompt: r.prompt, mentions: promptMentions, total: promptTotal });
-    }
+    // Always include every prompt so the UI can show the full run (even if all models failed).
+    promptStats.push({ prompt: r.prompt, mentions: promptMentions, total: promptTotal });
   }
 
   const modelBreakdown = [...modelStats.entries()]
@@ -138,12 +181,14 @@ export function computeVisibilityRunInsights(
     }))
     .sort((a, b) => b.pct - a.pct);
 
-  const sortedPrompts = [...promptStats].sort((a, b) => a.mentions / a.total - b.mentions / b.total);
-  const weakPrompts = sortedPrompts.filter((p) => p.mentions < p.total).slice(0, 3);
-  const strongPrompts = [...promptStats]
+  const allPrompts = [...promptStats];
+  // Partition every prompt into exactly one section (no caps, no overlap) so UI totals match the run.
+  const weakPrompts = promptStats
+    .filter((p) => p.mentions === 0)
+    .sort((a, b) => b.total - a.total);
+  const strongPrompts = promptStats
     .filter((p) => p.mentions > 0)
-    .sort((a, b) => b.mentions / b.total - a.mentions / a.total)
-    .slice(0, 3);
+    .sort((a, b) => b.mentions / Math.max(b.total, 1) - a.mentions / Math.max(a.total, 1));
 
   const topCompetitors = [...competitorCounts.entries()]
     .map(([name, count]) => ({ name, count }))
@@ -174,6 +219,7 @@ export function computeVisibilityRunInsights(
     score,
     coreScore,
     modelBreakdown,
+    allPrompts,
     weakPrompts,
     strongPrompts,
     topCompetitors,

@@ -1,4 +1,5 @@
 import type { Category, LlmProvider } from "./constants";
+import type { GeoLocation } from "./geo";
 import type { PresenceAudit } from "./presenceAudit";
 
 export type BusinessCandidate = {
@@ -8,7 +9,7 @@ export type BusinessCandidate = {
   address: string;
   description: string;
   nameAliases?: string[];
-  targetLocations?: string[];
+  targetLocations?: GeoLocation[];
   targetItems?: string[];
 };
 
@@ -109,7 +110,22 @@ export type ActionPlan = {
   presenceAudit?: PresenceAudit;
 };
 
-export type JobStatus = "queued" | "running" | "completed" | "failed";
+export type JobStatus =
+  | "generating"
+  | "ready"
+  | "queued"
+  | "running"
+  | "completed"
+  | "failed"
+  | "cancelled";
+
+/** Job is still in the visibility-check flow (prompts or model run). */
+export const ACTIVE_VISIBILITY_JOB_STATUSES: JobStatus[] = [
+  "generating",
+  "ready",
+  "queued",
+  "running",
+];
 
 export type VisibilityJobProgress = {
   completed: number;
@@ -125,6 +141,7 @@ export type VisibilityJob = {
   business: BusinessCandidate;
   category: Category | string;
   city: string;
+  state: string;
   country: string;
   prompts: string[];
   results?: PromptResult[];
@@ -139,6 +156,7 @@ export type VisibilityJob = {
 export type SearchBusinessRequest = {
   name: string;
   city: string;
+  state?: string;
   country: string;
 };
 
@@ -150,6 +168,7 @@ export type GeneratePromptsRequest = {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
 };
 
@@ -161,12 +180,30 @@ export type CreateVisibilityJobRequest = {
   business: BusinessCandidate;
   category: string;
   city: string;
+  state?: string;
   country: string;
   prompts: string[];
 };
 
 export type CreateVisibilityJobResponse = {
   jobId: string;
+};
+
+export type StartVisibilityJobRequest = {
+  category: string;
+};
+
+export type StartVisibilityJobResponse = {
+  job: VisibilityJob;
+};
+
+export type RunVisibilityJobRequest = {
+  prompts: string[];
+};
+
+export type RunVisibilityJobResponse = {
+  jobId: string;
+  job: VisibilityJob;
 };
 
 export type BuildPlanRequest = {
@@ -256,6 +293,8 @@ export type ProductPlanLimits = {
   visibilityRunsPerMonth: number;
 };
 
+export type BillingPeriod = "monthly" | "yearly";
+
 export type ProductPlan = {
   id: string;
   name: string;
@@ -263,14 +302,28 @@ export type ProductPlan = {
   price: number;
   currency: string;
   priceLabel?: string;
+  billingPeriod: BillingPeriod;
   blurb: string;
   features: string[];
   limits: ProductPlanLimits;
   active: boolean;
   sortOrder: number;
+  /** Present on admin responses; synced from Razorpay when billing is configured. */
+  razorpayPlanId?: string;
 };
 
-export type SubscriptionStatus = "active" | "canceled" | "past_due" | "trialing";
+export type PlanMigrationResult = {
+  scheduled: number;
+  failed: number;
+  errors: string[];
+};
+
+export type SubscriptionStatus =
+  | "active"
+  | "canceled"
+  | "past_due"
+  | "trialing"
+  | "incomplete";
 
 export type SubscriptionInfo = {
   id: string;
@@ -281,6 +334,8 @@ export type SubscriptionInfo = {
   plan: ProductPlan | null;
   runsUsedThisPeriod: number;
   runsLimit: number;
+  cancelAtPeriodEnd?: boolean;
+  canceledAt?: string;
 };
 
 export type InvoiceRecord = {
@@ -291,6 +346,7 @@ export type InvoiceRecord = {
   periodLabel: string;
   note?: string;
   createdAt: string;
+  razorpayPaymentId?: string;
 };
 
 export type CostRate = {

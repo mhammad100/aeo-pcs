@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import type { UserRole } from "@aeo-pcs/shared";
 import { env } from "../config/env";
 
@@ -14,6 +15,7 @@ export async function verifyPassword(password: string, passwordHash: string): Pr
 export type JwtPayload = {
   sub: string;
   role: UserRole;
+  sid?: string;
 };
 
 export function signAccessToken(payload: JwtPayload): string {
@@ -22,14 +24,20 @@ export function signAccessToken(payload: JwtPayload): string {
   });
 }
 
+export function createSessionId(): string {
+  return randomUUID();
+}
+
 export function verifyAccessToken(token: string): JwtPayload {
   const decoded = jwt.verify(token, env.jwtSecret);
   if (typeof decoded !== "object" || !decoded || !("sub" in decoded) || !("role" in decoded)) {
     throw new Error("Invalid token payload");
   }
+  const payload = decoded as JwtPayload;
   return {
-    sub: String((decoded as JwtPayload).sub),
-    role: (decoded as JwtPayload).role,
+    sub: String(payload.sub),
+    role: payload.role,
+    sid: typeof payload.sid === "string" ? payload.sid : undefined,
   };
 }
 

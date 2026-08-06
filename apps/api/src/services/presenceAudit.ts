@@ -402,14 +402,25 @@ export async function buildPresenceAudit(input: {
   };
 }
 
-export function buildPresenceManualItems(audit: PresenceAudit): ManualItem[] {
+export function buildPresenceManualItems(
+  audit: PresenceAudit,
+  options?: { targetMarkets?: string },
+): ManualItem[] {
   const items: ManualItem[] = [];
+  const markets = options?.targetMarkets?.trim();
+  const marketsPhrase = markets ? ` for ${markets}` : "";
+  const marketsClause = markets
+    ? ` Match posts and descriptions to these target markets: ${markets}.`
+    : " Post updates that match your target locations.";
+  const locationPagesPhrase = markets
+    ? `dedicated pages for your main services and these markets (${markets})`
+    : "dedicated pages for your main services and locations";
 
   if (audit.googleBusiness.status === "missing") {
     items.push({
       title: "Create Google Business Profile",
       guidance:
-        "Register and verify a Google Business Profile for your location. Complete every core field—business name, address, hours, category, photos, and services—so AI assistants can treat your listing as a trusted local source.",
+        `Register and verify a Google Business Profile${marketsPhrase}. Complete every core field—business name, address, hours, category, photos, and services—so AI assistants can treat your listing as a trusted local source.`,
     });
   } else if (
     audit.googleBusiness.providedByUser &&
@@ -418,7 +429,7 @@ export function buildPresenceManualItems(audit: PresenceAudit): ManualItem[] {
     items.push({
       title: "Strengthen Google listing",
       guidance:
-        "Your Google Business Profile is on file but is underused in AI answers. Refresh your description with the services customers search for, add recent photos, respond to reviews, and post updates that match your target locations.",
+        `Your Google Business Profile is on file but is underused in AI answers. Refresh your description with the services customers search for, add recent photos, respond to reviews.${marketsClause}`,
     });
   }
 
@@ -426,7 +437,7 @@ export function buildPresenceManualItems(audit: PresenceAudit): ManualItem[] {
     items.push({
       title: "Publish a business website",
       guidance:
-        "Add a public website with clear service pages, contact details, and location information. AI assistants prefer citing stable business-owned pages when recommending providers.",
+        `Add a public website with clear service pages, contact details, and location information${marketsPhrase}. AI assistants prefer citing stable business-owned pages when recommending providers.`,
     });
   } else if (
     audit.website.providedByUser &&
@@ -435,7 +446,7 @@ export function buildPresenceManualItems(audit: PresenceAudit): ManualItem[] {
     items.push({
       title: "Improve website for AI",
       guidance:
-        "Your website is live but rarely cited in AI answers. Add dedicated pages for your main services and locations, publish an FAQ section, and keep titles and descriptions aligned with how customers ask questions.",
+        `Your website is live but rarely cited in AI answers. Add ${locationPagesPhrase}, publish an FAQ section, and keep titles and descriptions aligned with how customers ask questions.`,
     });
   }
 
@@ -461,7 +472,7 @@ export function buildPresenceManualItems(audit: PresenceAudit): ManualItem[] {
       const label = dir.domain.replace(/^www\./, "");
       items.push({
         title: `Get listed on ${label}`,
-        guidance: `AI assistants frequently cite ${label} when answering local queries in your category. Create or claim a complete listing with photos, services, and a link to your website so you appear alongside competitors.`,
+        guidance: `AI assistants frequently cite ${label} when answering local queries in your category${marketsPhrase}. Create or claim a complete listing with photos, services, and a link to your website so you appear alongside competitors.`,
       });
     }
   }

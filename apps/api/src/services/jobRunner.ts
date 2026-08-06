@@ -1,4 +1,5 @@
 import { VisibilityJobModel } from "../models/VisibilityJob";
+import { COPY } from "@aeo-pcs/shared";
 import { AppError } from "../utils/AppError";
 import { getEnabledVisibilityModels } from "./aeoSettings.service";
 import { publishJobUpdate } from "./jobEvents";
@@ -6,8 +7,19 @@ import { assertAiFeaturesAllowed } from "./subscriptions.service";
 import { runVisibilityCheck } from "./visibility";
 
 const running = new Set<string>();
+const cancelRequested = new Set<string>();
 /** Jobs stuck in running/queued longer than this are marked failed on resume. */
 const STALE_MS = 25 * 60 * 1000;
+
+export function requestCancelVisibilityJob(jobId: string) {
+  cancelRequested.add(jobId);
+}
+
+async function isJobCancelled(jobId: string): Promise<boolean> {
+  if (cancelRequested.has(jobId)) return true;
+  const job = await VisibilityJobModel.findById(jobId).select("status").lean();
+  return job?.status === "cancelled";
+}
 
 export async function enqueueVisibilityJob(jobId: string) {
   if (running.has(jobId)) return;
@@ -47,10 +59,39 @@ export async function resumeInterruptedVisibilityJobs() {
   }
 }
 
+async function markJobCancelled(jobId: string) {
+  cancelRequested.delete(jobId);
+  await VisibilityJobModel.findByIdAndUpdate(jobId, {
+    $set: {
+      status: "cancelled",
+      error: COPY.visibility.cancelledMessage,
+    },
+    $unset: { plan: 1 },
+  });
+  publishJobUpdate(jobId, {
+    status: "cancelled",
+    error: COPY.visibility.cancelledMessage,
+  });
+}
+
 async function processVisibilityJob(jobId: string) {
   const job = await VisibilityJobModel.findById(jobId);
   if (!job) return;
-  if (job.status === "completed" || job.status === "failed") return;
+  if (
+    job.status === "completed" ||
+    job.status === "failed" ||
+    job.status === "cancelled" ||
+    job.status === "generating" ||
+    job.status === "ready"
+  ) {
+    return;
+  }
+  if (job.status !== "queued" && job.status !== "running") return;
+
+  if (await isJobCancelled(jobId)) {
+    await markJobCancelled(jobId);
+    return;
+  }
 
   try {
     if (job.userId) {
@@ -92,13 +133,15 @@ async function processVisibilityJob(jobId: string) {
       },
       category: job.category || "",
       city: job.city || "",
+      state: job.state || "",
       country: job.country || "",
       targetLocations: (job.targetLocations?.length
         ? job.targetLocations
-        : job.business?.targetLocations) as string[] | undefined,
+        : job.business?.targetLocations) as never,
       targetItems: (job.targetItems?.length ? job.targetItems : job.business?.targetItems) as
         | string[]
         | undefined,
+      description: job.business?.description || "",
       prompts: job.prompts || [],
       models,
       usage: {
@@ -106,7 +149,11 @@ async function processVisibilityJob(jobId: string) {
         businessId: job.businessId ? String(job.businessId) : null,
         refs: { jobId },
       },
+      shouldAbort: () => isJobCancelled(jobId),
       onProgress: async ({ completed, total: t, currentPrompt, currentModel }) => {
+        if (await isJobCancelled(jobId)) {
+          throw new AppError("Visibility check cancelled", 499, "VISIBILITY_CANCELLED");
+        }
         await VisibilityJobModel.findByIdAndUpdate(jobId, {
           $set: {
             progress: { completed, total: t, currentPrompt, currentModel },
@@ -118,6 +165,11 @@ async function processVisibilityJob(jobId: string) {
         });
       },
     });
+
+    if (await isJobCancelled(jobId)) {
+      await markJobCancelled(jobId);
+      return;
+    }
 
     const hasAnyAnswer = results.some((r) => r.perModel.some((m) => m.answer?.trim()));
     if (!hasAnyAnswer) {
@@ -161,6 +213,11 @@ async function processVisibilityJob(jobId: string) {
       error: partialWarning,
     });
   } catch (err) {
+    if (await isJobCancelled(jobId)) {
+      await markJobCancelled(jobId);
+      return;
+    }
+
     const message =
       err instanceof AppError
         ? err.message

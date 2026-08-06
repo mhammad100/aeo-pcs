@@ -8,7 +8,8 @@ export async function login(req: Request, res: Response) {
   const result = await authService.loginUser(
     req.body.email,
     req.body.password,
-    expectedRole
+    expectedRole,
+    { revokeOtherSession: Boolean(req.body.revokeOtherSession) }
   );
   res.json(result);
 }
@@ -33,4 +34,9 @@ export async function changePassword(req: AuthedRequest, res: Response) {
     req.body.newPassword
   );
   res.json({ ok: true });
+}
+
+export async function logout(req: AuthedRequest, res: Response) {
+  const result = await authService.logoutUser(req.userId!);
+  res.json(result);
 }

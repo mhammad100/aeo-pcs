@@ -156,6 +156,13 @@ export default function AppDashboardPage() {
                     </Card>
                   </Col>
                 )}
+                {runInsights.strongPrompts.length > 0 && (
+                  <Col xs={24} md={12} className="dash-stretch-col">
+                    <Card title="Where AI mentions you" className="dash-panel-card">
+                      <PromptScoreList items={runInsights.strongPrompts} variant="strong" />
+                    </Card>
+                  </Col>
+                )}
               </Row>
             )}
 
@@ -186,7 +193,7 @@ export default function AppDashboardPage() {
             <Card
               title="Business profile"
               className="dash-panel-card"
-              extra={<Link href="/app/settings">Edit</Link>}
+              extra={<Link href="/app/settings#identity">Edit</Link>}
             >
               {biz ? (
                 <>
@@ -197,7 +204,7 @@ export default function AppDashboardPage() {
                       : ""}
                   </Paragraph>
                   <Paragraph type="secondary" style={{ marginBottom: 4 }}>
-                    {[biz.city, biz.country].filter(Boolean).join(", ")}
+                    {[biz.city, biz.state, biz.country].filter(Boolean).join(", ")}
                   </Paragraph>
                   {biz.websiteUrl && (
                     <Paragraph style={{ marginBottom: 0 }}>

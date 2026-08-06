@@ -1,6 +1,7 @@
+import { COPY } from "@aeo-pcs/shared";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Alert, Button, Card, Form, Input, Typography } from "antd";
+import { Alert, Button, Card, Form, Input, Modal, Typography } from "antd";
 import { api, ApiError } from "@/lib/api";
 import { useAppDispatch } from "@/store/hooks";
 import { setCredentials } from "@/store/authSlice";
@@ -12,12 +13,16 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [sessionConflict, setSessionConflict] = useState<{
+    email: string;
+    password: string;
+  } | null>(null);
 
-  async function onFinish(values: { email: string; password: string }) {
+  async function completeLogin(values: { email: string; password: string }, revokeOtherSession = false) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.login(values);
+      const res = await api.login({ ...values, revokeOtherSession });
       if (res.user.role !== "admin") {
         setError("Admin access only. Use the business app to log in as a business user.");
         return;
@@ -25,10 +30,18 @@ export default function LoginPage() {
       dispatch(setCredentials(res));
       navigate("/");
     } catch (err) {
+      if (err instanceof ApiError && err.code === "SESSION_ACTIVE") {
+        setSessionConflict({ email: values.email, password: values.password });
+        return;
+      }
       setError(err instanceof ApiError ? err.message : "Login failed");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function onFinish(values: { email: string; password: string }) {
+    await completeLogin(values, false);
   }
 
   return (
@@ -53,6 +66,22 @@ export default function LoginPage() {
           </Button>
         </Form>
       </Card>
+
+      <Modal
+        open={Boolean(sessionConflict)}
+        title={COPY.auth.signInHereTitle}
+        okText={COPY.auth.signInHereConfirm}
+        cancelText={COPY.auth.signInHereCancel}
+        confirmLoading={loading}
+        onOk={() => {
+          if (!sessionConflict) return;
+          void completeLogin(sessionConflict, true);
+          setSessionConflict(null);
+        }}
+        onCancel={() => setSessionConflict(null)}
+      >
+        <p>{COPY.auth.signInHereBody}</p>
+      </Modal>
     </div>
   );
 }

@@ -6,9 +6,13 @@ const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api/v1";
 
 export class ApiError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  code?: string;
+  details?: Record<string, unknown>;
+  constructor(message: string, status: number, code?: string, details?: Record<string, unknown>) {
     super(message);
     this.status = status;
+    this.code = code;
+    this.details = details;
   }
 }
 
@@ -23,9 +27,16 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
   const data = await res.json().catch(() => ({}));
+  const code = (data as { code?: string }).code;
+  const details = (data as { details?: Record<string, unknown> }).details;
   if (res.status === 401 && token) store.dispatch(logout());
   if (!res.ok) {
-    throw new ApiError((data as { error?: string }).error || "Request failed", res.status);
+    throw new ApiError(
+      (data as { error?: string }).error || "Request failed",
+      res.status,
+      code,
+      details
+    );
   }
   return data as T;
 }
@@ -54,6 +65,7 @@ export type AdminBusinessRow = {
 export const api = {
   login: (body: LoginRequest) =>
     request<LoginResponse>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
+  logout: () => request<{ ok: boolean }>("/auth/logout", { method: "POST", body: "{}" }),
   me: () => request<MeResponse>("/auth/me"),
   listUsers: () => request<{ users: AdminUserRow[] }>("/admin/users"),
   listBusinesses: () => request<{ businesses: AdminBusinessRow[] }>("/admin/businesses"),
@@ -74,9 +86,12 @@ export const api = {
 
   listAdminPlans: () => request<{ plans: AdminPlan[] }>("/admin/plans"),
   createAdminPlan: (body: CreatePlanBody) =>
-    request<{ plan: AdminPlan }>("/admin/plans", { method: "POST", body: JSON.stringify(body) }),
+    request<{ plan: AdminPlan; migration: PlanMigrationResult | null }>("/admin/plans", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   updateAdminPlan: (planId: string, body: Partial<CreatePlanBody>) =>
-    request<{ plan: AdminPlan }>(`/admin/plans/${planId}`, {
+    request<{ plan: AdminPlan; migration: PlanMigrationResult | null }>(`/admin/plans/${planId}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     }),
@@ -112,11 +127,19 @@ export type AdminPlan = {
   price: number;
   currency: string;
   priceLabel?: string;
+  billingPeriod: "monthly" | "yearly";
   blurb: string;
   features: string[];
   limits: { visibilityRunsPerMonth: number };
   active: boolean;
   sortOrder: number;
+  razorpayPlanId?: string;
+};
+
+export type PlanMigrationResult = {
+  scheduled: number;
+  failed: number;
+  errors: string[];
 };
 
 type CreatePlanBody = {
@@ -125,9 +148,11 @@ type CreatePlanBody = {
   price: number;
   currency?: string;
   priceLabel?: string;
+  billingPeriod?: "monthly" | "yearly";
   blurb?: string;
   features?: string[];
   visibilityRunsPerMonth?: number;
   active?: boolean;
   sortOrder?: number;
+  razorpayPlanId?: string;
 };
