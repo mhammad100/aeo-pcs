@@ -48,54 +48,56 @@ export default function PublicHeader({ sticky = false }: PublicHeaderProps) {
   }, [menuOpen]);
 
   return (
-    <header className={`ma-header${sticky ? " ma-header-sticky" : ""}`}>
-      <div className="ma-header-inner">
-        <Link href="/" className="ma-brand-lockup ma-header-brand" onClick={() => setMenuOpen(false)}>
-          <BrandMark size={34} variant="onDark" />
-          <span className="ma-brand-lockup-copy">
-            <span className="ma-brand-lockup-name">
-              Master<em>AEO</em>
+    <>
+      <header className={`ma-header${sticky ? " ma-header-sticky" : ""}`}>
+        <div className="ma-header-inner">
+          <Link href="/" className="ma-brand-lockup ma-header-brand" onClick={() => setMenuOpen(false)}>
+            <BrandMark size={34} variant="onDark" />
+            <span className="ma-brand-lockup-copy">
+              <span className="ma-brand-lockup-name">
+                Master<em>AEO</em>
+              </span>
             </span>
-          </span>
-        </Link>
-        <div className="ma-header-end">
-          <nav className="ma-nav" aria-label="Primary">
-            {links.map((l) => {
-              const active =
-                (l.href.includes("pricing") && pathname === "/pricing") ||
-                (l.href.includes("about") && pathname === "/about");
-              return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  style={{ color: active ? "var(--ma-ink)" : undefined }}
-                >
-                  {l.label}
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="ma-header-actions">
-            <Link href="/login" className="ma-header-signin">
-              Sign in
-            </Link>
-            <Link href="/signup" className="ma-btn ma-btn-primary ma-btn-compact ma-header-cta">
-              <span className="ma-header-cta-full">Check your score</span>
-              <span className="ma-header-cta-short">Get started</span>
-            </Link>
-            <button
-              type="button"
-              className="ma-header-menu-btn"
-              aria-expanded={menuOpen}
-              aria-controls={panelId}
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              onClick={() => setMenuOpen((o) => !o)}
-            >
-              <span className={`ma-header-menu-icon${menuOpen ? " is-open" : ""}`} aria-hidden />
-            </button>
+          </Link>
+          <div className="ma-header-end">
+            <nav className="ma-nav" aria-label="Primary">
+              {links.map((l) => {
+                const active =
+                  (l.href.includes("pricing") && pathname === "/pricing") ||
+                  (l.href.includes("about") && pathname === "/about");
+                return (
+                  <Link
+                    key={l.href}
+                    href={l.href}
+                    style={{ color: active ? "var(--ma-ink)" : undefined }}
+                  >
+                    {l.label}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="ma-header-actions">
+              <Link href="/login" className="ma-header-signin">
+                Sign in
+              </Link>
+              <Link href="/signup" className="ma-btn ma-btn-primary ma-btn-compact ma-header-cta">
+                <span className="ma-header-cta-full">Check your score</span>
+                <span className="ma-header-cta-short">Get started</span>
+              </Link>
+              <button
+                type="button"
+                className="ma-header-menu-btn"
+                aria-expanded={menuOpen}
+                aria-controls={panelId}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                onClick={() => setMenuOpen((o) => !o)}
+              >
+                <span className={`ma-header-menu-icon${menuOpen ? " is-open" : ""}`} aria-hidden />
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </header>
 
       <div
         className={`ma-header-backdrop${menuOpen ? " is-open" : ""}`}
@@ -130,6 +132,6 @@ export default function PublicHeader({ sticky = false }: PublicHeaderProps) {
           </Link>
         </div>
       </div>
-    </header>
+    </>
   );
 }

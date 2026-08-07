@@ -1690,11 +1690,10 @@ a {
 
 .ma-header {
   position: relative;
-  z-index: 20;
+  z-index: 80;
   width: 100%;
-  border-bottom: 1px solid var(--ma-border);
-  background: rgba(14, 28, 53, 0.85);
-  backdrop-filter: blur(10px);
+  /* Keep backdrop-filter off this node — it creates a containing block that
+     traps position:fixed drawer/backdrop to the header height only. */
 }
 
 .ma-header-sticky {
@@ -1712,6 +1711,9 @@ a {
   margin: 0 auto;
   width: 100%;
   box-sizing: border-box;
+  border-bottom: 1px solid var(--ma-border);
+  background: rgba(14, 28, 53, 0.85);
+  backdrop-filter: blur(10px);
 }
 
 @media (min-width: 640px) {
@@ -1924,7 +1926,7 @@ a {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
-    z-index: 30;
+    z-index: 60;
   }
 
   .ma-header-backdrop.is-open {
@@ -1947,7 +1949,7 @@ a {
     box-shadow: -20px 0 50px rgba(0, 0, 0, 0.35);
     transform: translateX(105%);
     transition: transform 0.25s ease;
-    z-index: 40;
+    z-index: 70;
     box-sizing: border-box;
   }
 
