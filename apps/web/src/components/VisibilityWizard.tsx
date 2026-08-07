@@ -737,7 +737,7 @@ export default function VisibilityWizard() {
                 <div className="vis-busy" role="status" aria-live="polite">
                   <Spin size="large" />
                   <div className="vis-busy-copy">
-                    <Text strong style={{ color: "#EDEAE1", display: "block", marginBottom: 6 }}>
+                    <Text strong style={{ color: "#EDEFF6", display: "block", marginBottom: 6 }}>
                       {localBusyLabel || "Working…"}
                     </Text>
                     <Text type="secondary">
@@ -821,7 +821,7 @@ export default function VisibilityWizard() {
                   <div className="vis-running-head">
                     <Spin />
                     <div>
-                      <Text strong style={{ color: "#EDEAE1", display: "block", marginBottom: 4 }}>
+                      <Text strong style={{ color: "#EDEFF6", display: "block", marginBottom: 4 }}>
                         {visibility.status === "queued"
                           ? "Queued — starting shortly…"
                           : `Checking ${business.selected?.name || "your business"}…`}
@@ -834,7 +834,7 @@ export default function VisibilityWizard() {
                       </Text>
                     </div>
                   </div>
-                  <Progress percent={progressPct} strokeColor="#8FBF9F" style={{ marginBottom: 12 }} />
+                  <Progress percent={progressPct} strokeColor="#14B8A6" style={{ marginBottom: 12 }} />
                   {currentPrompt ? (
                     <div className="vis-running-prompt">
                       <span className="vis-running-prompt-label">Current question</span>
@@ -922,7 +922,7 @@ export default function VisibilityWizard() {
                         marginBottom: 8,
                       }}
                     >
-                      <Text strong style={{ color: "#EDEAE1" }}>
+                      <Text strong style={{ color: "#EDEFF6" }}>
                         {item.title}
                       </Text>
                       {!visibility.itemOutputs[item.id] ? (
@@ -968,10 +968,10 @@ export default function VisibilityWizard() {
                       padding: "12px 14px",
                       borderRadius: 10,
                       border: "1px solid var(--ma-line)",
-                      borderLeft: "3px solid #C9773D",
+                      borderLeft: "3px solid #E8943A",
                     }}
                   >
-                    <Text strong style={{ color: "#EDEAE1" }}>
+                    <Text strong style={{ color: "#EDEFF6" }}>
                       {item.title}
                     </Text>
                     <Paragraph style={{ marginBottom: 0, marginTop: 6 }} type="secondary">

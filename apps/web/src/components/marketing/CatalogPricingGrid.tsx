@@ -35,8 +35,11 @@ export default function CatalogPricingGrid() {
 
   return (
     <div className="ma-price-grid">
-      {plans.map((t) => (
-        <div key={t.id} className="ma-price">
+      {plans.map((t, index) => (
+        <div
+          key={t.id}
+          className={`ma-price${index === Math.min(1, plans.length - 1) ? " is-featured" : ""}`}
+        >
           <h3>{t.name}</h3>
           <p className="amount">
             {t.priceLabel ||

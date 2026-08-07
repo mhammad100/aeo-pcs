@@ -7,5 +7,137 @@ body,
 #root {
   margin: 0;
   min-height: 100%;
-  background: #0f1a17;
+  background: #0e1c35;
+  color: #edeff6;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.ant-btn {
+  height: auto !important;
+  min-height: 44px;
+  padding: 10px 22px !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 0.95rem !important;
+  line-height: 1.25 !important;
+  box-shadow: none !important;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease !important;
+}
+
+.ant-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.ant-btn-sm {
+  min-height: 36px;
+  padding: 7px 14px !important;
+  font-size: 0.875rem !important;
+}
+
+.ant-btn-lg {
+  min-height: 48px;
+  padding: 12px 28px !important;
+}
+
+.ant-btn-icon-only {
+  min-height: 40px;
+  width: 40px !important;
+  padding: 0 !important;
+}
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous),
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):hover,
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):focus,
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):active,
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous).ant-btn-loading {
+  color: #04342c !important;
+}
+
+.ant-btn-primary:not(.ant-btn-dangerous) {
+  background: #14b8a6 !important;
+  border-color: #14b8a6 !important;
+}
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):hover,
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):focus {
+  background: #0f9e93 !important;
+  border-color: #0f9e93 !important;
+}
+
+.ant-btn-primary:not(:disabled):not(.ant-btn-dangerous):active {
+  background: #0d8a80 !important;
+  border-color: #0d8a80 !important;
+}
+
+.ant-btn-primary.ant-btn-dangerous:not(:disabled),
+.ant-btn-primary.ant-btn-dangerous:not(:disabled):hover,
+.ant-btn-primary.ant-btn-dangerous:not(:disabled):focus {
+  color: #edeff6 !important;
+}
+
+.ant-btn-default {
+  background: transparent !important;
+  border-color: #3d5a80 !important;
+  color: #7a9cc8 !important;
+}
+
+.ant-btn-default:not(:disabled):hover,
+.ant-btn-default:not(:disabled):focus {
+  background: rgba(20, 184, 166, 0.06) !important;
+  border-color: #14b8a6 !important;
+  color: #edeff6 !important;
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-number,
+.ant-select-selector,
+.ant-picker {
+  border-radius: 8px !important;
+  border-color: #3d5a80 !important;
+  background: #0e1c35 !important;
+  color: #edeff6 !important;
+  font-size: 0.95rem !important;
+  min-height: 44px;
+  box-shadow: none !important;
+}
+
+.ant-input,
+.ant-select-single .ant-select-selector {
+  padding: 10px 14px !important;
+}
+
+.ant-input-affix-wrapper {
+  padding: 0 14px !important;
+}
+
+.ant-input-affix-wrapper > input.ant-input {
+  min-height: 42px;
+  padding: 10px 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: #0f9e93 !important;
+}
+
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector {
+  border-color: #14b8a6 !important;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.18) !important;
+}
+
+.ant-form-item-label > label {
+  color: #edeff6 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
 }

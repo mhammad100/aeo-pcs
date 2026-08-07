@@ -59,7 +59,7 @@ export default function UsersPage() {
   return (
     <div>
       <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 16 }}>
-        <Title level={2} style={{ margin: 0, color: "#EDEAE1" }}>
+        <Title level={2} style={{ margin: 0, color: "#EDEFF6" }}>
           Users
         </Title>
         <Button type="primary" onClick={() => setOpen(true)}>

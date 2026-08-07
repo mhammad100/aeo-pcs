@@ -54,7 +54,7 @@ export default function VisibilityInsights({
       <div className="vis-insights-hero">
         <div className={`vis-score-value ${pctClass(brandPct)}`}>{brandPct}%</div>
         <div>
-          <Text style={{ color: "#EDEAE1", fontSize: 16, fontWeight: 600 }}>
+          <Text style={{ color: "#EDEFF6", fontSize: 16, fontWeight: 600 }}>
             Visibility index
           </Text>
           <Paragraph type="secondary" style={{ marginBottom: 0, maxWidth: 480 }}>
@@ -64,7 +64,7 @@ export default function VisibilityInsights({
           {showCoreScore && insights.coreScore && (
             <Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 8, maxWidth: 480 }}>
               On {insights.coreScore.promptCount} niche searches aligned with your profile:{" "}
-              <Text style={{ color: "#EDEAE1" }}>{insights.coreScore.visibilityPct}%</Text> (
+              <Text style={{ color: "#EDEFF6" }}>{insights.coreScore.visibilityPct}%</Text> (
               {insights.coreScore.totalMentions}/{insights.coreScore.totalChecks} mentions).
             </Paragraph>
           )}

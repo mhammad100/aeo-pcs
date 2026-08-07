@@ -88,7 +88,7 @@ export default function SubscriptionPage() {
 
   return (
     <AppShell>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
+      <Title level={2} style={{ color: "#EDEFF6" }}>
         Subscription
       </Title>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
@@ -149,7 +149,7 @@ export default function SubscriptionPage() {
           </Card>
           {plans.length > 1 ? (
             <>
-              <Title level={4} style={{ color: "#EDEAE1", marginBottom: 16 }}>
+              <Title level={4} style={{ color: "#EDEFF6", marginBottom: 16 }}>
                 Change plan
               </Title>
               <PlanCatalog

@@ -46,13 +46,13 @@ const PROVIDER_META: Record<LlmProvider, { label: string; color: string; bg: str
   google: { label: "Gemini", color: "#4285F4", bg: "rgba(66, 133, 244, 0.12)" },
   openai: { label: "OpenAI", color: "#10A37F", bg: "rgba(16, 163, 127, 0.12)" },
   perplexity: { label: "Perplexity", color: "#20B2AA", bg: "rgba(32, 178, 170, 0.12)" },
-  anthropic: { label: "Anthropic", color: "#C9773D", bg: "rgba(201, 119, 61, 0.15)" },
+  anthropic: { label: "Anthropic", color: "#E8943A", bg: "rgba(232, 148, 58, 0.15)" },
 };
 
 const sectionCardStyle = {
   marginBottom: 16,
-  border: "1px solid #2B3B34",
-  background: "linear-gradient(180deg, #182822 0%, #152420 100%)",
+  border: "1px solid rgba(61, 90, 128, 0.45)",
+  background: "linear-gradient(180deg, #1C2E50 0%, #16233E 100%)",
 };
 
 type TaskModelField = "promptGenerationModel" | "actionPlanModel";
@@ -512,7 +512,7 @@ export default function SettingsPage() {
         }}
       >
         <div>
-          <Title level={2} style={{ color: "#EDEAE1", marginBottom: 4 }}>
+          <Title level={2} style={{ color: "#EDEFF6", marginBottom: 4 }}>
             AEO Settings
           </Title>
           <Paragraph type="secondary" style={{ marginBottom: 0 }}>
@@ -539,7 +539,7 @@ export default function SettingsPage() {
             <Col xs={24} sm={8}>
               <Card style={sectionCardStyle} styles={{ body: { padding: "14px 16px" } }}>
                 <Text type="secondary">Prompts per run</Text>
-                <Title level={3} style={{ margin: "4px 0 0", color: "#EDEAE1" }}>
+                <Title level={3} style={{ margin: "4px 0 0", color: "#EDEFF6" }}>
                   {promptsPerRun}
                 </Title>
                 <Text type="secondary" style={{ fontSize: 12 }}>
@@ -550,7 +550,7 @@ export default function SettingsPage() {
             <Col xs={24} sm={8}>
               <Card style={sectionCardStyle} styles={{ body: { padding: "14px 16px" } }}>
                 <Text type="secondary">Enabled visibility models</Text>
-                <Title level={3} style={{ margin: "4px 0 0", color: "#EDEAE1" }}>
+                <Title level={3} style={{ margin: "4px 0 0", color: "#EDEFF6" }}>
                   {enabledVisibility}
                   <Text type="secondary" style={{ fontSize: 16, fontWeight: 400 }}>
                     {" "}
@@ -564,11 +564,11 @@ export default function SettingsPage() {
             </Col>
             <Col xs={24} sm={8}>
               <Card
-                style={{ ...sectionCardStyle, borderColor: "#C9773D55" }}
+                style={{ ...sectionCardStyle, borderColor: "#E8943A55" }}
                 styles={{ body: { padding: "14px 16px" } }}
               >
                 <Text type="secondary">API calls per check</Text>
-                <Title level={3} style={{ margin: "4px 0 0", color: "#C9773D" }}>
+                <Title level={3} style={{ margin: "4px 0 0", color: "#E8943A" }}>
                   {callsPerRun || "—"}
                 </Title>
                 <Text type="secondary" style={{ fontSize: 12 }}>
@@ -723,7 +723,7 @@ export default function SettingsPage() {
             marginTop: 12,
             padding: "12px 16px",
             borderRadius: 8,
-            border: "1px solid #2B3B34",
+            border: "1px solid rgba(61, 90, 128, 0.45)",
             background: "rgba(21, 36, 32, 0.95)",
             display: "flex",
             justifyContent: "space-between",

@@ -35,7 +35,7 @@ export default function BillingPage() {
 
   return (
     <AppShell>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
+      <Title level={2} style={{ color: "#EDEFF6" }}>
         Billing
       </Title>
       <Paragraph type="secondary">

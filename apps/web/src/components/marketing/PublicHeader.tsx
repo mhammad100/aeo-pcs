@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import BrandMark from "@/components/BrandMark";
 
 const links = [
   { href: "/#features", label: "Features" },
@@ -14,8 +15,14 @@ export default function PublicHeader() {
 
   return (
     <header className="ma-header">
-      <Link href="/" className="ma-header-brand">
-        Master AEO
+      <Link href="/" className="ma-brand-lockup ma-header-brand">
+        <BrandMark size={36} />
+        <span className="ma-brand-lockup-copy">
+          <span className="ma-brand-lockup-name">
+            Master <em>AEO</em>
+          </span>
+          <span className="ma-brand-lockup-tag">Answer engine optimization</span>
+        </span>
       </Link>
       <nav className="ma-nav" aria-label="Primary">
         {links.map((l) => {

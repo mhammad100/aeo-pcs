@@ -6,7 +6,7 @@ const { Title, Paragraph, Text } = Typography;
 export default function DashboardPage() {
   return (
     <div>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
+      <Title level={2} style={{ color: "#EDEFF6" }}>
         Overview
       </Title>
       <Paragraph type="secondary">

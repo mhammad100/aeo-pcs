@@ -8,6 +8,29 @@ import { setCredentials } from "@/store/authSlice";
 
 const { Title, Text } = Typography;
 
+function BrandMark({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <rect x="6" y="6" width="88" height="88" rx="20" fill="#16233E" />
+      <polyline
+        points="26,74 26,26 50,54 74,26 74,74"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="88" cy="8" r="10" fill="#14B8A6" />
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -18,7 +41,10 @@ export default function LoginPage() {
     password: string;
   } | null>(null);
 
-  async function completeLogin(values: { email: string; password: string }, revokeOtherSession = false) {
+  async function completeLogin(
+    values: { email: string; password: string },
+    revokeOtherSession = false
+  ) {
     setLoading(true);
     setError(null);
     try {
@@ -45,12 +71,36 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "grid",
+        placeItems: "center",
+        padding: 24,
+        background: "#0E1C35",
+      }}
+    >
       <Card style={{ width: "100%", maxWidth: 420 }}>
-        <Text style={{ color: "#8FBF9F", letterSpacing: "0.1em", textTransform: "uppercase" }}>
-          Master AEO
-        </Text>
-        <Title level={2} style={{ marginTop: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+          <BrandMark />
+          <div>
+            <div style={{ color: "#EDEFF6", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
+              Master <span style={{ color: "#14B8A6" }}>AEO</span>
+            </div>
+            <div
+              style={{
+                color: "#7A9CC8",
+                fontSize: 9,
+                letterSpacing: "3.5px",
+                textTransform: "uppercase",
+                marginTop: 4,
+              }}
+            >
+              Answer engine optimization
+            </div>
+          </div>
+        </div>
+        <Title level={2} style={{ marginTop: 20 }}>
           Admin login
         </Title>
         {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
@@ -80,7 +130,7 @@ export default function LoginPage() {
         }}
         onCancel={() => setSessionConflict(null)}
       >
-        <p>{COPY.auth.signInHereBody}</p>
+        <Text>{COPY.auth.signInHereBody}</Text>
       </Modal>
     </div>
   );

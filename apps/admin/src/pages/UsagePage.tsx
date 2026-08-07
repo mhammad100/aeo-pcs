@@ -40,7 +40,7 @@ export default function UsagePage() {
 
   return (
     <div>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
+      <Title level={2} style={{ color: "#EDEFF6" }}>
         Usage & profit
       </Title>
       <Paragraph type="secondary">
@@ -53,7 +53,7 @@ export default function UsagePage() {
         <Col xs={24} md={6}>
           <Card loading={loading}>
             <Text type="secondary">Calls</Text>
-            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
+            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
               {t?.calls ?? "—"}
             </Title>
           </Card>
@@ -61,7 +61,7 @@ export default function UsagePage() {
         <Col xs={24} md={6}>
           <Card loading={loading}>
             <Text type="secondary">Est. LLM cost</Text>
-            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
+            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
               {t ? `$${t.estimatedCost.toFixed(2)}` : "—"}
             </Title>
           </Card>
@@ -69,7 +69,7 @@ export default function UsagePage() {
         <Col xs={24} md={6}>
           <Card loading={loading}>
             <Text type="secondary">Invoice revenue</Text>
-            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
+            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
               {t ? `$${t.subscriptionRevenue.toFixed(2)}` : "—"}
             </Title>
           </Card>
@@ -77,7 +77,7 @@ export default function UsagePage() {
         <Col xs={24} md={6}>
           <Card loading={loading}>
             <Text type="secondary">Margin</Text>
-            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEAE1" }}>
+            <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
               {t ? `$${t.margin.toFixed(2)}` : "—"}
             </Title>
           </Card>
@@ -88,7 +88,7 @@ export default function UsagePage() {
         <Button onClick={load}>Refresh</Button>
       </Space>
 
-      <Title level={4} style={{ color: "#EDEAE1" }}>
+      <Title level={4} style={{ color: "#EDEFF6" }}>
         By feature
       </Title>
       <Table
@@ -110,7 +110,7 @@ export default function UsagePage() {
         ]}
       />
 
-      <Title level={4} style={{ color: "#EDEAE1" }}>
+      <Title level={4} style={{ color: "#EDEFF6" }}>
         By model
       </Title>
       <Table
@@ -132,7 +132,7 @@ export default function UsagePage() {
         ]}
       />
 
-      <Title level={4} style={{ color: "#EDEAE1" }}>
+      <Title level={4} style={{ color: "#EDEFF6" }}>
         Cost rates
       </Title>
       <Table

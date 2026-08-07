@@ -7,6 +7,7 @@ import { Alert, Button, Card, Form, Input, Modal, Spin, Typography } from "antd"
 import type { LoginConflictDetails } from "@aeo-pcs/shared";
 import { COPY } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
+import BrandMark from "@/components/BrandMark";
 import { resolvePostAuthPath } from "@/lib/authRouting";
 import { useRedirectIfAuthenticated } from "@/lib/useRedirectIfAuthenticated";
 import { useAppDispatch } from "@/store/hooks";
@@ -79,19 +80,25 @@ export default function LoginPage() {
 
   if (checkingSession) {
     return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0F1A17" }}>
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0E1C35" }}>
         <Spin size="large" />
       </div>
     );
   }
 
   return (
-    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+    <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24, background: "#0E1C35" }}>
       <Card style={{ width: "100%", maxWidth: 420 }}>
-        <Link href="/" style={{ color: "var(--ma-accent-soft)", fontFamily: "var(--ma-font-display)" }}>
-          Master AEO
+        <Link href="/" className="ma-brand-lockup" style={{ marginBottom: 8 }}>
+          <BrandMark size={40} />
+          <span className="ma-brand-lockup-copy">
+            <span className="ma-brand-lockup-name">
+              Master <em>AEO</em>
+            </span>
+            <span className="ma-brand-lockup-tag">Answer engine optimization</span>
+          </span>
         </Link>
-        <Title level={2} style={{ marginTop: 8 }}>
+        <Title level={2} style={{ marginTop: 20 }}>
           Log in
         </Title>
         <Text type="secondary">Enter your business dashboard</Text>

@@ -16,6 +16,23 @@ const items = [
   { key: "/settings", label: <Link to="/settings">Settings</Link> },
 ];
 
+function BrandMark({ size = 28 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <rect x="6" y="6" width="88" height="88" rx="20" fill="#16233E" />
+      <polyline
+        points="26,74 26,26 50,54 74,26 74,74"
+        fill="none"
+        stroke="#FFFFFF"
+        strokeWidth="9"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="88" cy="12" r="10" fill="#14B8A6" />
+    </svg>
+  );
+}
+
 export default function AdminShell() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,30 +42,35 @@ export default function AdminShell() {
     items.find((i) => i.key !== "/" && location.pathname.startsWith(i.key))?.key || "/";
 
   return (
-    <Layout style={{ minHeight: "100vh", background: "#0F1A17" }}>
-      <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#152420" }}>
-        <div style={{ padding: 20 }}>
-          <Text strong style={{ color: "#8FBF9F", letterSpacing: "0.06em" }}>
-            Master AEO Admin
-          </Text>
+    <Layout style={{ minHeight: "100vh", background: "#0E1C35" }}>
+      <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#16233E" }}>
+        <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 10 }}>
+          <BrandMark />
+          <div>
+            <Text strong style={{ color: "#EDEFF6", display: "block", lineHeight: 1.2 }}>
+              Master <span style={{ color: "#14B8A6" }}>AEO</span>
+            </Text>
+            <Text style={{ color: "#7A9CC8", fontSize: 10, letterSpacing: "0.18em" }}>ADMIN</Text>
+          </div>
         </div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={[selected]}
           items={items}
-          style={{ background: "#152420", borderInlineEnd: "none" }}
+          style={{ background: "#16233E", borderInlineEnd: "none" }}
         />
       </Sider>
-      <Layout style={{ background: "#0F1A17" }}>
+      <Layout style={{ background: "#0E1C35" }}>
         <Header
           style={{
-            background: "#152420",
+            background: "#16233E",
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
             gap: 16,
             paddingInline: 24,
+            borderBottom: "1px solid rgba(61, 90, 128, 0.45)",
           }}
         >
           <Text type="secondary">{user?.email}</Text>

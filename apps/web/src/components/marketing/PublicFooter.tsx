@@ -1,4 +1,5 @@
 import Link from "next/link";
+import BrandMark from "@/components/BrandMark";
 
 const FOOTER_LINKS = {
   product: [
@@ -28,8 +29,14 @@ export default function PublicFooter() {
       <div className="ma-footer-inner">
         <div className="ma-footer-top">
           <div className="ma-footer-brand">
-            <Link href="/" className="ma-footer-logo">
-              Master AEO
+            <Link href="/" className="ma-brand-lockup ma-footer-logo">
+              <BrandMark size={40} />
+              <span className="ma-brand-lockup-copy">
+                <span className="ma-brand-lockup-name">
+                  Master <em>AEO</em>
+                </span>
+                <span className="ma-brand-lockup-tag">Answer engine optimization</span>
+              </span>
             </Link>
             <p className="ma-footer-tagline">
               AI visibility for local and growing businesses. Know how assistants talk about you —

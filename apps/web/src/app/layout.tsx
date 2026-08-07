@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import Providers from "@/components/Providers";
 import "./globals.css";
 
-const fraunces = Fraunces({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-fraunces",
+  variable: "--font-inter",
   display: "swap",
 });
 
-const manrope = Manrope({
+const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
-  variable: "--font-manrope",
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
@@ -26,12 +26,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${fraunces.variable} ${manrope.variable}`}>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
       <body
         style={
           {
-            "--ma-font-display": "var(--font-fraunces), Georgia, serif",
-            "--ma-font-body": "var(--font-manrope), system-ui, sans-serif",
+            "--ma-font-display": "var(--font-inter), system-ui, sans-serif",
+            "--ma-font-body": "var(--font-inter), system-ui, sans-serif",
+            "--ma-font-mono": "var(--font-jetbrains), ui-monospace, monospace",
           } as React.CSSProperties
         }
       >

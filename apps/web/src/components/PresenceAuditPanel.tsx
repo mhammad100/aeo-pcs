@@ -9,13 +9,13 @@ const { Text, Paragraph } = Typography;
 function statusColor(status: PresenceChannelStatus): string {
   switch (status) {
     case "verified":
-      return "#8FBF9F";
+      return "#14B8A6";
     case "needs_improvement":
-      return "#C9773D";
+      return "#E8943A";
     case "missing":
-      return "#E57373";
+      return "#E8535A";
     default:
-      return "#8A9990";
+      return "#7A9CC8";
   }
 }
 
@@ -38,7 +38,7 @@ function ChannelRow({ channel }: { channel: PresenceChannelAudit }) {
           marginBottom: 8,
         }}
       >
-        <Text strong style={{ color: "#EDEAE1" }}>
+        <Text strong style={{ color: "#EDEFF6" }}>
           {channel.label}
         </Text>
         <Text style={{ color: statusColor(channel.status), fontSize: 12, fontWeight: 600 }}>
@@ -95,7 +95,7 @@ export default function PresenceAuditPanel({ audit }: { audit: PresenceAudit }) 
                   border: "1px solid var(--ma-line)",
                 }}
               >
-                <Text strong style={{ color: "#EDEAE1" }}>
+                <Text strong style={{ color: "#EDEFF6" }}>
                   {d.domain}
                 </Text>
                 <Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 4 }}>

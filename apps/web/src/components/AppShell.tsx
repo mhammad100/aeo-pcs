@@ -17,6 +17,7 @@ import {
 import { Button, Drawer, Dropdown, Grid, Layout, Menu, Typography } from "antd";
 import type { MenuProps } from "antd";
 import AuthGuard from "@/components/AuthGuard";
+import BrandMark from "@/components/BrandMark";
 import ProfileGate from "@/components/ProfileGate";
 import SubscriptionGate from "@/components/SubscriptionGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -67,11 +68,13 @@ function ShellBrand({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="/app" className={`app-shell-brand${compact ? " is-compact" : ""}`}>
       <span className="app-shell-brand-mark" aria-hidden>
-        MA
+        <BrandMark size={compact ? 32 : 40} />
       </span>
       <span className="app-shell-brand-copy">
-        <span className="app-shell-brand-name">Master AEO</span>
-        {!compact && <span className="app-shell-brand-tag">AI visibility</span>}
+        <span className="app-shell-brand-name">
+          Master <em style={{ fontStyle: "normal", color: "var(--ma-accent)" }}>AEO</em>
+        </span>
+        {!compact && <span className="app-shell-brand-tag">Answer engine optimization</span>}
       </span>
     </Link>
   );

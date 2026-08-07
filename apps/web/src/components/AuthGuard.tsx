@@ -49,7 +49,7 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0F1A17" }}>
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#0E1C35" }}>
         <Spin size="large" />
       </div>
     );

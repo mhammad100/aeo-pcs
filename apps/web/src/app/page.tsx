@@ -14,20 +14,25 @@ export default function HomePage() {
 
         <div className="ma-hero-content">
           <div className="ma-hero-copy">
-            <h1 className="ma-brand ma-rise">Master AEO</h1>
+            <p className="ma-section-label ma-rise" style={{ marginBottom: 16 }}>
+              Answer engine optimization
+            </p>
+            <h1 className="ma-brand ma-rise">
+              Master <span style={{ color: "var(--ma-accent)" }}>AEO</span>
+            </h1>
             <p className="ma-headline ma-rise ma-rise-delay-1">
-              See how AI talks about your business.
+              Is your business visible to AI?
             </p>
             <p className="ma-lede ma-rise ma-rise-delay-2">
-              Track mentions across AI assistants, get a fix-it plan, and improve visibility month
-              over month.
+              When buyers ask ChatGPT, Gemini, or Perplexity for the best in your category — do they
+              find you?
             </p>
             <div className="ma-cta-row ma-rise ma-rise-delay-3">
               <Link href="/signup" className="ma-btn ma-btn-primary">
-                Get started
+                Check your score
               </Link>
               <Link href="/#features" className="ma-btn ma-btn-ghost">
-                Explore product
+                See how it works
               </Link>
             </div>
           </div>
@@ -46,15 +51,15 @@ export default function HomePage() {
               </p>
               <div className="ma-hero-stage-rows">
                 <div className="ma-hero-stage-row">
-                  <strong>ChatGPT-style</strong>
+                  <strong>ChatGPT</strong>
                   <em>mentioned</em>
                 </div>
                 <div className="ma-hero-stage-row">
-                  <strong>Gemini-style</strong>
+                  <strong>Gemini</strong>
                   <span>not mentioned</span>
                 </div>
                 <div className="ma-hero-stage-row">
-                  <strong>Perplexity-style</strong>
+                  <strong>Perplexity</strong>
                   <em>mentioned</em>
                 </div>
               </div>

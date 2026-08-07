@@ -113,7 +113,7 @@ export default function PlansPage() {
 
   return (
     <div>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
+      <Title level={2} style={{ color: "#EDEFF6" }}>
         Plans
       </Title>
       <Paragraph type="secondary">
@@ -209,7 +209,7 @@ export default function PlansPage() {
         ]}
       />
 
-      <Title level={4} style={{ color: "#EDEAE1" }}>
+      <Title level={4} style={{ color: "#EDEFF6" }}>
         Recent subscriptions
       </Title>
       <Table

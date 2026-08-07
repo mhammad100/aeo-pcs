@@ -30,7 +30,7 @@ export default function BusinessesPage() {
 
   return (
     <div>
-      <Title level={2} style={{ color: "#EDEAE1" }}>
+      <Title level={2} style={{ color: "#EDEFF6" }}>
         Businesses
       </Title>
       {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
