@@ -8,20 +8,20 @@ export default function HomePage() {
     <div className="ma-hero">
       <div className="ma-hero-viewport">
         <div className="ma-hero-bg" aria-hidden />
-        <div className="ma-hero-grid" aria-hidden />
         <div className="ma-hero-orb" aria-hidden />
+        <div className="ma-hero-glow" aria-hidden />
         <PublicHeader />
 
         <div className="ma-hero-content">
           <div className="ma-hero-copy">
-            <p className="ma-section-label ma-rise" style={{ marginBottom: 16 }}>
-              Answer engine optimization
-            </p>
+            <p className="ma-hero-eyebrow ma-rise">Answer engine optimization</p>
             <h1 className="ma-brand ma-rise">
-              Master <span style={{ color: "var(--ma-accent)" }}>AEO</span>
+              Master <span>AEO</span>
             </h1>
             <p className="ma-headline ma-rise ma-rise-delay-1">
-              Is your business visible to AI?
+              Is your business
+              <br />
+              visible to AI?
             </p>
             <p className="ma-lede ma-rise ma-rise-delay-2">
               When buyers ask ChatGPT, Gemini, or Perplexity for the best in your category — do they
@@ -35,15 +35,24 @@ export default function HomePage() {
                 See how it works
               </Link>
             </div>
+            <ul className="ma-hero-proof ma-rise ma-rise-delay-3">
+              <li>7 intent clusters</li>
+              <li>3 AI models checked</li>
+              <li>Fix-it ready-made content</li>
+            </ul>
           </div>
 
           <div className="ma-hero-stage" aria-hidden>
             <div className="ma-hero-stage-inner">
-              <div className="ma-hero-stage-bar">
-                <span />
-                <span />
-                <span />
+              <div className="ma-hero-stage-top">
+                <div className="ma-hero-stage-bar">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <span className="ma-hero-stage-live">Live</span>
               </div>
+              <div className="ma-hero-stage-label">AI visibility report</div>
               <div className="ma-hero-stage-score">42%</div>
               <p className="ma-hero-stage-meta">
                 Sample visibility score — how often assistants named this business across checked
@@ -348,17 +357,22 @@ export default function HomePage() {
       </section>
 
       <section className="ma-band">
+        <div className="ma-band-glow" aria-hidden />
         <div className="ma-band-inner">
-          <div>
+          <div className="ma-band-copy">
+            <p className="ma-band-eyebrow">Get started</p>
             <h2>Ready to see your AI footprint?</h2>
-            <p>Invite-only for now. Log in if you have access, or request an account to join.</p>
+            <p>
+              Check whether assistants recommend your business — then close the gap with a clear
+              action plan.
+            </p>
           </div>
-          <div className="ma-cta-row">
-            <Link href="/login" className="ma-btn ma-btn-primary">
-              Log in to dashboard
+          <div className="ma-cta-row ma-band-actions">
+            <Link href="/signup" className="ma-btn ma-btn-primary">
+              Check your score
             </Link>
-            <Link href="/#pricing" className="ma-btn ma-btn-ghost">
-              View pricing
+            <Link href="/login" className="ma-btn ma-btn-ghost">
+              Log in
             </Link>
           </div>
         </div>

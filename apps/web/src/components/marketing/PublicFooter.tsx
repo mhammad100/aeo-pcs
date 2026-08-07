@@ -42,14 +42,6 @@ export default function PublicFooter() {
               AI visibility for local and growing businesses. Know how assistants talk about you —
               then fix it.
             </p>
-            <div className="ma-footer-cta">
-              <Link href="/signup" className="ma-btn ma-btn-primary">
-                Get started free
-              </Link>
-              <Link href="/login" className="ma-btn ma-btn-ghost">
-                Log in
-              </Link>
-            </div>
           </div>
 
           <div className="ma-footer-nav">
@@ -94,9 +86,10 @@ export default function PublicFooter() {
 
         <div className="ma-footer-bottom">
           <p>© {year} Master AEO. All rights reserved.</p>
-          <a href="mailto:hello@masteraeo.com" className="ma-footer-contact">
-            hello@masteraeo.com
-          </a>
+          <div className="ma-footer-bottom-links">
+            <Link href="/#pricing">Pricing</Link>
+            <a href="mailto:hello@masteraeo.com">hello@masteraeo.com</a>
+          </div>
         </div>
       </div>
     </footer>
