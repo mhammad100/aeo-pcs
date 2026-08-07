@@ -17,7 +17,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Master AEO — AI visibility for your business",
+    default: "Master AEO - AI visibility for your business",
     template: "%s · Master AEO",
   },
   description:

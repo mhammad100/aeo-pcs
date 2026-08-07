@@ -743,7 +743,7 @@ export default function VisibilityWizard() {
                     <Text type="secondary">
                       {isGeneratingPrompts
                         ? "This usually takes a few seconds while we research your offerings and craft discovery questions."
-                        : "Queuing your check — progress will appear as each AI assistant answers."}
+                        : "Queuing your check, progress will appear as each AI assistant answers."}
                     </Text>
                   </div>
                 </div>
@@ -797,7 +797,7 @@ export default function VisibilityWizard() {
                     <div className="vis-detail-item">
                       <label>Location</label>
                       <span>
-                        {[business.city, business.state, business.country].filter(Boolean).join(", ") || "—"}
+                        {[business.city, business.state, business.country].filter(Boolean).join(", ") || "-"}
                       </span>
                     </div>
                     <div className="vis-detail-item">
@@ -806,7 +806,7 @@ export default function VisibilityWizard() {
                         {formatCategoryLabel(
                           business.category,
                           business.selected?.customCategory
-                        ) || "—"}
+                        ) || "-"}
                       </span>
                     </div>
                   </div>
@@ -823,7 +823,7 @@ export default function VisibilityWizard() {
                     <div>
                       <Text strong style={{ color: "#EDEFF6", display: "block", marginBottom: 4 }}>
                         {visibility.status === "queued"
-                          ? "Queued — starting shortly…"
+                          ? "Queued starting shortly…"
                           : `Checking ${business.selected?.name || "your business"}…`}
                       </Text>
                       <Text type="secondary">

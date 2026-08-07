@@ -76,7 +76,7 @@ export default function OnboardingProfilePage() {
 
   function onComplete() {
     sessionStorage.removeItem("onboarding-profile-started");
-    message.success("Profile complete — welcome to Master AEO");
+    message.success("Profile complete, welcome to Master AEO");
     router.replace("/app");
   }
 
@@ -85,7 +85,7 @@ export default function OnboardingProfilePage() {
       <OnboardingShell
         step={1}
         title="Complete your business profile"
-        subtitle="Four quick steps — the last two are optional, but help us tailor your action plan."
+        subtitle="Four quick steps, the last two are optional, but help us tailor your action plan."
       >
         {error && <Alert type="error" showIcon message={error} style={{ marginBottom: 16 }} />}
 

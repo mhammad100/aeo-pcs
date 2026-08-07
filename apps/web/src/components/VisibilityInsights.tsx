@@ -82,13 +82,13 @@ export default function VisibilityInsights({
         <div className="vis-insight-metric">
           <span className="vis-insight-metric-label">Avg rank</span>
           <span className="vis-insight-metric-value">
-            {score.avgPosition != null ? `#${score.avgPosition}` : "—"}
+            {score.avgPosition != null ? `#${score.avgPosition}` : "-"}
           </span>
           <span className="vis-insight-metric-hint">When your brand is named</span>
         </div>
         <div className="vis-insight-metric">
           <span className="vis-insight-metric-label">Sentiment</span>
-          <span className="vis-insight-metric-value">{insights.sentimentLabel ?? "—"}</span>
+          <span className="vis-insight-metric-value">{insights.sentimentLabel ?? "-"}</span>
           <span className="vis-insight-metric-hint">Tone in mentions</span>
         </div>
       </div>

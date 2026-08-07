@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function RefundPage() {
   return (
     <PublicShell>
-      <div className="ma-page">
+      <div className="ma-page-narrow">
         <div className="ma-section-label">Legal</div>
         <h1 className="ma-section-title">Refund Policy</h1>
         <p className="ma-section-copy">Last updated: August 3, 2026</p>
@@ -36,10 +36,10 @@ export default function RefundPage() {
             We may, at our sole discretion, issue a full or partial refund or credit if:
           </p>
           <ul>
-            <li>Duplicate charge — you were billed twice for the same period</li>
-            <li>Billing error — you were charged an incorrect amount due to our error</li>
+            <li>Duplicate charge, you were billed twice for the same period</li>
+            <li>Billing error, you were charged an incorrect amount due to our error</li>
             <li>
-              Service not delivered — a paid period began but you could not access core subscribed
+              Service not delivered, a paid period began but you could not access core subscribed
               features for a sustained period due to a Master AEO outage or account provisioning
               failure under our control (excluding third-party AI provider outages outside our
               reasonable control)

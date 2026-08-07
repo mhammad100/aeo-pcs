@@ -218,7 +218,7 @@ export default function BusinessProfileForm({
           })}
         </div>
         <p className="app-form-field-note">
-          These are the terms customers use when asking AI for recommendations — they shape your
+          These are the terms customers use when asking AI for recommendations they shape your
           visibility prompts.
         </p>
       </div>
@@ -230,7 +230,7 @@ export default function BusinessProfileForm({
       <section className="geo-location-section">
         <div className="app-form-section-head">
           <h4>Registered address</h4>
-          <p>Where your business is officially located — used as the default for visibility checks.</p>
+          <p>Where your business is officially located used as the default for visibility checks.</p>
         </div>
         <GeoLocationPicker
           value={headquarters}
@@ -420,7 +420,7 @@ export default function BusinessProfileForm({
           <section className="app-form-section">
             <div className="app-form-section-head">
               <h4>Location</h4>
-              <p>Where you operate — used for local visibility checks.</p>
+              <p>Where you operate used for local visibility checks.</p>
             </div>
             {locationFields}
           </section>

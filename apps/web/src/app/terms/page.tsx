@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <PublicShell>
-      <div className="ma-page">
+      <div className="ma-page-narrow">
         <div className="ma-section-label">Legal</div>
         <h1 className="ma-section-title">Terms and Conditions</h1>
         <p className="ma-section-copy">Last updated: August 3, 2026</p>

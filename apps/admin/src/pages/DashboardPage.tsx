@@ -10,7 +10,7 @@ export default function DashboardPage() {
         Overview
       </Title>
       <Paragraph type="secondary">
-        Operator console for Master AEO — create business accounts, manage plans, and later track
+        Operator console for Master AEO, Create business accounts, manage plans, and later track
         token usage and profit.
       </Paragraph>
       <Row gutter={[16, 16]}>

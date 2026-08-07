@@ -9,12 +9,12 @@ export default function PublicShell({
   hero?: boolean;
 }) {
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="ma-page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {hero ? (
         children
       ) : (
         <>
-          <PublicHeader />
+          <PublicHeader sticky />
           <main style={{ flex: 1 }}>{children}</main>
           <PublicFooter />
         </>

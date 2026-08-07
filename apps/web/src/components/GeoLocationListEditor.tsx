@@ -34,7 +34,7 @@ export default function GeoLocationListEditor({ value = [], onChange, headquarte
       {value.length === 0 ? (
         <div className="geo-location-empty">
           <p>
-            Optional — add areas where you want AI visibility. Country is enough; state and city
+            Optional add areas where you want AI visibility. Country is enough; state and city
             are optional so you can target a whole country, a state, or a city.
           </p>
         </div>

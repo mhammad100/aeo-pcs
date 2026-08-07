@@ -68,11 +68,11 @@ function ShellBrand({ compact = false }: { compact?: boolean }) {
   return (
     <Link href="/app" className={`app-shell-brand${compact ? " is-compact" : ""}`}>
       <span className="app-shell-brand-mark" aria-hidden>
-        <BrandMark size={compact ? 32 : 40} />
+        <BrandMark size={compact ? 32 : 40} variant="onDark" />
       </span>
       <span className="app-shell-brand-copy">
         <span className="app-shell-brand-name">
-          Master <em style={{ fontStyle: "normal", color: "var(--ma-accent)" }}>AEO</em>
+          Master<em style={{ fontStyle: "normal", color: "var(--ma-accent)" }}>AEO</em>
         </span>
         {!compact && <span className="app-shell-brand-tag">Answer engine optimization</span>}
       </span>

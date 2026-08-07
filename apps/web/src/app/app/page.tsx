@@ -76,7 +76,7 @@ export default function AppDashboardPage() {
             <div className="dash-kpi-grid">
               <StatCard
                 label="Latest visibility"
-                value={typeof latest === "number" ? `${latest}%` : "—"}
+                value={typeof latest === "number" ? `${latest}%` : "-"}
                 footer={
                   typeof brandPct === "number" && typeof sourcePct === "number"
                     ? `Brand ${brandPct}% · Source cited ${sourcePct}%`
@@ -92,14 +92,14 @@ export default function AppDashboardPage() {
                       {delta} pts
                     </span>
                   ) : (
-                    "—"
+                    "-"
                   )
                 }
-                footer={`This month ${typeof current === "number" ? `${current}%` : "—"} · Last month ${typeof previous === "number" ? `${previous}%` : "—"}`}
+                footer={`This month ${typeof current === "number" ? `${current}%` : "-"} · Last month ${typeof previous === "number" ? `${previous}%` : "-"}`}
               />
               <StatCard
                 label="Checklist progress"
-                value={checklist ? `${checklist.percent}%` : "—"}
+                value={checklist ? `${checklist.percent}%` : "-"}
                 footer={
                   checklist ? (
                     <>

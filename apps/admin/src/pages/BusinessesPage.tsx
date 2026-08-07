@@ -39,18 +39,18 @@ export default function BusinessesPage() {
         loading={loading}
         dataSource={rows}
         columns={[
-          { title: "Name", dataIndex: "name", render: (v: string) => v || "—" },
+          { title: "Name", dataIndex: "name", render: (v: string) => v || "-" },
           { title: "Owner", dataIndex: "ownerEmail" },
-          { title: "Category", dataIndex: "category", render: (v: string) => v || "—" },
+          { title: "Category", dataIndex: "category", render: (v: string) => v || "-" },
           {
             title: "Location",
             render: (_: unknown, r: AdminBusinessRow) =>
-              [r.city, r.country].filter(Boolean).join(", ") || "—",
+              [r.city, r.country].filter(Boolean).join(", ") || "-",
           },
           {
             title: "Website",
             dataIndex: "websiteUrl",
-            render: (v: string) => v || "—",
+            render: (v: string) => v || "-",
           },
           {
             title: "Profile",

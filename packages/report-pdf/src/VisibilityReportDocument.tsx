@@ -84,7 +84,7 @@ function PresenceSection({ audit }: { audit: PresenceAudit }) {
           <Text style={styles.subhead}>Directories influencing AI answers</Text>
           {audit.directories.map((d) => (
             <Text key={d.domain} style={styles.bulletItem}>
-              • {d.domain} — cited {d.citationCount} time{d.citationCount === 1 ? "" : "s"}.{" "}
+              • {d.domain} cited {d.citationCount} time{d.citationCount === 1 ? "" : "s"}.{" "}
               {d.summary}
             </Text>
           ))}
@@ -141,7 +141,7 @@ function PromptSummaryTable({ results }: { results: PromptResult[] }) {
                   </Text>
                 ))
               ) : (
-                <Text style={styles.cellText}>—</Text>
+                <Text style={styles.cellText}>-</Text>
               )}
             </View>
           </View>
@@ -162,7 +162,7 @@ function DetailedResponses({ results }: { results: PromptResult[] }) {
             if (!m.answer?.trim()) {
               return (
                 <View key={m.model} style={styles.responseItem}>
-                  <Text style={styles.responseMeta}>{m.model} — Response unavailable.</Text>
+                  <Text style={styles.responseMeta}>{m.model} Response unavailable.</Text>
                 </View>
               );
             }
@@ -216,7 +216,7 @@ export function VisibilityReportDocument(props: VisibilityReportInput) {
     results?.filter((r) => r.perModel.some((m) => m.mentioned && m.answer?.trim())).length ?? 0;
 
   return (
-    <Document title={`AI Visibility Report — ${businessName}`} author="Master AEO">
+    <Document title={`AI Visibility Report ${businessName}`} author="Master AEO">
       <Page size="A4" style={styles.coverPage}>
         <Text style={styles.coverBrand}>Master AEO</Text>
         <Text style={styles.coverTitle}>AI Visibility Report</Text>

@@ -28,7 +28,7 @@ export default function PromptScoreList({ items, variant = "weak" }: Props) {
                     : "No model responses for this prompt"
                 }
               >
-                {p.total ? `${p.mentions}/${p.total}` : "—"}
+                {p.total ? `${p.mentions}/${p.total}` : "-"}
               </span>
               <span className="prompt-score-list__hint">
                 {p.total ? `${pct}% mentioned` : "no responses"}

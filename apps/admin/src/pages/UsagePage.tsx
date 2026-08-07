@@ -54,7 +54,7 @@ export default function UsagePage() {
           <Card loading={loading}>
             <Text type="secondary">Calls</Text>
             <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
-              {t?.calls ?? "—"}
+              {t?.calls ?? "-"}
             </Title>
           </Card>
         </Col>
@@ -62,7 +62,7 @@ export default function UsagePage() {
           <Card loading={loading}>
             <Text type="secondary">Est. LLM cost</Text>
             <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
-              {t ? `$${t.estimatedCost.toFixed(2)}` : "—"}
+              {t ? `$${t.estimatedCost.toFixed(2)}` : "-"}
             </Title>
           </Card>
         </Col>
@@ -70,7 +70,7 @@ export default function UsagePage() {
           <Card loading={loading}>
             <Text type="secondary">Invoice revenue</Text>
             <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
-              {t ? `$${t.subscriptionRevenue.toFixed(2)}` : "—"}
+              {t ? `$${t.subscriptionRevenue.toFixed(2)}` : "-"}
             </Title>
           </Card>
         </Col>
@@ -78,7 +78,7 @@ export default function UsagePage() {
           <Card loading={loading}>
             <Text type="secondary">Margin</Text>
             <Title level={3} style={{ margin: "8px 0 0", color: "#EDEFF6" }}>
-              {t ? `$${t.margin.toFixed(2)}` : "—"}
+              {t ? `$${t.margin.toFixed(2)}` : "-"}
             </Title>
           </Card>
         </Col>

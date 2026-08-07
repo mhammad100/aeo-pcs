@@ -30,25 +30,25 @@ const PROFILE_SECTIONS: {
   {
     id: "identity",
     title: "Identity",
-    hint: "Name, category, and services — powers your visibility checks and action plan.",
+    hint: "Name, category, and services powers your visibility checks and action plan.",
     icon: <IdcardOutlined />,
   },
   {
     id: "location",
     title: "Location",
-    hint: "City, country, and areas you serve — keeps results relevant to your market.",
+    hint: "City, country, and areas you serve keeps results relevant to your market.",
     icon: <EnvironmentOutlined />,
   },
   {
     id: "online",
     title: "Online presence",
-    hint: "Website and Google Business links — referenced in your action plan.",
+    hint: "Website and Google Business links referenced in your action plan.",
     icon: <GlobalOutlined />,
   },
   {
     id: "social",
     title: "Social profiles",
-    hint: "Instagram, LinkedIn, and more — used when generating content.",
+    hint: "Instagram, LinkedIn, and more used when generating content.",
     icon: <ShareAltOutlined />,
   },
 ];
@@ -222,7 +222,7 @@ export default function BusinessProfileSettings({
                     <span className="settings-nav-item-icon">{section.icon}</span>
                     <span className="settings-nav-item-label">{section.title}</span>
                     <span className={`settings-nav-item-status${filled ? " is-filled" : ""}`}>
-                      {filled ? "✓" : "—"}
+                      {filled ? "✓" : "-"}
                     </span>
                   </button>
                 );

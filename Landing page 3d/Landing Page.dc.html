@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#0E1C35;font-family:Inter,sans-serif;}
+  a{color:#14B8A6;text-decoration:none;}
+  a:hover{color:#0F9E93;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes fadeUn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+  @keyframes floatY{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+  @keyframes floatY2{0%,100%{transform:translateY(0);}50%{transform:translateY(14px);}}
+  @keyframes pulseDot{0%,100%{opacity:1;}50%{opacity:0.4;}}
+  @keyframes spin3d{from{transform:rotateY(0deg);}to{transform:rotateY(360deg);}}
+  @keyframes spinZ{from{transform:rotateZ(0deg);}to{transform:rotateZ(360deg);}}
+  @keyframes gridDrift{from{background-position:0 0;}to{background-position:0 60px;}}
+  @keyframes glowPulse{0%,100%{opacity:0.35;}50%{opacity:0.8;}}
+  @keyframes dashTravel{from{stroke-dashoffset:0;}to{stroke-dashoffset:-400;}}
+  @keyframes flicker{0%,100%{opacity:1;}45%{opacity:1;}47%{opacity:0.4;}49%{opacity:1;}}
+  @keyframes particleDrift{0%{transform:translate(0,0);}50%{transform:translate(6px,-18px);}100%{transform:translate(0,0);}}
+</style>
+</helmet>
+
+<div style="background:#0E1C35;color:#7A9CC8;overflow-x:hidden;">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 64px;border-bottom:1px solid #1E3255;position:sticky;top:0;background:rgba(14,28,53,0.85);backdrop-filter:blur(10px);z-index:20;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <dc-import name="Icon" size="34" variant="onDark" hint-size="34,34"></dc-import>
+      <div style="font-size:17px;font-weight:700;"><span style="color:#FFFFFF;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+    </div>
+    <div style="display:flex;gap:36px;font-size:14px;font-weight:500;color:#7A9CC8;">
+      <div>Product</div><div>How it works</div><div>Pricing</div><div>Resources</div>
+    </div>
+    <div style="display:flex;gap:12px;align-items:center;">
+      <div style="font-size:14px;font-weight:600;color:#7A9CC8;">Sign in</div>
+      <div style="background:#14B8A6;color:#04342C;font-weight:600;font-size:14px;padding:11px 22px;box-shadow:0 0 0 rgba(20,184,166,0.5);">Check your score</div>
+    </div>
+  </div>
+
+  <div onMouseMove="{{onHeroMove}}" onMouseLeave="{{onHeroLeave}}" style="position:relative;overflow:hidden;min-height:760px;perspective:1600px;display:flex;align-items:center;">
+
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 50% 0%,rgba(20,184,166,0.10),transparent 70%);pointer-events:none;"></div>
+
+    <div style="position:absolute;left:0;right:0;bottom:0;height:60%;overflow:hidden;pointer-events:none;transform-style:preserve-3d;">
+      <div style="position:absolute;left:-20%;right:-20%;bottom:-10%;height:220%;transform:rotateX(78deg);background-image:repeating-linear-gradient(to right,rgba(20,184,166,0.16) 0px,rgba(20,184,166,0.16) 1px,transparent 1px,transparent 56px),repeating-linear-gradient(to bottom,rgba(20,184,166,0.16) 0px,rgba(20,184,166,0.16) 1px,transparent 1px,transparent 56px);animation:gridDrift 3.5s linear infinite;"></div>
+    </div>
+
+    <div style="position:absolute;top:14%;left:8%;width:6px;height:6px;border-radius:50%;background:#14B8A6;box-shadow:0 0 10px #14B8A6;animation:particleDrift 6s ease-in-out infinite;"></div>
+    <div style="position:absolute;top:64%;left:14%;width:4px;height:4px;border-radius:50%;background:#7A9CC8;animation:particleDrift 8s ease-in-out infinite 1s;"></div>
+    <div style="position:absolute;top:30%;left:46%;width:5px;height:5px;border-radius:50%;background:#14B8A6;box-shadow:0 0 8px #14B8A6;animation:particleDrift 7s ease-in-out infinite 0.5s;"></div>
+    <div style="position:absolute;top:78%;left:38%;width:4px;height:4px;border-radius:50%;background:#3D5A80;animation:particleDrift 9s ease-in-out infinite 2s;"></div>
+    <div style="position:absolute;top:20%;right:6%;width:5px;height:5px;border-radius:50%;background:#7A9CC8;animation:particleDrift 6.5s ease-in-out infinite 1.4s;"></div>
+
+    <div style="position:relative;z-index:2;width:100%;max-width:1280px;margin:0 auto;padding:70px 64px 90px;display:flex;align-items:center;gap:60px;transform-style:preserve-3d;">
+
+      <div style="flex:1;max-width:600px;display:flex;flex-direction:column;gap:24px;transform:{{textLayerTransform}};transform-style:preserve-3d;">
+        <div style="border:1px solid rgba(20,184,166,0.5);border-radius:999px;padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:1.5px;color:#14B8A6;width:fit-content;text-transform:uppercase;animation:fadeUp 0.6s ease both;">Answer Engine Optimization</div>
+        <div style="font-size:56px;font-weight:800;letter-spacing:-1.5px;line-height:1.06;color:#FFFFFF;animation:fadeUp 0.6s ease 0.08s both;">Is your business<br><span style="color:#14B8A6;">visible to AI?</span></div>
+        <div style="font-size:16px;line-height:1.7;color:#7A9CC8;animation:fadeUp 0.6s ease 0.16s both;">When buyers ask ChatGPT, Gemini, or Perplexity for the best in your category — do they find you? MasterAEO checks, then fixes the gap.</div>
+        <div style="display:flex;gap:12px;margin-top:6px;animation:fadeUp 0.6s ease 0.24s both;">
+          <div style="background:#14B8A6;color:#04342C;font-weight:600;font-size:15px;padding:15px 30px;">Check your score</div>
+          <div style="border:1px solid #3D5A80;color:#7A9CC8;font-weight:600;font-size:15px;padding:15px 30px;">See how it works</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;animation:fadeUp 0.6s ease 0.32s both;">
+          <div style="background:#1C2E50;border:1px solid #2A3F63;color:#7A9CC8;font-size:12px;padding:7px 12px;animation:floatY 5s ease-in-out infinite;">7 intent clusters</div>
+          <div style="background:#1C2E50;border:1px solid #2A3F63;color:#7A9CC8;font-size:12px;padding:7px 12px;animation:floatY2 6s ease-in-out infinite;">3 AI models checked</div>
+          <div style="background:#1C2E50;border:1px solid #2A3F63;color:#7A9CC8;font-size:12px;padding:7px 12px;animation:floatY 7s ease-in-out infinite 0.6s;">Fix-It ready-made content</div>
+        </div>
+      </div>
+
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:18px;position:relative;transform-style:preserve-3d;">
+
+        <div style="width:460px;background:#0F1B30;border:1px solid #1E3255;padding:14px 18px;display:flex;gap:10px;align-items:center;animation:fadeUn 0.6s ease both;transform:{{consoleTransform}};transform-style:preserve-3d;box-shadow:0 20px 40px rgba(0,0,0,0.35);">
+          <div style="font-family:'JetBrains Mono',monospace;color:#14B8A6;font-size:13px;">&gt;</div>
+          <input value="{{inputDraft}}" onChange="{{onInputChange}}" placeholder="Type your business name…" style="flex:1;background:transparent;border:none;color:#FFFFFF;font-size:13px;font-family:'JetBrains Mono',monospace;padding:11px 4px;outline:none;"></input>
+          <div onClick="{{onScanClick}}" style="background:#14B8A6;color:#04342C;font-weight:600;font-size:13px;padding:11px 20px;white-space:nowrap;cursor:pointer;">Scan live</div>
+        </div>
+
+        <div style="position:relative;width:460px;display:flex;justify-content:center;transform-style:preserve-3d;">
+          <div style="position:absolute;width:360px;height:360px;background:#14B8A6;opacity:0.16;filter:blur(80px);border-radius:50%;animation:floatY 5s ease-in-out infinite;"></div>
+
+          <div style="position:absolute;top:-70px;left:10px;perspective:600px;transform:translateZ(30px);">
+            <div style="position:relative;width:120px;height:120px;transform-style:preserve-3d;animation:spin3d 11s linear infinite;">
+              <div style="position:absolute;inset:0;border:1px solid rgba(20,184,166,0.35);border-radius:50%;transform:rotateX(72deg);"><div style="position:absolute;inset:0;animation:spinZ 4s linear infinite;"><div style="position:absolute;top:-3px;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#14B8A6;box-shadow:0 0 8px #14B8A6;"></div></div></div>
+              <div style="position:absolute;inset:0;border:1px solid rgba(122,156,200,0.25);border-radius:50%;transform:rotateX(72deg) rotateZ(70deg);"><div style="position:absolute;inset:0;animation:spinZ 5.5s linear infinite reverse;"><div style="position:absolute;top:-3px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#7A9CC8;box-shadow:0 0 6px #7A9CC8;"></div></div></div>
+            </div>
+          </div>
+
+          <div style="width:460px;background:#0F1B30;border:1px solid #1E3255;padding:26px;display:flex;flex-direction:column;gap:16px;position:relative;z-index:1;animation:fadeUp 0.7s ease 0.15s both;transform:{{cardTransform}};transform-style:preserve-3d;box-shadow:0 30px 60px rgba(0,0,0,0.4);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#7A9CC8;text-transform:uppercase;">AI Visibility Report</div>
+              <div style="background:rgba(20,184,166,0.15);color:#14B8A6;font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 10px;animation:pulseDot 1.8s ease-in-out infinite;">LIVE</div>
+            </div>
+            <div><div style="font-size:17px;font-weight:700;color:#FFFFFF;">{{displayName}}</div><div style="font-size:12px;color:#3D5A80;margin-top:2px;">Retail &amp; E-Commerce</div></div>
+            <div style="border-top:1px solid #1E3255;"></div>
+            <sc-if value="{{isScanning}}" hint-placeholder-val="{{true}}">
+              <div style="height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;perspective:700px;">
+                <div style="position:relative;width:150px;height:150px;transform-style:preserve-3d;animation:spin3d 9s linear infinite;">
+                  <div style="position:absolute;inset:0;border:1px solid rgba(20,184,166,0.4);border-radius:50%;transform:rotateX(72deg);">
+                    <div style="position:absolute;inset:0;animation:spinZ 3.2s linear infinite;"><div style="position:absolute;top:-4px;left:50%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#14B8A6;box-shadow:0 0 10px #14B8A6;"></div></div>
+                  </div>
+                  <div style="position:absolute;inset:0;border:1px solid rgba(122,156,200,0.3);border-radius:50%;transform:rotateX(72deg) rotateZ(60deg);">
+                    <div style="position:absolute;inset:0;animation:spinZ 4.6s linear infinite reverse;"><div style="position:absolute;top:-4px;left:50%;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:#7A9CC8;box-shadow:0 0 8px #7A9CC8;"></div></div>
+                  </div>
+                  <div style="position:absolute;inset:0;border:1px solid rgba(122,156,200,0.22);border-radius:50%;transform:rotateX(72deg) rotateZ(120deg);">
+                    <div style="position:absolute;inset:0;animation:spinZ 5.8s linear infinite;"><div style="position:absolute;top:-4px;left:50%;width:7px;height:7px;margin-left:-3.5px;border-radius:50%;background:#3D5A80;box-shadow:0 0 8px #3D5A80;"></div></div>
+                  </div>
+                  <div style="position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px;border-radius:50%;background:#16233E;border:2px solid #14B8A6;transform:translateZ(18px);"></div>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#14B8A6;letter-spacing:0.5px;">{{scanLabel}}</div>
+              </div>
+            </sc-if>
+            <sc-if value="{{isRevealed}}" hint-placeholder-val="{{false}}">
+              <div style="display:flex;align-items:center;gap:14px;animation:fadeUp 0.5s ease both;">
+                <div style="flex:1;text-align:center;"><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:6px;">Before</div><div style="font-size:30px;font-weight:800;color:#E8535A;">{{beforeVal}}%</div><div style="font-size:11px;color:#3D5A80;margin-top:2px;">2 of 9 prompts</div></div>
+                <div style="color:#14B8A6;font-size:22px;font-weight:700;">→</div>
+                <div style="flex:1;text-align:center;border:1px solid #14B8A6;padding:10px 4px;"><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:6px;">After fixes</div><div style="font-size:30px;font-weight:800;color:#14B8A6;">{{afterVal}}%</div><div style="font-size:11px;color:#3D5A80;margin-top:2px;">8 of 9 prompts</div></div>
+              </div>
+            </sc-if>
+            <div style="background:rgba(20,184,166,0.08);border-top:1px solid rgba(20,184,166,0.3);padding:12px 4px;color:#14B8A6;font-size:13px;font-weight:600;text-align:center;">12 ready-made content fixes generated →</div>
+          </div>
+
+          <div style="position:absolute;bottom:-24px;right:0px;transform:translateZ(40px) rotate(-4deg);background:#1C2E50;border:1px solid #14B8A6;padding:8px 14px;font-size:11px;font-weight:600;color:#14B8A6;box-shadow:0 12px 24px rgba(0,0,0,0.35);animation:floatY2 4.5s ease-in-out infinite;">+65 pts uplift</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#0E1C35;padding:90px 64px;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background-image:repeating-linear-gradient(to right,rgba(26,46,80,0.35) 0px,rgba(26,46,80,0.35) 1px,transparent 1px,transparent 60px);pointer-events:none;"></div>
+    <div style="position:relative;text-align:center;max-width:700px;margin:0 auto 60px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#3D5A80;text-transform:uppercase;margin-bottom:14px;">How it works</div>
+      <div style="font-size:36px;font-weight:800;letter-spacing:-0.5px;color:#FFFFFF;">From invisible to answer-ready in three steps</div>
+    </div>
+    <div style="position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:32px;max-width:1120px;margin:0 auto;perspective:1200px;">
+      <div style="background:#0F1B30;border:1px solid #1E3255;padding:36px;display:flex;flex-direction:column;gap:14px;transform-style:preserve-3d;transition:transform 0.35s ease,box-shadow 0.35s ease;" style-hover="transform:rotateY(-6deg) rotateX(4deg) translateZ(10px);box-shadow:0 25px 45px rgba(0,0,0,0.4);">
+        <div style="font-size:13px;font-weight:700;color:#14B8A6;">01</div>
+        <div style="font-size:20px;font-weight:700;color:#FFFFFF;">Run the scan</div>
+        <div style="font-size:15px;line-height:1.7;color:#7A9CC8;">We ask ChatGPT, Gemini, and Perplexity the real questions your buyers ask — across 7 intent clusters.</div>
+      </div>
+      <div style="background:#0F1B30;border:1px solid #1E3255;padding:36px;display:flex;flex-direction:column;gap:14px;transform-style:preserve-3d;transition:transform 0.35s ease,box-shadow 0.35s ease;" style-hover="transform:rotateY(-6deg) rotateX(4deg) translateZ(10px);box-shadow:0 25px 45px rgba(0,0,0,0.4);">
+        <div style="font-size:13px;font-weight:700;color:#14B8A6;">02</div>
+        <div style="font-size:20px;font-weight:700;color:#FFFFFF;">See the root cause</div>
+        <div style="font-size:15px;line-height:1.7;color:#7A9CC8;">Get a scored report showing exactly why you're missing — weak local signal, no forum presence, thin footprint.</div>
+      </div>
+      <div style="background:#0F1B30;border:1px solid #1E3255;padding:36px;display:flex;flex-direction:column;gap:14px;transform-style:preserve-3d;transition:transform 0.35s ease,box-shadow 0.35s ease;" style-hover="transform:rotateY(-6deg) rotateX(4deg) translateZ(10px);box-shadow:0 25px 45px rgba(0,0,0,0.4);">
+        <div style="font-size:13px;font-weight:700;color:#14B8A6;">03</div>
+        <div style="font-size:20px;font-weight:700;color:#FFFFFF;">Fix it, ready-made</div>
+        <div style="font-size:15px;line-height:1.7;color:#7A9CC8;">MasterAEO generates the exact content needed to close the gap — published and re-checked automatically.</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding:90px 64px;background:#0F1B30;position:relative;">
+    <div style="text-align:center;max-width:700px;margin:0 auto 50px;">
+      <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#3D5A80;text-transform:uppercase;margin-bottom:14px;">Checked against</div>
+      <div style="font-size:36px;font-weight:800;letter-spacing:-0.5px;color:#FFFFFF;">Every model your buyers actually use</div>
+    </div>
+    <div style="display:flex;gap:24px;max-width:1000px;margin:0 auto;justify-content:center;perspective:1000px;">
+      <div style="flex:1;background:#0E1C35;border:1px solid #1E3255;border-top:2px solid #14B8A6;padding:28px;display:flex;flex-direction:column;gap:10px;transition:transform 0.35s ease;" style-hover="transform:translateY(-8px) rotateX(4deg);">
+        <div style="font-size:15px;font-weight:700;color:#FFFFFF;">ChatGPT</div>
+        <div style="height:6px;background:#1C2E50;border-radius:3px;overflow:hidden;"><div style="width:85%;height:100%;background:#14B8A6;"></div></div>
+        <div style="font-size:12px;color:#7A9CC8;">85% average visibility uplift</div>
+      </div>
+      <div style="flex:1;background:#0E1C35;border:1px solid #1E3255;border-top:2px solid #14B8A6;padding:28px;display:flex;flex-direction:column;gap:10px;transition:transform 0.35s ease;" style-hover="transform:translateY(-8px) rotateX(4deg);">
+        <div style="font-size:15px;font-weight:700;color:#FFFFFF;">Gemini</div>
+        <div style="height:6px;background:#1C2E50;border-radius:3px;overflow:hidden;"><div style="width:90%;height:100%;background:#14B8A6;"></div></div>
+        <div style="font-size:12px;color:#7A9CC8;">90% average visibility uplift</div>
+      </div>
+      <div style="flex:1;background:#0E1C35;border:1px solid #1E3255;border-top:2px solid #14B8A6;padding:28px;display:flex;flex-direction:column;gap:10px;transition:transform 0.35s ease;" style-hover="transform:translateY(-8px) rotateX(4deg);">
+        <div style="font-size:15px;font-weight:700;color:#FFFFFF;">Perplexity</div>
+        <div style="height:6px;background:#1C2E50;border-radius:3px;overflow:hidden;"><div style="width:94%;height:100%;background:#14B8A6;"></div></div>
+        <div style="font-size:12px;color:#7A9CC8;">94% average visibility uplift</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#0E1C35;padding:110px 64px;text-align:center;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:50%;left:50%;width:500px;height:500px;background:#14B8A6;opacity:0.10;filter:blur(100px);border-radius:50%;transform:translate(-50%,-50%);animation:glowPulse 4s ease-in-out infinite;"></div>
+    <div style="position:relative;display:flex;align-items:baseline;justify-content:center;gap:18px;margin-bottom:20px;">
+      <div style="font-size:64px;font-weight:800;color:#E8535A;letter-spacing:-2px;animation:flicker 5s ease-in-out infinite;">24%</div>
+      <div style="font-size:32px;color:#7A9CC8;">→</div>
+      <div style="font-size:64px;font-weight:800;color:#14B8A6;letter-spacing:-2px;animation:flicker 5s ease-in-out infinite 0.3s;">89%</div>
+    </div>
+    <div style="position:relative;font-size:40px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;max-width:640px;margin:0 auto 16px;">AI found your competitor. Not you.</div>
+    <div style="position:relative;font-size:16px;color:#7A9CC8;margin-bottom:32px;">Run a free scan and see exactly where you stand.</div>
+    <div style="position:relative;background:#14B8A6;color:#04342C;font-weight:600;font-size:15px;padding:16px 34px;display:inline-block;">Check your score</div>
+  </div>
+
+  <div style="background:#0E1C35;padding:48px 64px;border-top:1px solid #1E3255;display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <dc-import name="Icon" size="28" variant="onDark" hint-size="28,28"></dc-import>
+      <div style="font-size:14px;font-weight:700;"><span style="color:#FFFFFF;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+    </div>
+    <div style="font-size:12px;color:#3D5A80;">© 2026 MasterAEO. All rights reserved.</div>
+  </div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { phase: 'scanning', stepIndex: 0, beforeVal: 0, afterVal: 0, businessName: '', inputDraft: '', mx: 0, my: 0 };
+  scanLabels = ['Querying ChatGPT…', 'Querying Gemini…', 'Querying Perplexity…'];
+
+  componentDidMount() { this.runCycle(); }
+  componentWillUnmount() { clearTimeout(this._t); clearInterval(this._i); }
+
+  onHeroMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const mx = ((e.clientX - r.left) / r.width) * 2 - 1;
+    const my = ((e.clientY - r.top) / r.height) * 2 - 1;
+    this.setState({ mx, my });
+  };
+  onHeroLeave = () => this.setState({ mx: 0, my: 0 });
+
+  onInputChange = (e) => this.setState({ inputDraft: e.target.value });
+  onScanClick = () => {
+    const name = this.state.inputDraft.trim();
+    if (name) this.setState({ businessName: name });
+    clearTimeout(this._t); clearInterval(this._i);
+    this.runCycle();
+  };
+  runCycle() {
+    this.setState({ phase: 'scanning', stepIndex: 0, beforeVal: 0, afterVal: 0 });
+    let step = 0;
+    const advance = () => {
+      step += 1;
+      if (step < 3) {
+        this.setState({ stepIndex: step });
+        this._t = setTimeout(advance, 650);
+      } else {
+        this.setState({ phase: 'revealed' });
+        this.countUp();
+      }
+    };
+    this._t = setTimeout(advance, 650);
+  }
+  countUp() {
+    let n = 0;
+    this._i = setInterval(() => {
+      n += 1;
+      this.setState({ beforeVal: Math.min(24, Math.round((n / 14) * 24)), afterVal: Math.min(89, Math.round((n / 14) * 89)) });
+      if (n >= 14) {
+        clearInterval(this._i);
+        this._t = setTimeout(() => this.runCycle(), 6500);
+      }
+    }, 45);
+  }
+  renderVals() {
+    const mx = this.state.mx, my = this.state.my;
+    return {
+      isScanning: this.state.phase === 'scanning',
+      isRevealed: this.state.phase === 'revealed',
+      scanLabel: this.scanLabels[this.state.stepIndex],
+      beforeVal: this.state.beforeVal,
+      afterVal: this.state.afterVal,
+      displayName: this.state.businessName || 'Meridian Retail Co.',
+      inputDraft: this.state.inputDraft,
+      onInputChange: this.onInputChange,
+      onScanClick: this.onScanClick,
+      onHeroMove: this.onHeroMove,
+      onHeroLeave: this.onHeroLeave,
+      cardTransform: `rotateY(${mx * 8}deg) rotateX(${-my * 8}deg) translateZ(20px)`,
+      consoleTransform: `rotateY(${mx * 4}deg) rotateX(${-my * 4}deg)`,
+      textLayerTransform: `rotateY(${mx * -2}deg)`,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -7,7 +7,7 @@ import CatalogPricingGrid from "@/components/marketing/CatalogPricingGrid";
 export default function PricingPage() {
   return (
     <PublicShell>
-      <div className="ma-page" style={{ maxWidth: 1120 }}>
+      <div className="ma-page-narrow" style={{ maxWidth: 1120 }}>
         <div className="ma-section-label">Pricing</div>
         <h1 className="ma-section-title">Pricing</h1>
         <CatalogPricingGrid />

@@ -87,12 +87,12 @@ export default function UsersPage() {
           },
           {
             title: "Business",
-            render: (_: unknown, row: AdminUserRow) => row.business?.name || "—",
+            render: (_: unknown, row: AdminUserRow) => row.business?.name || "-",
           },
           {
             title: "Profile",
             render: (_: unknown, row: AdminUserRow) =>
-              row.business?.profileCompletedAt ? "Complete" : row.business ? "Incomplete" : "—",
+              row.business?.profileCompletedAt ? "Complete" : row.business ? "Incomplete" : "-",
           },
           {
             title: "Actions",

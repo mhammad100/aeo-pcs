@@ -48,7 +48,7 @@ async function upsertUser(input: {
         country: "India",
         countryCode: "IN",
         stateCode: "GJ",
-        description: "Seeded demo business — complete profile in onboarding.",
+        description: "Seeded demo business, Complete profile in onboarding.",
         targetItems: ["General services"],
         targetLocations: [
           { city: "Ahmedabad", state: "Gujarat", country: "India", countryCode: "IN", stateCode: "GJ" },

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<template id="__bundler_thumbnail" data-bg-color="#0E1C35">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <rect x="6" y="6" width="88" height="88" rx="20" fill="#16233E"></rect>
+    <polyline points="26,74 26,26 50,54 74,26 74,74" fill="none" stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></polyline>
+    <circle cx="88" cy="8" r="10" fill="#14B8A6"></circle>
+  </svg>
+</template>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body{margin:0;background:#E4E7ED;}
+  .kitLabel{font-size:13px;font-weight:700;letter-spacing:2px;color:#16233E;margin-bottom:16px;text-transform:uppercase;}
+  .specLabel{font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;}
+</style>
+</helmet>
+
+<div style="font-family:Inter,sans-serif;background:#E4E7ED;padding:80px 40px;display:flex;flex-direction:column;align-items:center;gap:100px;">
+
+<div style="width:1200px;">
+  <div class="kitLabel">01&nbsp;&nbsp;Company Icon Sheet</div>
+  <div style="background:#F7F8FA;border:1px solid #E4E7ED;padding:60px;">
+    <div style="display:flex;justify-content:space-around;align-items:center;gap:56px;flex-wrap:wrap;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <dc-import name="Icon" size="96" variant="dark" hint-size="96,96"></dc-import>
+        <div style="text-align:center;"><div style="font-size:14px;font-weight:700;color:#16233E;">96px</div><div style="font-size:12px;color:#3D5A80;">Primary, dark tile</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <dc-import name="Icon" size="64" variant="dark" hint-size="64,64"></dc-import>
+        <div style="text-align:center;"><div style="font-size:14px;font-weight:700;color:#16233E;">64px</div><div style="font-size:12px;color:#3D5A80;">Medium, dark tile</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <dc-import name="Icon" size="40" variant="dark" hint-size="40,40"></dc-import>
+        <div style="text-align:center;"><div style="font-size:14px;font-weight:700;color:#16233E;">40px</div><div style="font-size:12px;color:#3D5A80;">Small, dark tile</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <dc-import name="Icon" size="40" variant="outline" hint-size="40,40"></dc-import>
+        <div style="text-align:center;"><div style="font-size:14px;font-weight:700;color:#16233E;">40px</div><div style="font-size:12px;color:#3D5A80;">Outline variant</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <div style="width:72px;height:72px;background:#0E1C35;border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <dc-import name="Icon" size="40" variant="onDark" hint-size="40,40"></dc-import>
+        </div>
+        <div style="text-align:center;"><div style="font-size:14px;font-weight:700;color:#16233E;">40px</div><div style="font-size:12px;color:#3D5A80;">On dark background</div></div>
+      </div>
+    </div>
+    <div style="margin-top:48px;border-top:1px solid #E4E7ED;padding-top:32px;display:flex;gap:32px;">
+      <div style="display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;background:#16233E;"></div><div><div style="font-size:13px;font-weight:600;color:#16233E;">Navy</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3D5A80;">#16233E</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;background:#14B8A6;"></div><div><div style="font-size:13px;font-weight:600;color:#16233E;">Teal</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3D5A80;">#14B8A6</div></div></div>
+      <div style="display:flex;align-items:center;gap:12px;"><div style="width:32px;height:32px;background:#0F9E93;"></div><div><div style="font-size:13px;font-weight:600;color:#16233E;">Teal Dark</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#3D5A80;">#0F9E93</div></div></div>
+    </div>
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">02&nbsp;&nbsp;Wordmark Sheet</div>
+  <div style="background:#F7F8FA;border:1px solid #E4E7ED;padding:60px;display:flex;flex-direction:column;gap:48px;">
+    <div>
+      <div class="specLabel">Full lockup</div>
+      <div style="display:flex;align-items:center;gap:20px;">
+        <dc-import name="Icon" size="56" variant="dark" hint-size="56,56"></dc-import>
+        <div>
+          <div style="font-size:40px;font-weight:800;letter-spacing:-1px;"><span style="color:#16233E;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+          <div style="font-size:11px;font-weight:400;letter-spacing:3.5px;color:#3D5A80;margin-top:6px;">ANSWER ENGINE OPTIMIZATION</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="specLabel">Compact lockup — for nav bars</div>
+      <div style="background:#FFFFFF;border:1px solid #E4E7ED;display:inline-flex;align-items:center;gap:12px;padding:12px 20px;">
+        <dc-import name="Icon" size="40" variant="dark" hint-size="40,40"></dc-import>
+        <div>
+          <div style="font-size:26px;font-weight:600;letter-spacing:-0.5px;"><span style="color:#16233E;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+          <div style="font-size:9px;font-weight:400;letter-spacing:2px;color:#3D5A80;margin-top:2px;">ANSWER ENGINE OPTIMIZATION</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="specLabel">Reversed lockup — on deep navy</div>
+      <div style="background:#0E1C35;padding:40px;display:flex;align-items:center;gap:20px;">
+        <dc-import name="Icon" size="56" variant="dark" hint-size="56,56"></dc-import>
+        <div>
+          <div style="font-size:40px;font-weight:800;letter-spacing:-1px;"><span style="color:#FFFFFF;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+          <div style="font-size:11px;font-weight:400;letter-spacing:3.5px;color:#7A9CC8;margin-top:6px;">ANSWER ENGINE OPTIMIZATION</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="specLabel">Do not</div>
+      <div style="display:flex;gap:20px;">
+        <div style="position:relative;flex:1;background:#FFFFFF;border:1px solid #E4E7ED;padding:24px;">
+          <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:50%;background:#E8535A;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">✕</div>
+          <div style="display:flex;align-items:center;gap:12px;transform:scaleX(1.7);transform-origin:left;">
+            <dc-import name="Icon" size="40" variant="dark" hint-size="40,40"></dc-import>
+            <div style="font-size:22px;font-weight:800;"><span style="color:#16233E;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+          </div>
+          <div style="font-size:12px;color:#3D5A80;margin-top:16px;">Don't stretch the lockup</div>
+        </div>
+        <div style="position:relative;flex:1;background:#FFFFFF;border:1px solid #E4E7ED;padding:24px;">
+          <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:50%;background:#E8535A;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">✕</div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <svg width="40" height="40" viewBox="0 0 100 100"><rect x="6" y="6" width="88" height="88" rx="20" fill="#16233E"></rect><polyline points="26,74 26,26 50,54 74,26 74,74" fill="none" stroke="#14B8A6" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></polyline><circle cx="88" cy="8" r="10" fill="#14B8A6"></circle></svg>
+            <div style="font-size:22px;font-weight:800;"><span style="color:#16233E;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+          </div>
+          <div style="font-size:12px;color:#3D5A80;margin-top:16px;">Don't recolour the M</div>
+        </div>
+        <div style="position:relative;flex:1;background:#FFFFFF;border:1px solid #E4E7ED;padding:24px;">
+          <div style="position:absolute;top:-10px;right:-10px;width:24px;height:24px;border-radius:50%;background:#E8535A;color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">✕</div>
+          <div style="display:flex;align-items:center;height:40px;">
+            <div style="font-size:22px;font-weight:800;"><span style="color:#16233E;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+          </div>
+          <div style="font-size:12px;color:#3D5A80;margin-top:16px;">Don't use wordmark without icon</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">03&nbsp;&nbsp;Colour Palette Sheet</div>
+  <div style="background:#F7F8FA;border:1px solid #E4E7ED;padding:60px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;">
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#16233E;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Navy</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#16233E</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#16233E;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#16233E</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Primary surfaces, headings on light</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#14B8A6;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Teal</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#14B8A6</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#14B8A6;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#14B8A6</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Accent, CTA buttons, signal dot</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#0F9E93;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Teal Dark</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#0F9E93</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#0F9E93;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#0F9E93</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Hover state for teal elements</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#1C2E50;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Navy Light</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#1C2E50</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#1C2E50;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#1C2E50</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Secondary dark surfaces, cards on dark</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#0E1C35;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Deep Navy</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#0E1C35</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;border-top:1px solid #1E3255;"><div style="width:40px;height:40px;background:#0E1C35;border:1px solid #1E3255;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#0E1C35</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Hero / page background, darkest dark</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#F7F8FA;border:1px solid #E4E7ED;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Off White</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#F7F8FA</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#F7F8FA;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#F7F8FA</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Light page background</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#7A9CC8;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Steel Blue</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#7A9CC8</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#7A9CC8;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#7A9CC8</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Body text on dark backgrounds</div>
+      </div>
+
+      <div style="border:1px solid #E4E7ED;">
+        <div style="background:#FFFFFF;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#3D5A80;"></div><div><div style="font-size:13px;font-weight:700;color:#16233E;">Muted Blue</div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#3D5A80;">#3D5A80</div></div></div>
+        <div style="background:#0E1C35;padding:16px;display:flex;align-items:center;gap:12px;"><div style="width:40px;height:40px;background:#3D5A80;"></div><div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7A9CC8;">#3D5A80</div></div>
+        <div style="padding:12px 16px;font-size:11px;color:#3D5A80;background:#F7F8FA;">Secondary text, labels on dark</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">04&nbsp;&nbsp;Typography Sheet</div>
+  <div style="background:#F7F8FA;border:1px solid #E4E7ED;padding:60px;display:flex;gap:40px;">
+
+    <div style="flex:1;background:#FFFFFF;border:1px solid #E4E7ED;padding:40px;display:flex;flex-direction:column;gap:32px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#3D5A80;text-transform:uppercase;">On light</div>
+      <div><div class="specLabel">Display / Hero — 52 / 800 / -1.5px</div><div style="font-size:52px;font-weight:800;letter-spacing:-1.5px;color:#16233E;line-height:1.05;">Is your business visible to AI?</div></div>
+      <div><div class="specLabel">Section heading — 32 / 700 / -0.5px</div><div style="font-size:32px;font-weight:700;letter-spacing:-0.5px;color:#16233E;">Your visibility report</div></div>
+      <div><div class="specLabel">Card heading — 20 / 700</div><div style="font-size:20px;font-weight:700;color:#16233E;">Meridian Retail Co.</div></div>
+      <div><div class="specLabel">UI label — 11 / 600 / 2px</div><div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#16233E;text-transform:uppercase;">Visibility score</div></div>
+      <div><div class="specLabel">Body — 16 / 400 / 1.7lh</div><div style="font-size:16px;font-weight:400;line-height:1.7;color:#16233E;">MasterAEO checks whether AI assistants recommend your business, then generates ready-made content to close the gap.</div></div>
+      <div><div class="specLabel">Tagline — 11 / 400 / 3.5px</div><div style="font-size:11px;font-weight:400;letter-spacing:3.5px;color:#3D5A80;text-transform:uppercase;">Answer engine optimization</div></div>
+    </div>
+
+    <div style="flex:1;background:#0E1C35;padding:40px;display:flex;flex-direction:column;gap:32px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#7A9CC8;text-transform:uppercase;">On dark</div>
+      <div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;">Display / Hero — 52 / 800 / -1.5px</div><div style="font-size:52px;font-weight:800;letter-spacing:-1.5px;color:#FFFFFF;line-height:1.05;">Is your business <span style="color:#14B8A6;">visible to AI?</span></div></div>
+      <div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;">Section heading — 32 / 700 / -0.5px</div><div style="font-size:32px;font-weight:700;letter-spacing:-0.5px;color:#FFFFFF;">Your visibility report</div></div>
+      <div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;">Card heading — 20 / 700</div><div style="font-size:20px;font-weight:700;color:#FFFFFF;">Meridian Retail Co.</div></div>
+      <div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;">UI label — 11 / 600 / 2px</div><div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#7A9CC8;text-transform:uppercase;">Visibility score</div></div>
+      <div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;">Body — 16 / 400 / 1.7lh</div><div style="font-size:16px;font-weight:400;line-height:1.7;color:#7A9CC8;">MasterAEO checks whether AI assistants recommend your business, then generates ready-made content to close the gap.</div></div>
+      <div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:8px;">Tagline — 11 / 400 / 3.5px</div><div style="font-size:11px;font-weight:400;letter-spacing:3.5px;color:#7A9CC8;text-transform:uppercase;">Answer engine optimization</div></div>
+    </div>
+
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">05&nbsp;&nbsp;Hero Image — 1200 × 620</div>
+  <div style="width:1200px;height:620px;display:flex;position:relative;overflow:hidden;background:#0E1C35;background-image:repeating-linear-gradient(to right,rgba(26,46,80,0.4) 0px,rgba(26,46,80,0.4) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(to bottom,rgba(26,46,80,0.4) 0px,rgba(26,46,80,0.4) 1px,transparent 1px,transparent 60px);">
+    <div style="width:50%;padding:64px 56px;display:flex;flex-direction:column;gap:22px;position:relative;z-index:1;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <dc-import name="Icon" size="36" variant="dark" hint-size="36,36"></dc-import>
+        <div style="font-size:18px;font-weight:700;"><span style="color:#FFFFFF;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+      </div>
+      <div style="border:1px solid rgba(20,184,166,0.5);border-radius:999px;padding:7px 16px;font-size:11px;font-weight:600;letter-spacing:1.5px;color:#14B8A6;width:fit-content;text-transform:uppercase;">Answer Engine Optimization</div>
+      <div style="font-size:46px;font-weight:800;letter-spacing:-1.5px;line-height:1.08;color:#FFFFFF;">Is your business<br><span style="color:#14B8A6;">visible to AI?</span></div>
+      <div style="font-size:15px;line-height:1.6;color:#7A9CC8;">When buyers ask ChatGPT, Gemini, or Perplexity<br>for the best in your category — do they find you?</div>
+      <div style="display:flex;gap:12px;margin-top:6px;">
+        <div style="background:#14B8A6;color:#04342C;font-weight:600;font-size:14px;padding:14px 28px;">Check your score</div>
+        <div style="border:1px solid #3D5A80;color:#7A9CC8;font-weight:600;font-size:14px;padding:14px 28px;">See how it works</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;">
+        <div style="background:#1C2E50;border:1px solid #2A3F63;color:#7A9CC8;font-size:12px;padding:7px 12px;">7 intent clusters</div>
+        <div style="background:#1C2E50;border:1px solid #2A3F63;color:#7A9CC8;font-size:12px;padding:7px 12px;">3 AI models checked</div>
+        <div style="background:#1C2E50;border:1px solid #2A3F63;color:#7A9CC8;font-size:12px;padding:7px 12px;">Fix-It ready-made content</div>
+      </div>
+    </div>
+
+    <div style="width:50%;display:flex;align-items:center;justify-content:center;position:relative;">
+      <div style="position:absolute;width:340px;height:340px;background:#14B8A6;opacity:0.18;filter:blur(70px);border-radius:50%;"></div>
+      <div style="width:460px;background:#0F1B30;border:1px solid #1E3255;padding:26px;display:flex;flex-direction:column;gap:16px;position:relative;z-index:1;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#7A9CC8;text-transform:uppercase;">AI Visibility Report</div>
+          <div style="background:rgba(20,184,166,0.15);color:#14B8A6;font-size:10px;font-weight:700;letter-spacing:1px;padding:4px 10px;">LIVE</div>
+        </div>
+        <div><div style="font-size:17px;font-weight:700;color:#FFFFFF;">Meridian Retail Co.</div><div style="font-size:12px;color:#3D5A80;margin-top:2px;">Retail &amp; E-Commerce</div></div>
+        <div style="border-top:1px solid #1E3255;"></div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="flex:1;text-align:center;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:6px;">Before</div>
+            <div style="font-size:30px;font-weight:800;color:#E8535A;">24%</div>
+            <div style="font-size:11px;color:#3D5A80;margin-top:2px;">2 of 9 prompts</div>
+          </div>
+          <div style="color:#14B8A6;font-size:22px;font-weight:700;">→</div>
+          <div style="flex:1;text-align:center;border:1px solid #14B8A6;padding:10px 4px;">
+            <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:6px;">After fixes</div>
+            <div style="font-size:30px;font-weight:800;color:#14B8A6;">89%</div>
+            <div style="font-size:11px;color:#3D5A80;margin-top:2px;">8 of 9 prompts</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3D5A80;text-transform:uppercase;margin-bottom:10px;">Model breakdown</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:74px;font-size:11px;color:#7A9CC8;">ChatGPT</div><div style="flex:1;height:6px;background:#1C2E50;border-radius:3px;overflow:hidden;"><div style="width:85%;height:100%;background:#14B8A6;"></div></div><div style="width:28px;font-size:11px;color:#7A9CC8;text-align:right;">85%</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:74px;font-size:11px;color:#7A9CC8;">Gemini</div><div style="flex:1;height:6px;background:#1C2E50;border-radius:3px;overflow:hidden;"><div style="width:90%;height:100%;background:#14B8A6;"></div></div><div style="width:28px;font-size:11px;color:#7A9CC8;text-align:right;">90%</div></div>
+            <div style="display:flex;align-items:center;gap:8px;"><div style="width:74px;font-size:11px;color:#7A9CC8;">Perplexity</div><div style="flex:1;height:6px;background:#1C2E50;border-radius:3px;overflow:hidden;"><div style="width:94%;height:100%;background:#14B8A6;"></div></div><div style="width:28px;font-size:11px;color:#7A9CC8;text-align:right;">94%</div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <div style="background:#1C2E50;color:#7A9CC8;font-size:11px;padding:5px 10px;">No footprint</div>
+          <div style="background:#1C2E50;color:#7A9CC8;font-size:11px;padding:5px 10px;">Weak local signal</div>
+          <div style="background:#1C2E50;color:#7A9CC8;font-size:11px;padding:5px 10px;">No forum presence</div>
+        </div>
+        <div style="background:rgba(20,184,166,0.08);border-top:1px solid rgba(20,184,166,0.3);padding:12px 4px;color:#14B8A6;font-size:13px;font-weight:600;text-align:center;">12 ready-made content fixes generated →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">06&nbsp;&nbsp;Social Media Card — 1200 × 630</div>
+  <div style="width:1200px;height:630px;background:#0E1C35;background-image:repeating-linear-gradient(to right,rgba(26,46,80,0.4) 0px,rgba(26,46,80,0.4) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(to bottom,rgba(26,46,80,0.4) 0px,rgba(26,46,80,0.4) 1px,transparent 1px,transparent 60px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <dc-import name="Icon" size="56" variant="dark" hint-size="56,56"></dc-import>
+      <div style="font-size:30px;font-weight:700;"><span style="color:#FFFFFF;">Master</span><span style="color:#14B8A6;">AEO</span></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:18px;">
+      <div style="font-size:80px;font-weight:800;color:#E8535A;letter-spacing:-2px;">24%</div>
+      <div style="font-size:44px;color:#7A9CC8;">→</div>
+      <div style="font-size:80px;font-weight:800;color:#14B8A6;letter-spacing:-2px;">89%</div>
+    </div>
+    <div style="font-size:42px;font-weight:800;letter-spacing:-1px;color:#FFFFFF;">AI found your competitor. Not you.</div>
+    <div style="font-size:17px;color:#7A9CC8;">MasterAEO shows you why — and fixes it.</div>
+    <div style="border:1px solid #14B8A6;border-radius:999px;padding:10px 22px;color:#14B8A6;font-size:14px;font-weight:600;margin-top:6px;">masteraeo.ai</div>
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">07&nbsp;&nbsp;Favicon Sheet</div>
+  <div style="background:#F7F8FA;border:1px solid #E4E7ED;padding:60px;">
+    <div style="display:flex;align-items:flex-end;gap:48px;flex-wrap:wrap;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;"><dc-import name="Icon" size="120" variant="dark" hint-size="120,120"></dc-import><div style="text-align:center;font-size:12px;color:#3D5A80;">512px<br>App icon</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;"><dc-import name="Icon" size="80" variant="dark" hint-size="80,80"></dc-import><div style="text-align:center;font-size:12px;color:#3D5A80;">192px<br>Android</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;"><dc-import name="Icon" size="72" variant="dark" hint-size="72,72"></dc-import><div style="text-align:center;font-size:12px;color:#3D5A80;">180px<br>Apple touch</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;"><dc-import name="Icon" size="32" variant="dark" hint-size="32,32"></dc-import><div style="text-align:center;font-size:12px;color:#3D5A80;">32px<br>Browser tab</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;"><dc-import name="Icon" size="16" variant="dark" show-m="{{false}}" hint-size="16,16"></dc-import><div style="text-align:center;font-size:12px;color:#3D5A80;">16px<br>Browser tab (small)</div></div>
+    </div>
+    <div style="margin-top:32px;border-top:1px solid #E4E7ED;padding-top:20px;font-size:12px;font-style:italic;color:#3D5A80;">At 16px the M stroke is unreadable — the mark simplifies to the tile shape with the teal signal dot only.</div>
+  </div>
+</div>
+
+<div style="width:1200px;">
+  <div class="kitLabel">08&nbsp;&nbsp;UI Component Preview</div>
+  <div style="display:flex;flex-direction:column;gap:24px;">
+
+    <div style="background:#F7F8FA;border:1px solid #E4E7ED;padding:48px;display:flex;flex-direction:column;gap:28px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#3D5A80;text-transform:uppercase;">On light</div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="background:#14B8A6;color:#FFFFFF;font-weight:600;font-size:14px;padding:12px 24px;">Check your score</div>
+        <div style="border:1px solid #16233E;color:#16233E;font-weight:600;font-size:14px;padding:12px 24px;">View report</div>
+        <div style="color:#3D5A80;font-weight:600;font-size:14px;padding:12px 24px;">Learn more</div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="background:#1C2E50;color:#14B8A6;font-weight:700;font-size:18px;padding:10px 20px;border-radius:999px;">89%</div>
+        <div style="background:#1C2E50;color:#E8535A;font-weight:700;font-size:18px;padding:10px 20px;border-radius:999px;">24%</div>
+        <div style="background:rgba(122,156,200,0.15);color:#3D5A80;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;">ChatGPT</div>
+        <div style="background:rgba(61,90,128,0.18);color:#3D5A80;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;">Gemini</div>
+        <div style="background:rgba(15,158,147,0.15);color:#0F9E93;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;">Perplexity</div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#16233E;text-transform:uppercase;margin-bottom:8px;">Visibility score</div>
+        <div style="display:flex;align-items:center;gap:12px;"><div style="width:300px;height:8px;background:#E4E7ED;border-radius:4px;overflow:hidden;"><div style="width:89%;height:100%;background:#14B8A6;"></div></div><div style="font-size:12px;font-weight:600;color:#14B8A6;">89%</div></div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="background:#EDEFF6;color:#3D5A80;font-size:12px;padding:6px 12px;border-radius:999px;">No footprint</div>
+        <div style="width:420px;background:#0F1B30;border-left:4px solid #14B8A6;padding:18px 20px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#14B8A6;text-transform:uppercase;">Content fix</div>
+          <div style="font-size:13px;color:#7A9CC8;line-height:1.5;">Add your business to 3 local directories with matching NAP data.</div>
+          <div style="background:#14B8A6;color:#FFFFFF;font-size:12px;font-weight:600;padding:8px 16px;width:fit-content;margin-top:6px;">Generate</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#0E1C35;padding:48px;display:flex;flex-direction:column;gap:28px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:2px;color:#7A9CC8;text-transform:uppercase;">On dark</div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="background:#14B8A6;color:#FFFFFF;font-weight:600;font-size:14px;padding:12px 24px;">Check your score</div>
+        <div style="border:1px solid #7A9CC8;color:#7A9CC8;font-weight:600;font-size:14px;padding:12px 24px;">View report</div>
+        <div style="color:#7A9CC8;font-weight:600;font-size:14px;padding:12px 24px;">Learn more</div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="background:#1C2E50;color:#14B8A6;font-weight:700;font-size:18px;padding:10px 20px;border-radius:999px;">89%</div>
+        <div style="background:#1C2E50;color:#E8535A;font-weight:700;font-size:18px;padding:10px 20px;border-radius:999px;">24%</div>
+        <div style="background:rgba(122,156,200,0.15);color:#7A9CC8;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;">ChatGPT</div>
+        <div style="background:rgba(61,90,128,0.25);color:#7A9CC8;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;">Gemini</div>
+        <div style="background:rgba(15,158,147,0.2);color:#14B8A6;font-size:12px;font-weight:600;padding:6px 14px;border-radius:999px;">Perplexity</div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#7A9CC8;text-transform:uppercase;margin-bottom:8px;">Visibility score</div>
+        <div style="display:flex;align-items:center;gap:12px;"><div style="width:300px;height:8px;background:#1C2E50;border-radius:4px;overflow:hidden;"><div style="width:89%;height:100%;background:#14B8A6;"></div></div><div style="font-size:12px;font-weight:600;color:#14B8A6;">89%</div></div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;">
+        <div style="background:#1C2E50;color:#7A9CC8;font-size:12px;padding:6px 12px;border-radius:999px;">No footprint</div>
+        <div style="width:420px;background:#0F1B30;border-left:4px solid #14B8A6;padding:18px 20px;display:flex;flex-direction:column;gap:6px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:#14B8A6;text-transform:uppercase;">Content fix</div>
+          <div style="font-size:13px;color:#7A9CC8;line-height:1.5;">Add your business to 3 local directories with matching NAP data.</div>
+          <div style="background:#14B8A6;color:#FFFFFF;font-size:12px;font-weight:600;padding:8px 16px;width:fit-content;margin-top:6px;">Generate</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+</x-dc>
+</body>
+</html>

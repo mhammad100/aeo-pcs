@@ -10,19 +10,19 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <PublicShell>
-      <div className="ma-page">
+      <div className="ma-page-narrow">
         <div className="ma-section-label">Company</div>
         <h1 className="ma-section-title" style={{ maxWidth: "20ch" }}>
           We help businesses earn a seat in AI answers
         </h1>
         <p className="ma-section-copy" style={{ maxWidth: "52ch" }}>
-          Master AEO is building practical AI visibility tools for local and growing companies —
+          Master AEO is building practical AI visibility tools for local and growing companies
           measure whether assistants recommend you, understand who gets cited instead, and leave with
           a concrete plan.
         </p>
         <p className="ma-section-copy" style={{ maxWidth: "52ch" }}>
           Our product combines visibility checks, action plans, and a business dashboard so teams can
-          improve over months — not just run a one-off audit.
+          improve over months not just run a one-off audit.
         </p>
         <div className="ma-cta-row">
           <Link href="/features" className="ma-btn ma-btn-primary">

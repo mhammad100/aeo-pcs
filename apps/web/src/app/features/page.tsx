@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function FeaturesPage() {
   return (
     <PublicShell>
-      <div className="ma-page">
+      <div className="ma-page-narrow">
         <div className="ma-section-label">Product</div>
         <h1 className="ma-section-title" style={{ maxWidth: "22ch" }}>
           Everything you need to earn a place in AI answers
@@ -31,7 +31,7 @@ export default function FeaturesPage() {
           <article className="ma-feature">
             <h3>Mention scoring</h3>
             <p>
-              See a clear visibility percentage — how often your brand is named — plus the sources
+              See a clear visibility percentage, how often your brand is named plus the sources
               models lean on instead of you.
             </p>
           </article>
@@ -45,7 +45,7 @@ export default function FeaturesPage() {
           <article className="ma-feature">
             <h3>Business profile</h3>
             <p>
-              Website, Google Business, and social links stored once — every check uses the same
+              Website, Google Business, and social links stored once, every check uses the same
               identity.
             </p>
           </article>
@@ -59,7 +59,7 @@ export default function FeaturesPage() {
           <article className="ma-feature">
             <h3>Reports</h3>
             <p>
-              Download a shareable HTML report for stakeholders — score, prompt findings, and plan
+              Download a shareable HTML report for stakeholders, score, prompt findings, and plan
               status in one place.
             </p>
           </article>

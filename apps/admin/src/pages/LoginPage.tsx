@@ -84,8 +84,8 @@ export default function LoginPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
           <BrandMark />
           <div>
-            <div style={{ color: "#EDEFF6", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
-              Master <span style={{ color: "#14B8A6" }}>AEO</span>
+            <div style={{ color: "#FFFFFF", fontWeight: 700, fontSize: 16, lineHeight: 1.1 }}>
+              Master<span style={{ color: "#14B8A6" }}>AEO</span>
             </div>
             <div
               style={{

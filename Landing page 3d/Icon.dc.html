@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<svg width="{{size}}" height="{{size}}" viewBox="0 0 100 100" style="display:block;flex-shrink:0">
+  <rect x="6" y="6" width="88" height="88" rx="20" fill="{{tileFill}}" stroke="{{tileStroke}}" stroke-width="{{tileStrokeWidth}}"></rect>
+  <sc-if value="{{showM}}" hint-placeholder-val="{{true}}">
+    <polyline points="26,74 26,26 50,54 74,26 74,74" fill="none" stroke="{{mStroke}}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"></polyline>
+  </sc-if>
+  <circle cx="88" cy="8" r="10" fill="{{dotFill}}"></circle>
+</svg>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:96,&quot;height&quot;:96},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:64,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:16,&quot;max&quot;:256},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;outline&quot;,&quot;onDark&quot;]},&quot;showM&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const NAVY = '#16233E', TEAL = '#14B8A6', WHITE = '#FFFFFF';
+    const variant = this.props.variant ?? 'dark';
+    const size = this.props.size ?? 64;
+    const showM = this.props.showM ?? true;
+    let tileFill = NAVY, tileStroke = 'none', tileStrokeWidth = 0, mStroke = WHITE;
+    if (variant === 'outline') { tileFill = WHITE; tileStroke = NAVY; tileStrokeWidth = 4; mStroke = NAVY; }
+    else if (variant === 'onDark') { tileFill = 'rgba(255,255,255,0.10)'; tileStroke = 'rgba(255,255,255,0.22)'; tileStrokeWidth = 2; mStroke = WHITE; }
+    return { size, tileFill, tileStroke, tileStrokeWidth, mStroke, dotFill: TEAL, showM };
+  }
+}
+
+</script>
+</body>
+</html>

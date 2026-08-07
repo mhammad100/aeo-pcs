@@ -36,7 +36,7 @@ export default function RecentRunsList({ jobs }: Props) {
               <div className="recent-runs-meta">
                 <div className={`recent-runs-score ${scoreTone(score)}`}>
                   <span className="recent-runs-score-value">
-                    {typeof score === "number" ? `${score}%` : "—"}
+                    {typeof score === "number" ? `${score}%` : "-"}
                   </span>
                   <span className="recent-runs-score-label">visibility</span>
                 </div>

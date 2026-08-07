@@ -28,7 +28,7 @@ function BrandMark({ size = 28 }: { size?: number }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx="88" cy="12" r="10" fill="#14B8A6" />
+      <circle cx="88" cy="8" r="10" fill="#14B8A6" />
     </svg>
   );
 }
@@ -43,12 +43,12 @@ export default function AdminShell() {
 
   return (
     <Layout style={{ minHeight: "100vh", background: "#0E1C35" }}>
-      <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#16233E" }}>
+      <Sider breakpoint="lg" collapsedWidth={0} style={{ background: "#0F1B30", borderInlineEnd: "1px solid #1E3255" }}>
         <div style={{ padding: 20, display: "flex", alignItems: "center", gap: 10 }}>
           <BrandMark />
           <div>
-            <Text strong style={{ color: "#EDEFF6", display: "block", lineHeight: 1.2 }}>
-              Master <span style={{ color: "#14B8A6" }}>AEO</span>
+            <Text strong style={{ color: "#FFFFFF", display: "block", lineHeight: 1.2 }}>
+              Master<span style={{ color: "#14B8A6" }}>AEO</span>
             </Text>
             <Text style={{ color: "#7A9CC8", fontSize: 10, letterSpacing: "0.18em" }}>ADMIN</Text>
           </div>
@@ -58,19 +58,19 @@ export default function AdminShell() {
           mode="inline"
           selectedKeys={[selected]}
           items={items}
-          style={{ background: "#16233E", borderInlineEnd: "none" }}
+          style={{ background: "#0F1B30", borderInlineEnd: "none" }}
         />
       </Sider>
       <Layout style={{ background: "#0E1C35" }}>
         <Header
           style={{
-            background: "#16233E",
+            background: "#0F1B30",
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
             gap: 16,
             paddingInline: 24,
-            borderBottom: "1px solid rgba(61, 90, 128, 0.45)",
+            borderBottom: "1px solid #1E3255",
           }}
         >
           <Text type="secondary">{user?.email}</Text>
@@ -90,7 +90,13 @@ export default function AdminShell() {
             Log out
           </Button>
         </Header>
-        <Content style={{ padding: 24 }}>
+        <Content
+          style={{
+            padding: 24,
+            backgroundImage:
+              "repeating-linear-gradient(to right,rgba(26,46,80,0.3) 0px,rgba(26,46,80,0.3) 1px,transparent 1px,transparent 60px),repeating-linear-gradient(to bottom,rgba(26,46,80,0.3) 0px,rgba(26,46,80,0.3) 1px,transparent 1px,transparent 60px)",
+          }}
+        >
           <Outlet />
         </Content>
       </Layout>

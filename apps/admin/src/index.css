@@ -8,7 +8,7 @@ body,
   margin: 0;
   min-height: 100%;
   background: #0e1c35;
-  color: #edeff6;
+  color: #ffffff;
   font-family: Inter, system-ui, sans-serif;
 }
 
@@ -76,7 +76,7 @@ body,
 .ant-btn-primary.ant-btn-dangerous:not(:disabled),
 .ant-btn-primary.ant-btn-dangerous:not(:disabled):hover,
 .ant-btn-primary.ant-btn-dangerous:not(:disabled):focus {
-  color: #edeff6 !important;
+  color: #ffffff !important;
 }
 
 .ant-btn-default {

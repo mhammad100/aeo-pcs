@@ -133,7 +133,7 @@ export default function SettingsInlineEditor({
           <div className="settings-field-row-head">
             <span className="settings-field-label">Email address</span>
           </div>
-          <div className="settings-field-value">{email || "—"}</div>
+          <div className="settings-field-value">{email || "-"}</div>
           <p className="settings-field-hint">Contact support to change your login email.</p>
         </div>
 
@@ -400,7 +400,7 @@ export default function SettingsInlineEditor({
           editing={editingKey === "targetLocations"}
           saving={savingKey === "targetLocations"}
           display={<GeoLocationChipList items={business?.targetLocations || []} />}
-          hint="Areas you serve beyond your registered address — country required; state and city optional."
+          hint="Areas you serve beyond your registered address. Country required; state and city optional."
           onEdit={() =>
             startEdit("targetLocations", () =>
               setDraftTargetLocations(

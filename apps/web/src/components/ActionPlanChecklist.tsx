@@ -136,8 +136,8 @@ function ActionPlanItemCard({
             rows={2}
             placeholder={
               isAutomatable
-                ? "Optional note — e.g. where you published this"
-                : "Optional note — track what you completed"
+                ? "Optional note, e.g. where you published this"
+                : "Optional note track what you completed"
             }
             value={note}
             onChange={(e) => setNote(e.target.value)}

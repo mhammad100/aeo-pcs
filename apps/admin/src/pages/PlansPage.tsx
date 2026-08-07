@@ -166,7 +166,7 @@ export default function PlansPage() {
           {
             title: "Payment plan ID",
             dataIndex: "razorpayPlanId",
-            render: (v?: string) => v || "—",
+            render: (v?: string) => v || "-",
           },
           {
             title: "Active",
@@ -219,7 +219,7 @@ export default function PlansPage() {
         pagination={false}
         columns={[
           { title: "Business", dataIndex: "businessName" },
-          { title: "Plan", render: (_, r) => r.plan?.name || "—" },
+          { title: "Plan", render: (_, r) => r.plan?.name || "-" },
           { title: "Status", dataIndex: "status" },
         ]}
       />

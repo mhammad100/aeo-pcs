@@ -58,7 +58,7 @@ const sectionCardStyle = {
 type TaskModelField = "promptGenerationModel" | "actionPlanModel";
 
 function ProviderTag({ provider }: { provider?: LlmProvider }) {
-  if (!provider) return <Text type="secondary">—</Text>;
+  if (!provider) return <Text type="secondary">-</Text>;
   const meta = PROVIDER_META[provider];
   return (
     <Tag
@@ -569,7 +569,7 @@ export default function SettingsPage() {
               >
                 <Text type="secondary">API calls per check</Text>
                 <Title level={3} style={{ margin: "4px 0 0", color: "#E8943A" }}>
-                  {callsPerRun || "—"}
+                  {callsPerRun || "-"}
                 </Title>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {promptsPerRun} prompts × {enabledVisibility} models

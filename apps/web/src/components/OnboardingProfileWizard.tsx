@@ -22,7 +22,7 @@ const WIZARD_STEPS: {
     id: "identity",
     title: "Business identity",
     subtitle: "Name, category & services",
-    hint: "Name, category, and what you offer — this powers your visibility checks.",
+    hint: "Name, category, and what you offer. This powers your visibility checks.",
   },
   {
     id: "location",
@@ -34,14 +34,14 @@ const WIZARD_STEPS: {
     id: "online",
     title: "Online presence",
     subtitle: "Website & Google",
-    hint: "Add your website and Google Business Profile — we'll reference these in your action plan.",
+    hint: "Add your website and Google Business Profile. We'll reference these in your action plan.",
     optional: true,
   },
   {
     id: "social",
     title: "Social profiles",
     subtitle: "Instagram, LinkedIn & more",
-    hint: "Connect the platforms you use — optional, but helps when we generate content for you.",
+    hint: "Connect the platforms you use. Optional, but helps when we generate content for you.",
     optional: true,
   },
 ];

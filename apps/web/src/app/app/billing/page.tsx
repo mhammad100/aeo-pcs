@@ -75,7 +75,7 @@ export default function BillingPage() {
               {
                 title: COPY.billing.paymentReference,
                 dataIndex: "razorpayPaymentId",
-                render: (v?: string) => v || "—",
+                render: (v?: string) => v || "-",
               },
             ]}
           />
