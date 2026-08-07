@@ -5329,19 +5329,28 @@ a {
 .recent-runs-meta {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.recent-runs-score,
+.recent-runs-plan,
+.recent-runs-download {
+  box-sizing: border-box;
+  min-height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--ma-line);
+  background: rgba(14, 28, 53, 0.55);
 }
 
 .recent-runs-score {
   display: inline-flex;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--ma-line);
-  background: rgba(14, 28, 53, 0.55);
+  min-width: 118px;
+  padding: 0 12px;
   white-space: nowrap;
 }
 
@@ -5374,7 +5383,7 @@ a {
 
 .recent-runs-score-value {
   font-family: var(--ma-font-display);
-  font-size: 18px;
+  font-size: 16px;
   line-height: 1;
   color: var(--ma-ink);
 }
@@ -5390,12 +5399,12 @@ a {
 .recent-runs-plan {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--ma-line);
-  background: rgba(14, 28, 53, 0.45);
+  min-width: 118px;
+  padding: 0 12px;
   font-size: 12px;
+  font-weight: 500;
   color: var(--ma-muted);
   white-space: nowrap;
 }
@@ -5404,6 +5413,29 @@ a {
   border-color: rgba(20, 184, 166, 0.35);
   background: rgba(20, 184, 166, 0.1);
   color: var(--ma-accent-soft);
+}
+
+.recent-runs-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  padding: 0;
+  color: var(--ma-muted);
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.recent-runs-download:hover:not(:disabled) {
+  border-color: rgba(20, 184, 166, 0.45);
+  color: var(--ma-accent-soft);
+  background: rgba(20, 184, 166, 0.1);
+}
+
+.recent-runs-download:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .recent-runs-empty {
@@ -5907,7 +5939,14 @@ a {
 
   .recent-runs-meta {
     width: 100%;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .recent-runs-score,
+  .recent-runs-plan {
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
   .action-plan-hero {

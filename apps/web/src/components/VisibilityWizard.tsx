@@ -21,6 +21,7 @@ import {
 } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
 import { hasActiveSubscription } from "@/lib/authRouting";
+import { downloadBlob } from "@/lib/download";
 import VisibilityInsights from "@/components/VisibilityInsights";
 import VisibilityStepNav from "@/components/VisibilityStepNav";
 import { useVisibilityJobStream } from "@/hooks/useVisibilityJobStream";
@@ -46,18 +47,6 @@ const DEFAULT_RUNTIME: AeoRuntimeSettings = {
   visibilityModelCount: 3,
   visibilityModels: [],
 };
-
-function downloadBlob(content: BlobPart, filename: string, mime: string) {
-  const blob = new Blob([content], { type: mime });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
 
 function hasPlanContent(plan: { automatable?: unknown[]; manual?: unknown[] } | null | undefined) {
   if (!plan) return false;

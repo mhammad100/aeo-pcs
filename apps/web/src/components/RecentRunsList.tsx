@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircleOutlined, FileTextOutlined } from "@ant-design/icons";
+import { useState } from "react";
+import {
+  CheckCircleOutlined,
+  DownloadOutlined,
+  FileTextOutlined,
+  LoadingOutlined,
+} from "@ant-design/icons";
+import { message } from "antd";
 import type { VisibilityJobSummary } from "@aeo-pcs/shared";
+import { api, ApiError } from "@/lib/api";
+import { downloadBlob } from "@/lib/download";
 import { formatRunDate } from "@/lib/formatDate";
 
 type Props = {
@@ -17,12 +26,28 @@ function scoreTone(pct: number | undefined): string {
 }
 
 export default function RecentRunsList({ jobs }: Props) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  async function onDownload(jobId: string) {
+    if (downloadingId) return;
+    setDownloadingId(jobId);
+    try {
+      const report = await api.getReport(jobId);
+      downloadBlob(report.data, report.filename, report.contentType);
+    } catch (err) {
+      message.error(err instanceof ApiError ? err.message : "Report download failed");
+    } finally {
+      setDownloadingId(null);
+    }
+  }
+
   return (
     <ul className="recent-runs-list">
       {jobs.map((job, index) => {
         const score = job.score?.visibilityPct;
         const { primary, secondary } = formatRunDate(job.createdAt);
         const runLabel = index === 0 ? "Latest" : `Run ${jobs.length - index}`;
+        const busy = downloadingId === job.id;
 
         return (
           <li key={job.id} className="recent-runs-item">
@@ -57,6 +82,17 @@ export default function RecentRunsList({ jobs }: Props) {
                     </>
                   )}
                 </span>
+
+                <button
+                  type="button"
+                  className="recent-runs-download"
+                  aria-label="Download PDF report"
+                  title="Download PDF report"
+                  disabled={busy || Boolean(downloadingId)}
+                  onClick={() => void onDownload(job.id)}
+                >
+                  {busy ? <LoadingOutlined spin /> : <DownloadOutlined />}
+                </button>
               </div>
             </div>
           </li>
