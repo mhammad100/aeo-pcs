@@ -67,6 +67,7 @@ export default function VisibilityWizard() {
   const [runsLimit, setRunsLimit] = useState(0);
   const [runAllowance, setRunAllowance] = useState<"subscription" | "free">("free");
   const [canRunVisibility, setCanRunVisibility] = useState(false);
+  const [canGenerateActionPlan, setCanGenerateActionPlan] = useState(false);
   const [lastPrompts, setLastPrompts] = useState<string[]>([]);
   const [showPromptChoice, setShowPromptChoice] = useState(false);
   const [resumeChecked, setResumeChecked] = useState(false);
@@ -144,6 +145,7 @@ export default function VisibilityWizard() {
     setRunsLimit(limit);
     setRunAllowance(subscription.runAllowance ?? "free");
     setCanRunVisibility(canStartVisibilityRun(subscription));
+    setCanGenerateActionPlan(Boolean(subscription.canGenerateActionPlan));
   }
 
   function confirmCancelRun(onConfirmed: () => void) {
@@ -303,9 +305,11 @@ export default function VisibilityWizard() {
         setRunsLimit(limit);
         setRunAllowance(subscription.runAllowance ?? "free");
         setCanRunVisibility(canStartVisibilityRun(subscription));
+        setCanGenerateActionPlan(Boolean(subscription.canGenerateActionPlan));
       } catch (err) {
         if (!cancelled) {
           setCanRunVisibility(false);
+          setCanGenerateActionPlan(false);
           dispatch(setError(err instanceof ApiError ? err.message : "Failed to load subscription"));
         }
       } finally {
@@ -687,13 +691,19 @@ export default function VisibilityWizard() {
                       </Button>
                     )}
                     {!hasPlan ? (
-                      <Button
-                        type="primary"
-                        loading={visibility.uiBusy && localBusyLabel === "Building action plan"}
-                        onClick={onBuildPlan}
-                      >
-                        Generate action plan
-                      </Button>
+                      canGenerateActionPlan ? (
+                        <Button
+                          type="primary"
+                          loading={visibility.uiBusy && localBusyLabel === "Building action plan"}
+                          onClick={onBuildPlan}
+                        >
+                          Generate action plan
+                        </Button>
+                      ) : (
+                        <Link href="/app/subscription">
+                          <Button type="primary">Choose a plan for action plans</Button>
+                        </Link>
+                      )
                     ) : (
                       <Button type="primary" onClick={() => setStepOverride(1)}>
                         View action plan

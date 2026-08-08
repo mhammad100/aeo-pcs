@@ -16,6 +16,7 @@ export async function listUsers() {
       email: u.email,
       role: u.role,
       status: u.status,
+      canGenerateActionPlanOnFreeRun: Boolean(u.canGenerateActionPlanOnFreeRun),
       createdAt: u.createdAt,
       business: biz
         ? {
@@ -56,6 +57,7 @@ export async function createBusinessUser(input: {
   email: string;
   password: string;
   businessName?: string;
+  canGenerateActionPlanOnFreeRun?: boolean;
 }) {
   const email = input.email.toLowerCase();
   const existing = await UserModel.findOne({ email });
@@ -69,6 +71,7 @@ export async function createBusinessUser(input: {
     passwordHash,
     role: "business",
     status: "active",
+    canGenerateActionPlanOnFreeRun: Boolean(input.canGenerateActionPlanOnFreeRun),
   });
   const business = await BusinessModel.create({
     ownerUserId: user._id,

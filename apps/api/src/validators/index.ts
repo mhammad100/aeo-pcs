@@ -19,6 +19,7 @@ export const createAdminUserValidators = [
   body("email").isEmail().normalizeEmail(),
   body("password").isString().isLength({ min: 8, max: 128 }),
   body("businessName").optional().isString().trim().isLength({ max: 200 }),
+  body("canGenerateActionPlanOnFreeRun").optional().isBoolean(),
 ];
 
 export const setUserStatusValidators = [

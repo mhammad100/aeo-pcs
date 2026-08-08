@@ -36,6 +36,8 @@ export const COPY = {
     subscribeRequired: "Choose a plan to use this feature.",
     freeRunsExhausted:
       "You've used your free visibility check. Choose a plan to run more.",
+    actionPlanRequiresPlan:
+      "Action plans aren't included with free visibility checks. Choose a plan to unlock them.",
     planUnavailable:
       "This plan is no longer available. Please choose another plan.",
     planNotReady:

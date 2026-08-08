@@ -17,6 +17,7 @@ export async function createBusinessUser(req: AuthedRequest, res: Response) {
     email: req.body.email,
     password: req.body.password,
     businessName: req.body.businessName,
+    canGenerateActionPlanOnFreeRun: req.body.canGenerateActionPlanOnFreeRun,
   });
   res.status(201).json(result);
 }

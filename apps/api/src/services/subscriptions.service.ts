@@ -71,7 +71,8 @@ export async function getActiveSubscriptionForBusiness(businessId: string) {
 
 function freeSubscriptionInfo(
   businessId: string,
-  runsUsed: number
+  runsUsed: number,
+  canGenerateActionPlan: boolean
 ): SubscriptionInfo {
   const runsLimit = freeRunAllowance();
   const { start, end } = monthBounds();
@@ -85,6 +86,7 @@ function freeSubscriptionInfo(
     runsLimit,
     canRunVisibility: runsUsed < runsLimit,
     runAllowance: "free",
+    canGenerateActionPlan,
   };
 }
 
@@ -116,6 +118,7 @@ async function toSubscriptionInfo(
     runsLimit,
     canRunVisibility: entitled && runsUsed < runsLimit,
     runAllowance: "subscription",
+    canGenerateActionPlan: entitled,
     cancelAtPeriodEnd: Boolean(sub.cancelAtPeriodEnd),
     canceledAt: sub.canceledAt ? new Date(sub.canceledAt).toISOString() : undefined,
   };
@@ -126,13 +129,16 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
   if (!business) throw new AppError("Business not found", 404);
 
   const businessId = String(business._id);
+  const user = await UserModel.findById(userId).select("canGenerateActionPlanOnFreeRun").lean();
+  const canGenerateOnFree = Boolean(user?.canGenerateActionPlanOnFreeRun);
+
   const active = await getActiveSubscriptionForBusiness(businessId);
   if (active) {
     return toSubscriptionInfo(active, businessId, true);
   }
 
   const freeUsed = await runsUsedLifetime(businessId);
-  const freeInfo = freeSubscriptionInfo(businessId, freeUsed);
+  const freeInfo = freeSubscriptionInfo(businessId, freeUsed, canGenerateOnFree);
 
   const latest = await SubscriptionModel.findOne({ businessId: business._id })
     .sort({ createdAt: -1 })
@@ -149,6 +155,7 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
     runsLimit: freeInfo.runsLimit,
     canRunVisibility: freeInfo.canRunVisibility,
     runAllowance: "free",
+    canGenerateActionPlan: freeInfo.canGenerateActionPlan,
   };
 }
 
@@ -206,6 +213,24 @@ export async function assertAiFeaturesAllowed(userId: string) {
   if (await hasInProgressVisibilityJob(businessId)) return;
 
   throw new AppError(COPY.billing.freeRunsExhausted, 403);
+}
+
+/**
+ * Active AI access + (entitled subscription OR admin-granted free-run action plan permission).
+ */
+export async function assertActionPlanAllowed(userId: string) {
+  await assertAiFeaturesAllowed(userId);
+
+  const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
+  if (!business) throw new AppError("Business not found", 404);
+
+  const sub = await getActiveSubscriptionForBusiness(String(business._id));
+  if (sub) return;
+
+  const user = await UserModel.findById(userId).select("canGenerateActionPlanOnFreeRun").lean();
+  if (user?.canGenerateActionPlanOnFreeRun) return;
+
+  throw new AppError(COPY.billing.actionPlanRequiresPlan, 403);
 }
 
 export async function assertActiveSubscription(userId: string) {

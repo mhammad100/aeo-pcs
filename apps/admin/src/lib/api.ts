@@ -46,6 +46,7 @@ export type AdminUserRow = {
   email: string;
   role: string;
   status: string;
+  canGenerateActionPlanOnFreeRun: boolean;
   createdAt: string;
   business: { id: string; name: string; profileCompletedAt: string | null } | null;
 };
@@ -73,6 +74,7 @@ export const api = {
     email: string;
     password: string;
     businessName?: string;
+    canGenerateActionPlanOnFreeRun?: boolean;
   }) =>
     request<{ user: AuthUser }>("/admin/users", {
       method: "POST",

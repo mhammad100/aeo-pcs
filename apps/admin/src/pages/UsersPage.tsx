@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Alert, Button, Form, Input, Modal, Space, Table, Tag, Typography, message } from "antd";
+import { Alert, Button, Checkbox, Form, Input, Modal, Space, Table, Tag, Typography, message } from "antd";
 import { api, type AdminUserRow, ApiError } from "@/lib/api";
 
 const { Title } = Typography;
@@ -29,10 +29,20 @@ export default function UsersPage() {
     load();
   }, []);
 
-  async function onCreate(values: { email: string; password: string; businessName?: string }) {
+  async function onCreate(values: {
+    email: string;
+    password: string;
+    businessName?: string;
+    canGenerateActionPlanOnFreeRun?: boolean;
+  }) {
     setCreating(true);
     try {
-      await api.createBusinessUser(values);
+      await api.createBusinessUser({
+        email: values.email,
+        password: values.password,
+        businessName: values.businessName,
+        canGenerateActionPlanOnFreeRun: Boolean(values.canGenerateActionPlanOnFreeRun),
+      });
       message.success("Business user created");
       setOpen(false);
       form.resetFields();
@@ -95,6 +105,13 @@ export default function UsersPage() {
               row.business?.profileCompletedAt ? "Complete" : row.business ? "Incomplete" : "-",
           },
           {
+            title: "Free-run action plan",
+            dataIndex: "canGenerateActionPlanOnFreeRun",
+            render: (v: boolean) => (
+              <Tag color={v ? "blue" : "default"}>{v ? "Allowed" : "No"}</Tag>
+            ),
+          },
+          {
             title: "Actions",
             render: (_: unknown, row: AdminUserRow) =>
               row.role === "admin" ? null : (
@@ -122,6 +139,13 @@ export default function UsersPage() {
           </Form.Item>
           <Form.Item name="businessName" label="Business name (optional)">
             <Input />
+          </Form.Item>
+          <Form.Item
+            name="canGenerateActionPlanOnFreeRun"
+            valuePropName="checked"
+            style={{ marginBottom: 16 }}
+          >
+            <Checkbox>Allow action plan on free run</Checkbox>
           </Form.Item>
           <Button type="primary" htmlType="submit" block loading={creating}>
             Create

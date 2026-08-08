@@ -346,6 +346,11 @@ export type SubscriptionInfo = {
   canRunVisibility: boolean;
   /** Entitlement source for the current runsLimit. */
   runAllowance: "subscription" | "free";
+  /**
+   * True when the user may generate an action plan.
+   * Paid/entitled: always true. Free-run: only if admin granted the permission.
+   */
+  canGenerateActionPlan: boolean;
   cancelAtPeriodEnd?: boolean;
   canceledAt?: string;
 };

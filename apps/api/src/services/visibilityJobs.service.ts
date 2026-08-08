@@ -16,7 +16,7 @@ import { generatePrompts } from "./prompts";
 import { buildReportHtml, wrapReportDocument } from "./report";
 import { syncChecklistFromPlan } from "./checklist.service";
 import { getBusinessInsights, listVisibilityJobs } from "./insights.service";
-import { assertVisibilityRunAllowed, assertAiFeaturesAllowed } from "./subscriptions.service";
+import { assertVisibilityRunAllowed, assertActionPlanAllowed } from "./subscriptions.service";
 
 export { getBusinessInsights, listVisibilityJobs };
 
@@ -485,7 +485,7 @@ export async function buildPlanForJob(input: {
   userRole?: UserRole;
 }) {
   if (input.userRole !== "admin") {
-    await assertAiFeaturesAllowed(input.userId);
+    await assertActionPlanAllowed(input.userId);
   }
 
   const job = await VisibilityJobModel.findById(input.jobId);
@@ -550,7 +550,7 @@ export async function generatePlanItem(input: {
   description: string;
 }) {
   if (input.userRole !== "admin") {
-    await assertAiFeaturesAllowed(input.userId);
+    await assertActionPlanAllowed(input.userId);
   }
 
   const job = await VisibilityJobModel.findById(input.jobId);
