@@ -34,6 +34,8 @@ export const COPY = {
   },
   billing: {
     subscribeRequired: "Choose a plan to use this feature.",
+    freeRunsExhausted:
+      "You've used your free visibility check. Choose a plan to run more.",
     planUnavailable:
       "This plan is no longer available. Please choose another plan.",
     planNotReady:
@@ -59,6 +61,10 @@ export const COPY = {
       `Your subscription ends on ${periodEnd}. You'll keep access until then.`,
     periodEnds: (periodEnd: string) => `Current billing period ends ${periodEnd}.`,
     selectPlanPrompt: "Choose a plan to run visibility checks.",
+    freeRunPrompt: (remaining: number, limit: number) =>
+      remaining > 0
+        ? `You have ${remaining} of ${limit} free visibility ${remaining === 1 ? "check" : "checks"} left.`
+        : `You've used your ${limit} free visibility ${limit === 1 ? "check" : "checks"}. Choose a plan to continue.`,
     noPlans: "No plans are available right now. Please check back soon.",
     loadSubscriptionFailed: "We couldn't load your subscription. Please try again.",
     loadBillingFailed: "We couldn't load your billing history. Please try again.",

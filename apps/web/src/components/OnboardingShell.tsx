@@ -1,17 +1,15 @@
 "use client";
 
 import BrandMark from "@/components/BrandMark";
-import OnboardingSteps from "@/components/OnboardingSteps";
 
 type Props = {
-  step: 0 | 1;
   title: string;
   subtitle?: string;
   wide?: boolean;
   children: React.ReactNode;
 };
 
-export default function OnboardingShell({ step, title, subtitle, wide, children }: Props) {
+export default function OnboardingShell({ title, subtitle, wide, children }: Props) {
   return (
     <div className="onboarding-page">
       <div className={`onboarding-shell${wide ? " is-wide" : ""}`}>
@@ -27,7 +25,6 @@ export default function OnboardingShell({ step, title, subtitle, wide, children 
           </span>
           <h1 className="onboarding-title">{title}</h1>
           {subtitle && <p className="onboarding-subtitle">{subtitle}</p>}
-          <OnboardingSteps current={step} />
         </header>
         {children}
       </div>

@@ -17,10 +17,10 @@ import {
   type AeoRuntimeSettings,
   type VisibilityJob,
   COPY,
+  canStartVisibilityRun,
   formatCategoryLabel,
 } from "@aeo-pcs/shared";
 import { api, ApiError } from "@/lib/api";
-import { hasActiveSubscription } from "@/lib/authRouting";
 import { downloadBlob } from "@/lib/download";
 import VisibilityInsights from "@/components/VisibilityInsights";
 import VisibilityStepNav from "@/components/VisibilityStepNav";
@@ -65,6 +65,7 @@ export default function VisibilityWizard() {
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const [runsUsed, setRunsUsed] = useState(0);
   const [runsLimit, setRunsLimit] = useState(0);
+  const [runAllowance, setRunAllowance] = useState<"subscription" | "free">("free");
   const [canRunVisibility, setCanRunVisibility] = useState(false);
   const [lastPrompts, setLastPrompts] = useState<string[]>([]);
   const [showPromptChoice, setShowPromptChoice] = useState(false);
@@ -137,12 +138,12 @@ export default function VisibilityWizard() {
 
   async function refreshSubscription() {
     const { subscription } = await api.getMySubscription();
-    const subscribed = hasActiveSubscription(subscription);
     const used = subscription.runsUsedThisPeriod ?? 0;
     const limit = subscription.runsLimit ?? 0;
     setRunsUsed(used);
     setRunsLimit(limit);
-    setCanRunVisibility(subscribed && used < limit);
+    setRunAllowance(subscription.runAllowance ?? "free");
+    setCanRunVisibility(canStartVisibilityRun(subscription));
   }
 
   function confirmCancelRun(onConfirmed: () => void) {
@@ -296,12 +297,12 @@ export default function VisibilityWizard() {
       try {
         const { subscription } = await api.getMySubscription();
         if (cancelled) return;
-        const subscribed = hasActiveSubscription(subscription);
         const used = subscription.runsUsedThisPeriod ?? 0;
         const limit = subscription.runsLimit ?? 0;
         setRunsUsed(used);
         setRunsLimit(limit);
-        setCanRunVisibility(subscribed && used < limit);
+        setRunAllowance(subscription.runAllowance ?? "free");
+        setCanRunVisibility(canStartVisibilityRun(subscription));
       } catch (err) {
         if (!cancelled) {
           setCanRunVisibility(false);
@@ -514,7 +515,7 @@ export default function VisibilityWizard() {
         )}
         {!subscriptionLoading && runsLimit > 0 && (
           <span className="vis-meta-pill">
-            Runs {runsUsed}/{runsLimit}
+            {runAllowance === "free" ? "Free runs" : "Runs"} {runsUsed}/{runsLimit}
           </span>
         )}
       </div>
@@ -580,20 +581,16 @@ export default function VisibilityWizard() {
               type="warning"
               showIcon
               message={
-                runsLimit > 0 && runsUsed >= runsLimit
-                  ? "You've used all visibility checks for this billing period."
-                  : COPY.billing.selectPlanPrompt
+                runAllowance === "free"
+                  ? COPY.billing.freeRunsExhausted
+                  : runsLimit > 0 && runsUsed >= runsLimit
+                    ? "You've used all visibility checks for this billing period."
+                    : COPY.billing.selectPlanPrompt
               }
               action={
-                <Link
-                  href={
-                    runsLimit > 0 && runsUsed >= runsLimit
-                      ? "/app/subscription"
-                      : "/app/onboarding/plan"
-                  }
-                >
+                <Link href="/app/subscription">
                   <Button size="small" type="primary">
-                    {runsLimit > 0 && runsUsed >= runsLimit ? "Subscription" : "Plans"}
+                    Plans
                   </Button>
                 </Link>
               }

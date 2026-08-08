@@ -17,15 +17,45 @@ function monthBounds(d = new Date()) {
   return { start, end };
 }
 
+const COUNTED_RUN_STATUSES = [
+  "generating",
+  "ready",
+  "queued",
+  "running",
+  "completed",
+  "cancelled",
+] as const;
+
+const IN_PROGRESS_RUN_STATUSES = ["generating", "ready", "queued", "running"] as const;
+
 async function runsUsedThisMonth(businessId: string) {
   const { start, end } = monthBounds();
   return VisibilityJobModel.countDocuments({
     businessId,
     createdAt: { $gte: start, $lt: end },
-    status: {
-      $in: ["generating", "ready", "queued", "running", "completed", "cancelled"],
-    },
+    status: { $in: [...COUNTED_RUN_STATUSES] },
   });
+}
+
+/** Lifetime visibility runs (one-time free credit accounting). */
+async function runsUsedLifetime(businessId: string) {
+  return VisibilityJobModel.countDocuments({
+    businessId,
+    status: { $in: [...COUNTED_RUN_STATUSES] },
+  });
+}
+
+async function hasInProgressVisibilityJob(businessId: string) {
+  return Boolean(
+    await VisibilityJobModel.exists({
+      businessId,
+      status: { $in: [...IN_PROGRESS_RUN_STATUSES] },
+    })
+  );
+}
+
+function freeRunAllowance() {
+  return env.freeVisibilityRuns;
 }
 
 export async function getActiveSubscriptionForBusiness(businessId: string) {
@@ -39,6 +69,25 @@ export async function getActiveSubscriptionForBusiness(businessId: string) {
     .lean();
 }
 
+function freeSubscriptionInfo(
+  businessId: string,
+  runsUsed: number
+): SubscriptionInfo {
+  const runsLimit = freeRunAllowance();
+  const { start, end } = monthBounds();
+  return {
+    id: "",
+    status: "canceled",
+    currentPeriodStart: start.toISOString(),
+    currentPeriodEnd: end.toISOString(),
+    plan: null,
+    runsUsedThisPeriod: runsUsed,
+    runsLimit,
+    canRunVisibility: runsUsed < runsLimit,
+    runAllowance: "free",
+  };
+}
+
 async function toSubscriptionInfo(
   sub: {
     _id: { toString(): string };
@@ -50,10 +99,12 @@ async function toSubscriptionInfo(
     cancelAtPeriodEnd?: boolean | null;
     canceledAt?: Date | null;
   },
-  businessId: string
+  businessId: string,
+  entitled = true
 ): Promise<SubscriptionInfo> {
   const plan = await ProductPlanModel.findById(sub.planId).lean();
   const runsLimit = plan?.limits?.visibilityRunsPerMonth ?? 0;
+  const runsUsed = await runsUsedThisMonth(businessId);
   return {
     id: String(sub._id),
     status: sub.status as SubscriptionInfo["status"],
@@ -61,8 +112,10 @@ async function toSubscriptionInfo(
     currentPeriodEnd: new Date(sub.currentPeriodEnd).toISOString(),
     note: sub.note || undefined,
     plan: plan ? serializePlan(plan) : null,
-    runsUsedThisPeriod: await runsUsedThisMonth(businessId),
+    runsUsedThisPeriod: runsUsed,
     runsLimit,
+    canRunVisibility: entitled && runsUsed < runsLimit,
+    runAllowance: "subscription",
     cancelAtPeriodEnd: Boolean(sub.cancelAtPeriodEnd),
     canceledAt: sub.canceledAt ? new Date(sub.canceledAt).toISOString() : undefined,
   };
@@ -74,24 +127,29 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
 
   const businessId = String(business._id);
   const active = await getActiveSubscriptionForBusiness(businessId);
-  const sub =
-    active ||
-    (await SubscriptionModel.findOne({ businessId: business._id }).sort({ createdAt: -1 }).lean());
-  const runsUsed = await runsUsedThisMonth(businessId);
-
-  if (!sub) {
-    return {
-      id: "",
-      status: "canceled",
-      currentPeriodStart: monthBounds().start.toISOString(),
-      currentPeriodEnd: monthBounds().end.toISOString(),
-      plan: null,
-      runsUsedThisPeriod: runsUsed,
-      runsLimit: 0,
-    };
+  if (active) {
+    return toSubscriptionInfo(active, businessId, true);
   }
 
-  return toSubscriptionInfo(sub, businessId);
+  const freeUsed = await runsUsedLifetime(businessId);
+  const freeInfo = freeSubscriptionInfo(businessId, freeUsed);
+
+  const latest = await SubscriptionModel.findOne({ businessId: business._id })
+    .sort({ createdAt: -1 })
+    .lean();
+  if (!latest) {
+    return freeInfo;
+  }
+
+  // Expired / inactive subscription: surface history but keep free-run allowance for limits.
+  const historical = await toSubscriptionInfo(latest, businessId, false);
+  return {
+    ...historical,
+    runsUsedThisPeriod: freeInfo.runsUsedThisPeriod,
+    runsLimit: freeInfo.runsLimit,
+    canRunVisibility: freeInfo.canRunVisibility,
+    runAllowance: "free",
+  };
 }
 
 async function getEntitledSubscriptionContext(userId: string) {
@@ -118,29 +176,71 @@ export async function assertUserAccountActive(userId: string) {
   }
 }
 
-/** Active user account + entitled subscription (no run-limit check). */
+/**
+ * Active account + (entitled subscription OR free-run / in-progress free check access).
+ * Does not enforce starting a new visibility run.
+ */
 export async function assertAiFeaturesAllowed(userId: string) {
   await assertUserAccountActive(userId);
-  await getEntitledSubscriptionContext(userId);
+  const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
+  if (!business) throw new AppError("Business not found", 404);
+
+  const businessId = String(business._id);
+  const sub = await getActiveSubscriptionForBusiness(businessId);
+  if (sub) {
+    const plan = await ProductPlanModel.findById(sub.planId).lean();
+    if (!plan || !plan.active) {
+      throw new AppError(COPY.billing.planUnavailable, 403);
+    }
+    return;
+  }
+
+  const freeLimit = freeRunAllowance();
+  if (freeLimit <= 0) {
+    throw new AppError(COPY.billing.subscribeRequired, 403);
+  }
+
+  const used = await runsUsedLifetime(businessId);
+  // Remaining free credit, or wrapping up AI work for already-consumed free checks.
+  if (used <= freeLimit) return;
+  if (await hasInProgressVisibilityJob(businessId)) return;
+
+  throw new AppError(COPY.billing.freeRunsExhausted, 403);
 }
 
 export async function assertActiveSubscription(userId: string) {
-  await assertAiFeaturesAllowed(userId);
-  const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
-  if (!business) throw new AppError("Business not found", 404);
+  await assertUserAccountActive(userId);
+  const { business } = await getEntitledSubscriptionContext(userId);
   return business;
 }
 
 export async function assertVisibilityRunAllowed(userId: string) {
   await assertUserAccountActive(userId);
-  const { business, plan } = await getEntitledSubscriptionContext(userId);
-  const runsLimit = plan.limits?.visibilityRunsPerMonth ?? 0;
-  const runsUsed = await runsUsedThisMonth(String(business._id));
-  if (runsUsed >= runsLimit) {
-    throw new AppError(
-      `Visibility run limit reached (${runsLimit}/month on your current plan).`,
-      403
-    );
+  const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
+  if (!business) throw new AppError("Business not found", 404);
+
+  const businessId = String(business._id);
+  const sub = await getActiveSubscriptionForBusiness(businessId);
+  if (sub) {
+    const plan = await ProductPlanModel.findById(sub.planId).lean();
+    if (!plan || !plan.active) {
+      throw new AppError(COPY.billing.planUnavailable, 403);
+    }
+    const runsLimit = plan.limits?.visibilityRunsPerMonth ?? 0;
+    const runsUsed = await runsUsedThisMonth(businessId);
+    if (runsUsed >= runsLimit) {
+      throw new AppError(
+        `Visibility run limit reached (${runsLimit}/month on your current plan).`,
+        403
+      );
+    }
+    return business;
+  }
+
+  const freeLimit = freeRunAllowance();
+  const used = await runsUsedLifetime(businessId);
+  if (freeLimit <= 0 || used >= freeLimit) {
+    throw new AppError(COPY.billing.freeRunsExhausted, 403);
   }
 
   return business;

@@ -22,6 +22,15 @@ function optional(name: string): string {
   return process.env[name]?.trim() || "";
 }
 
+function requiredInt(name: string, min = 0): number {
+  const raw = required(name);
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < min) {
+    throw new Error(`${name} must be an integer >= ${min}`);
+  }
+  return n;
+}
+
 const razorpayKeyId = optional("RAZORPAY_KEY_ID");
 const razorpayKeySecret = optional("RAZORPAY_KEY_SECRET");
 const billingStubEnv = optional("BILLING_STUB").toLowerCase();
@@ -45,6 +54,11 @@ export const env = {
   jwtSecret: required("JWT_SECRET"),
   jwtExpiresIn: required("JWT_EXPIRES_IN"),
   SIGNUP_ENABLED: requiredBool("SIGNUP_ENABLED"),
+  /**
+   * One-time lifetime free visibility runs for users without an entitled subscription.
+   * Changing this updates the allowance for all unsubscribed businesses.
+   */
+  freeVisibilityRuns: requiredInt("FREE_VISIBILITY_RUNS", 0),
   razorpayKeyId,
   razorpayKeySecret,
   razorpayWebhookSecret: optional("RAZORPAY_WEBHOOK_SECRET"),

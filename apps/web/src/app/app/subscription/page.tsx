@@ -98,7 +98,15 @@ export default function SubscriptionPage() {
         </div>
       ) : !subscribed ? (
         <Card>
-          <Text>{COPY.billing.selectPlanPrompt}</Text>
+          <Text>
+            {COPY.billing.freeRunPrompt(
+              Math.max(0, limit - used),
+              limit
+            )}
+          </Text>
+          <Text type="secondary" style={{ display: "block", marginTop: 8 }}>
+            {COPY.billing.selectPlanPrompt}
+          </Text>
           {plans.length > 0 ? (
             <div style={{ marginTop: 16 }}>
               <PlanCatalog

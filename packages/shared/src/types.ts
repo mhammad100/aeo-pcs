@@ -332,8 +332,20 @@ export type SubscriptionInfo = {
   currentPeriodEnd: string;
   note?: string;
   plan: ProductPlan | null;
+  /**
+   * For entitled subscriptions: runs used in the current billing month.
+   * For unsubscribed users: lifetime free runs used.
+   */
   runsUsedThisPeriod: number;
+  /**
+   * For entitled subscriptions: plan monthly limit.
+   * For unsubscribed users: FREE_VISIBILITY_RUNS lifetime credit.
+   */
   runsLimit: number;
+  /** True when the user may start a new visibility check. */
+  canRunVisibility: boolean;
+  /** Entitlement source for the current runsLimit. */
+  runAllowance: "subscription" | "free";
   cancelAtPeriodEnd?: boolean;
   canceledAt?: string;
 };

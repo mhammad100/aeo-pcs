@@ -9,7 +9,6 @@ import OnboardingShell from "@/components/OnboardingShell";
 import { type BusinessProfileFormValues } from "@/components/BusinessProfileForm";
 import { api, ApiError } from "@/lib/api";
 import { normalizeProfilePayload } from "@/lib/businessProfileForm";
-import { hasActiveSubscription } from "@/lib/authRouting";
 import { useAppDispatch } from "@/store/hooks";
 import { setUser } from "@/store/authSlice";
 import type { BusinessProfile } from "@aeo-pcs/shared";
@@ -36,12 +35,6 @@ export default function OnboardingProfilePage() {
     let cancelled = false;
     (async () => {
       try {
-        const subRes = await api.getMySubscription();
-        if (!cancelled && !hasActiveSubscription(subRes.subscription)) {
-          router.replace("/app/onboarding/plan");
-          return;
-        }
-
         const res = await api.getMyBusiness();
         if (!cancelled) setBusiness(res.business);
       } catch (err) {
@@ -55,7 +48,7 @@ export default function OnboardingProfilePage() {
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
 
   async function onSave(values: BusinessProfileFormValues): Promise<BusinessProfile> {
     setSaving(true);
@@ -83,7 +76,6 @@ export default function OnboardingProfilePage() {
   return (
     <AuthGuard>
       <OnboardingShell
-        step={1}
         title="Complete your business profile"
         subtitle="Four quick steps, the last two are optional, but help us tailor your action plan."
       >

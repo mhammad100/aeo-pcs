@@ -19,7 +19,6 @@ import type { MenuProps } from "antd";
 import AuthGuard from "@/components/AuthGuard";
 import BrandMark from "@/components/BrandMark";
 import ProfileGate from "@/components/ProfileGate";
-import SubscriptionGate from "@/components/SubscriptionGate";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { logoutAndReset } from "@/store/session";
 
@@ -183,75 +182,73 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthGuard>
-      <SubscriptionGate>
-        <ProfileGate>
-          <Layout className="app-shell">
-            {isDesktop ? (
-              <Sider width={248} className="app-shell-sider" theme="dark">
-                <ShellBrand />
-                {nav}
-                <ShellSidebarFooter businessName={businessName} />
-              </Sider>
-            ) : (
-              <Drawer
-                title={<ShellBrand compact />}
-                placement="left"
-                open={mobileNavOpen}
-                onClose={() => setMobileNavOpen(false)}
-                className="app-shell-drawer"
-                width={280}
-                styles={{ body: { padding: 0 } }}
-              >
-                {nav}
-                <ShellSidebarFooter businessName={businessName} />
-              </Drawer>
-            )}
+      <ProfileGate>
+        <Layout className="app-shell">
+          {isDesktop ? (
+            <Sider width={248} className="app-shell-sider" theme="dark">
+              <ShellBrand />
+              {nav}
+              <ShellSidebarFooter businessName={businessName} />
+            </Sider>
+          ) : (
+            <Drawer
+              title={<ShellBrand compact />}
+              placement="left"
+              open={mobileNavOpen}
+              onClose={() => setMobileNavOpen(false)}
+              className="app-shell-drawer"
+              width={280}
+              styles={{ body: { padding: 0 } }}
+            >
+              {nav}
+              <ShellSidebarFooter businessName={businessName} />
+            </Drawer>
+          )}
 
-            <Layout className="app-shell-main">
-              <Header className="app-shell-header">
-                <div className="app-shell-header-start">
-                  {!isDesktop && (
-                    <Button
-                      type="text"
-                      className="app-shell-menu-btn"
-                      icon={<MenuOutlined />}
-                      aria-label="Open navigation"
-                      onClick={() => setMobileNavOpen(true)}
-                    />
-                  )}
-                  <div className="app-shell-header-titles">
-                    <Text className="app-shell-header-eyebrow">Master AEO</Text>
-                    <Text className="app-shell-header-title">{title}</Text>
-                  </div>
+          <Layout className="app-shell-main">
+            <Header className="app-shell-header">
+              <div className="app-shell-header-start">
+                {!isDesktop && (
+                  <Button
+                    type="text"
+                    className="app-shell-menu-btn"
+                    icon={<MenuOutlined />}
+                    aria-label="Open navigation"
+                    onClick={() => setMobileNavOpen(true)}
+                  />
+                )}
+                <div className="app-shell-header-titles">
+                  <Text className="app-shell-header-eyebrow">Master AEO</Text>
+                  <Text className="app-shell-header-title">{title}</Text>
                 </div>
+              </div>
 
-                <div className="app-shell-header-end">
-                  <Dropdown
-                    menu={{ items: userMenuItems }}
-                    trigger={["click"]}
-                    placement="bottomRight"
-                    overlayClassName="app-shell-user-dropdown"
-                  >
-                    <button type="button" className="app-shell-user-trigger">
-                      <span className="app-shell-user-avatar" aria-hidden>
-                        {initials}
-                      </span>
-                      <span className="app-shell-user-trigger-meta">
-                        {businessName && (
-                          <span className="app-shell-user-business">{businessName}</span>
-                        )}
-                        <span className="app-shell-user-email">{user?.email}</span>
-                      </span>
-                    </button>
-                  </Dropdown>
-                </div>
-              </Header>
+              <div className="app-shell-header-end">
+                <Dropdown
+                  menu={{ items: userMenuItems }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                  overlayClassName="app-shell-user-dropdown"
+                >
+                  <button type="button" className="app-shell-user-trigger">
+                    <span className="app-shell-user-avatar" aria-hidden>
+                      {initials}
+                    </span>
+                    <span className="app-shell-user-trigger-meta">
+                      {businessName && (
+                        <span className="app-shell-user-business">{businessName}</span>
+                      )}
+                      <span className="app-shell-user-email">{user?.email}</span>
+                    </span>
+                  </button>
+                </Dropdown>
+              </div>
+            </Header>
 
-              <Content className="app-shell-content">{children}</Content>
-            </Layout>
+            <Content className="app-shell-content">{children}</Content>
           </Layout>
-        </ProfileGate>
-      </SubscriptionGate>
+        </Layout>
+      </ProfileGate>
     </AuthGuard>
   );
 }

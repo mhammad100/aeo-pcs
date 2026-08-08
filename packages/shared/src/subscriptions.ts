@@ -1,4 +1,4 @@
-import type { SubscriptionStatus } from "./types";
+import type { SubscriptionInfo, SubscriptionStatus } from "./types";
 
 export const ENTITLED_SUBSCRIPTION_STATUSES: SubscriptionStatus[] = ["active", "trialing"];
 
@@ -18,4 +18,14 @@ export function hasEntitledSubscription(subscription: {
     if (Number.isFinite(end) && end <= Date.now()) return false;
   }
   return true;
+}
+
+/** Whether the user may start a new visibility check (paid period or free lifetime credit). */
+export function canStartVisibilityRun(
+  subscription: Pick<SubscriptionInfo, "runsUsedThisPeriod" | "runsLimit" | "canRunVisibility">
+): boolean {
+  if (typeof subscription.canRunVisibility === "boolean") {
+    return subscription.canRunVisibility;
+  }
+  return subscription.runsUsedThisPeriod < subscription.runsLimit;
 }
