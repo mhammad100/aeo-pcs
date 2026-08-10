@@ -21,3 +21,6 @@ export type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
 export const DEFAULT_PROMPTS_PER_RUN = 5;
 export const MAX_PROMPTS_PER_RUN = 20;
+
+/** Admin FX rate for converting USD LLM costs into INR reporting currency. */
+export const DEFAULT_USD_TO_INR_RATE = 83;

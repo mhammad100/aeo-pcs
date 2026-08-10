@@ -42,6 +42,8 @@ const AeoSettingsSchema = new Schema(
     promptGenerationModel: { type: TaskModelSchema, required: true },
     actionPlanModel: { type: TaskModelSchema, required: true },
     promptsPerRun: { type: Number, required: true, min: 1, max: 20, default: 5 },
+    /** INR per 1 USD — used to convert LLM costs for profit reporting. */
+    usdToInrRate: { type: Number, required: true, min: 0.01, default: 83 },
   },
   { timestamps: true }
 );

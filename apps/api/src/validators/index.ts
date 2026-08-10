@@ -234,6 +234,7 @@ export const updateAeoSettingsValidators = [
   body("actionPlanModel.outputPer1MTokens").optional().isFloat({ min: 0 }),
   body("actionPlanModel.currency").optional().isString().trim().isLength({ min: 3, max: 3 }),
   body("promptsPerRun").optional().isInt({ min: 1, max: MAX_PROMPTS_PER_RUN }),
+  body("usdToInrRate").optional().isFloat({ min: 0.01, max: 1000 }),
 ];
 
 export const subscribeValidators = [body("planId").isMongoId()];

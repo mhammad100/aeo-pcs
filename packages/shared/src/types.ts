@@ -52,6 +52,8 @@ export type AeoSettings = {
   promptGenerationModel: TaskModelConfig;
   actionPlanModel: TaskModelConfig;
   promptsPerRun: number;
+  /** How many INR equal 1 USD — used for usage/profit reporting. */
+  usdToInrRate: number;
   updatedAt?: string;
 };
 
@@ -374,28 +376,63 @@ export type CostRate = {
   currency: string;
 };
 
+export type MoneyAmount = {
+  amount: number;
+  currency: string;
+};
+
 export type UsageSummaryRow = {
   key: string;
   inputTokens: number;
   outputTokens: number;
   calls: number;
+  /** Estimated LLM cost in USD (token rates are USD). */
   estimatedCost: number;
+};
+
+export type UsageBusinessRow = {
+  businessId: string;
+  businessName: string;
+  ownerEmail: string | null;
+  planName: string | null;
+  planPrice: number | null;
+  planCurrency: string | null;
+  calls: number;
+  inputTokens: number;
+  outputTokens: number;
+  estimatedCostUsd: number;
+  estimatedCostInr: number;
+  revenueByCurrency: MoneyAmount[];
+  revenueInr: number;
+  marginInr: number;
 };
 
 export type UsageProfitSummary = {
   periodStart: string;
   periodEnd: string;
+  /** Token cost currency (always USD today). */
+  costCurrency: string;
+  /** Reporting currency for margin (INR). */
+  reportingCurrency: string;
+  fx: {
+    usdToInrRate: number;
+  };
   totals: {
     calls: number;
     inputTokens: number;
     outputTokens: number;
-    estimatedCost: number;
-    subscriptionRevenue: number;
-    margin: number;
+    estimatedCostUsd: number;
+    estimatedCostInr: number;
+    /** Paid invoice totals grouped by currency (no mixing). */
+    revenueByCurrency: MoneyAmount[];
+    /** Invoice revenue converted to INR via FX (INR passthrough, USD×rate). */
+    revenueInr: number;
+    marginInr: number;
   };
   byFeature: UsageSummaryRow[];
   byModel: UsageSummaryRow[];
   byDay: UsageSummaryRow[];
+  byBusiness: UsageBusinessRow[];
   costRates: CostRate[];
 };
 

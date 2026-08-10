@@ -5,7 +5,7 @@ const InvoiceSchema = new Schema(
     businessId: { type: Schema.Types.ObjectId, ref: "Business", required: true, index: true },
     subscriptionId: { type: Schema.Types.ObjectId, ref: "Subscription", default: null },
     amount: { type: Number, required: true, min: 0 },
-    currency: { type: String, required: true, default: "USD", uppercase: true },
+    currency: { type: String, required: true, default: "INR", uppercase: true },
     status: {
       type: String,
       enum: ["paid", "open", "void"],

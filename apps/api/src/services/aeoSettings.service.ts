@@ -1,5 +1,6 @@
 import {
   DEFAULT_PROMPTS_PER_RUN,
+  DEFAULT_USD_TO_INR_RATE,
   MAX_PROMPTS_PER_RUN,
   type AeoRuntimeSettings,
   type AeoSettings,
@@ -73,6 +74,7 @@ export function defaultAeoSettings(): Omit<AeoSettings, "updatedAt"> {
       currency: "USD",
     },
     promptsPerRun: DEFAULT_PROMPTS_PER_RUN,
+    usdToInrRate: DEFAULT_USD_TO_INR_RATE,
   };
 }
 
@@ -105,9 +107,11 @@ function serializeSettings(doc: {
   promptGenerationModel?: TaskModelConfig | null;
   actionPlanModel?: TaskModelConfig | null;
   promptsPerRun?: number | null;
+  usdToInrRate?: number | null;
   updatedAt?: Date | string | null;
 }): AeoSettings {
   const defaults = defaultAeoSettings();
+  const rate = Number(doc.usdToInrRate);
   return {
     visibilityModels: (doc.visibilityModels?.length
       ? doc.visibilityModels
@@ -118,6 +122,7 @@ function serializeSettings(doc: {
     ),
     actionPlanModel: serializeTask(doc.actionPlanModel || defaults.actionPlanModel),
     promptsPerRun: doc.promptsPerRun || defaults.promptsPerRun,
+    usdToInrRate: Number.isFinite(rate) && rate > 0 ? rate : defaults.usdToInrRate,
     updatedAt: doc.updatedAt ? new Date(doc.updatedAt).toISOString() : undefined,
   };
 }
@@ -157,6 +162,14 @@ async function syncCostRatesFromSettings(settings: AeoSettings) {
 export async function ensureAeoSettings(): Promise<AeoSettings> {
   const existing = await AeoSettingsModel.findOne({ key: SETTINGS_KEY }).lean();
   if (existing) {
+    // Backfill FX rate for settings docs created before this field existed.
+    if (existing.usdToInrRate == null || !Number.isFinite(Number(existing.usdToInrRate))) {
+      await AeoSettingsModel.updateOne(
+        { key: SETTINGS_KEY },
+        { $set: { usdToInrRate: DEFAULT_USD_TO_INR_RATE } }
+      );
+      return serializeSettings({ ...existing, usdToInrRate: DEFAULT_USD_TO_INR_RATE } as never);
+    }
     return serializeSettings(existing as never);
   }
 
@@ -202,6 +215,7 @@ export async function updateAeoSettings(input: Partial<{
   promptGenerationModel: TaskModelConfig;
   actionPlanModel: TaskModelConfig;
   promptsPerRun: number;
+  usdToInrRate: number;
 }>): Promise<AeoSettings> {
   await ensureAeoSettings();
 
@@ -247,6 +261,14 @@ export async function updateAeoSettings(input: Partial<{
       throw new AppError(`promptsPerRun must be an integer from 1 to ${MAX_PROMPTS_PER_RUN}`, 400);
     }
     $set.promptsPerRun = n;
+  }
+
+  if (input.usdToInrRate != null) {
+    const rate = Number(input.usdToInrRate);
+    if (!Number.isFinite(rate) || rate < 0.01 || rate > 1000) {
+      throw new AppError("usdToInrRate must be a number between 0.01 and 1000", 400);
+    }
+    $set.usdToInrRate = Math.round(rate * 10000) / 10000;
   }
 
   if (!Object.keys($set).length) {

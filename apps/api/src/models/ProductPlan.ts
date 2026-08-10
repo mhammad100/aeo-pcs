@@ -12,7 +12,7 @@ const ProductPlanSchema = new Schema(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, trim: true, unique: true, lowercase: true },
     price: { type: Number, required: true, min: 0 },
-    currency: { type: String, required: true, default: "USD", trim: true, uppercase: true },
+    currency: { type: String, required: true, default: "INR", trim: true, uppercase: true },
     blurb: { type: String, default: "", trim: true },
     features: { type: [String], default: [] },
     limits: { type: PlanLimitsSchema, default: () => ({ visibilityRunsPerMonth: 3 }) },

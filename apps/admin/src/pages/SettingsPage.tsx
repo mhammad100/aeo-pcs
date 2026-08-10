@@ -32,6 +32,7 @@ import type {
   TaskModelConfig,
   VisibilityModelConfig,
 } from "@aeo-pcs/shared";
+import { DEFAULT_USD_TO_INR_RATE } from "@aeo-pcs/shared";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -240,6 +241,7 @@ export default function SettingsPage() {
 
   const visibilityModels = settings?.visibilityModels ?? [];
   const promptsPerRun = settings?.promptsPerRun ?? 5;
+  const usdToInrRate = settings?.usdToInrRate ?? DEFAULT_USD_TO_INR_RATE;
   const promptModel = settings?.promptGenerationModel;
   const actionPlanModel = settings?.actionPlanModel;
 
@@ -357,6 +359,16 @@ export default function SettingsPage() {
   async function updatePromptsPerRun(value: number | null) {
     if (!settings) return;
     await persistSettings({ ...settings, promptsPerRun: Number(value) || 1 });
+  }
+
+  async function updateUsdToInrRate(value: number | null) {
+    if (!settings) return;
+    const rate = Number(value);
+    if (!Number.isFinite(rate) || rate < 0.01) {
+      message.warning("USD → INR rate must be greater than 0");
+      return;
+    }
+    await persistSettings({ ...settings, usdToInrRate: rate }, "FX rate saved");
   }
 
   type VisRow = VisibilityModelConfig & { key: number; index: number };
@@ -536,7 +548,7 @@ export default function SettingsPage() {
       ) : settings ? (
         <>
           <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card style={sectionCardStyle} styles={{ body: { padding: "14px 16px" } }}>
                 <Text type="secondary">Prompts per run</Text>
                 <Title level={3} style={{ margin: "4px 0 0", color: "#EDEFF6" }}>
@@ -547,7 +559,7 @@ export default function SettingsPage() {
                 </Text>
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card style={sectionCardStyle} styles={{ body: { padding: "14px 16px" } }}>
                 <Text type="secondary">Enabled visibility models</Text>
                 <Title level={3} style={{ margin: "4px 0 0", color: "#EDEFF6" }}>
@@ -562,7 +574,7 @@ export default function SettingsPage() {
                 </Text>
               </Card>
             </Col>
-            <Col xs={24} sm={8}>
+            <Col xs={24} sm={12} lg={6}>
               <Card
                 style={{ ...sectionCardStyle, borderColor: "#E8943A55" }}
                 styles={{ body: { padding: "14px 16px" } }}
@@ -573,6 +585,26 @@ export default function SettingsPage() {
                 </Title>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                   {promptsPerRun} prompts × {enabledVisibility} models
+                </Text>
+              </Card>
+            </Col>
+            <Col xs={24} sm={12} lg={6}>
+              <Card style={sectionCardStyle} styles={{ body: { padding: "14px 16px" } }}>
+                <Text type="secondary">USD → INR (usage FX)</Text>
+                <div style={{ marginTop: 8 }}>
+                  <InputNumber
+                    min={0.01}
+                    max={1000}
+                    step={0.1}
+                    size="small"
+                    style={{ width: 110 }}
+                    value={usdToInrRate}
+                    disabled={saving}
+                    onChange={(v) => void updateUsdToInrRate(v)}
+                  />
+                </div>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Converts LLM cost for profit margin
                 </Text>
               </Card>
             </Col>

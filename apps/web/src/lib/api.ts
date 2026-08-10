@@ -344,10 +344,12 @@ export const api = {
       usage: {
         periodStart: string;
         periodEnd: string;
+        costCurrency: string;
         totals: {
           calls: number;
           inputTokens: number;
           outputTokens: number;
+          /** Estimated LLM cost in USD. */
           estimatedCost: number;
         };
         byFeature: import("@aeo-pcs/shared").UsageSummaryRow[];

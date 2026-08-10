@@ -806,7 +806,7 @@ export async function createInvoiceAdmin(input: {
     businessId: business._id,
     subscriptionId: input.subscriptionId || null,
     amount: input.amount,
-    currency: (input.currency || "USD").toUpperCase(),
+    currency: (input.currency || "INR").toUpperCase(),
     status: input.status || "paid",
     periodLabel: input.periodLabel || "",
     note: input.note || "",
