@@ -43,6 +43,9 @@ export function mergeProfileValues(
     const trimmed = value?.trim();
     return trimmed ? trimmed : fallback;
   };
+  /** Keep intentional empty city/state when the form field is present. */
+  const pickGeoPart = (value: string | undefined, fallback: string) =>
+    value !== undefined ? String(value).trim() : fallback;
 
   const hq = profileHeadquarters(business);
 
@@ -50,11 +53,14 @@ export function mergeProfileValues(
     name: pick(partial.name, business?.name ?? ""),
     category: pick(partial.category, business?.category ?? ""),
     customCategory: pick(partial.customCategory, business?.customCategory ?? ""),
-    city: pick(partial.city, hq.city),
-    state: pick(partial.state, hq.state),
+    city: pickGeoPart(partial.city, hq.city),
+    state: pickGeoPart(partial.state, hq.state),
     country: pick(partial.country, hq.country),
     countryCode: partial.countryCode || business?.countryCode || hq.countryCode,
-    stateCode: partial.stateCode || business?.stateCode || hq.stateCode,
+    stateCode:
+      partial.stateCode !== undefined
+        ? String(partial.stateCode).trim()
+        : business?.stateCode || hq.stateCode || "",
     description: pick(partial.description, business?.description ?? ""),
     nameAliases: partial.nameAliases ?? business?.nameAliases ?? [],
     targetLocations: partial.targetLocations ?? business?.targetLocations ?? [],
@@ -65,9 +71,9 @@ export function mergeProfileValues(
   };
 }
 
-/** API requires city and country on every profile update. */
+/** API requires country on every profile update; city is optional. */
 export function canPersistProfile(values: BusinessProfileFormValues): boolean {
-  return Boolean(values.city?.trim() && values.country?.trim());
+  return Boolean(values.country?.trim());
 }
 
 export function normalizeProfilePayload(values: BusinessProfileFormValues) {

@@ -58,7 +58,7 @@ function identityComplete(profile: BusinessProfile | null): boolean {
 }
 
 function locationComplete(profile: BusinessProfile | null): boolean {
-  return Boolean(profile?.city?.trim() && profile?.country?.trim());
+  return Boolean(profile?.country?.trim());
 }
 
 function firstIncompleteStep(profile: BusinessProfile | null): number {
@@ -124,7 +124,7 @@ export default function OnboardingProfileWizard({
           await form.validateFields(fields);
         }
       } else if (step.id === "location") {
-        await form.validateFields(["city", "country"]);
+        await form.validateFields(["country"]);
       } else if (step.id === "online") {
         await form.validateFields(["websiteUrl", "googleBusinessUrl"]);
       }
@@ -154,7 +154,7 @@ export default function OnboardingProfileWizard({
     const merged = mergeProfileValues(business, values);
 
     if (!canPersistProfile(merged)) {
-      message.warning("Add your city and country to finish setup");
+      message.warning("Add your country to finish setup");
       return;
     }
 

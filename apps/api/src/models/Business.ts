@@ -40,6 +40,7 @@ const BusinessSchema = new Schema(
     name: { type: String, default: "", trim: true },
     category: { type: String, default: "", trim: true },
     customCategory: { type: String, default: "", trim: true },
+    // Registered / physical address: country required; state and city optional.
     city: { type: String, default: "", trim: true },
     state: { type: String, default: "", trim: true },
     country: { type: String, default: "", trim: true },

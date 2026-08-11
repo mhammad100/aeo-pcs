@@ -86,7 +86,7 @@ function sectionFilled(id: ProfileSectionId, profile: BusinessProfile | null): b
           (profile.targetItems?.length ?? 0) > 0
       );
     case "location":
-      return Boolean(profile.city && profile.country);
+      return Boolean(profile.country);
     case "online":
       return Boolean(profile.websiteUrl || profile.googleBusinessUrl);
     case "social":

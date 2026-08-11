@@ -32,7 +32,6 @@ export function profileIsComplete(b: {
   return Boolean(
     b.name?.trim() &&
       categoryOk &&
-      b.city?.trim() &&
       b.country?.trim() &&
       (b.description?.trim().length ?? 0) >= 10 &&
       hasTargetItem
@@ -53,7 +52,7 @@ export type UpdateBusinessProfileInput = {
   name: string;
   category: string;
   customCategory?: string;
-  city: string;
+  city?: string;
   state?: string;
   country: string;
   countryCode?: string;
@@ -91,7 +90,7 @@ export async function updateMyBusiness(userId: string, input: UpdateBusinessProf
     : [];
 
   const hq = headquartersLocation({
-    city: input.city,
+    city: input.city || "",
     state: input.state,
     country: input.country,
     countryCode: input.countryCode,

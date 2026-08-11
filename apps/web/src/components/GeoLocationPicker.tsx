@@ -14,8 +14,13 @@ type Props = {
   disabled?: boolean;
   showLabels?: boolean;
   showSummary?: boolean;
-  /** When true (target markets), state and city may be left empty. HQ should leave this false. */
+  /** When true, state and city may be left empty (country is enough). */
   depthOptional?: boolean;
+  /**
+   * When depthOptional, whether to append "(optional)" to state/city labels and placeholders.
+   * Defaults to true. Set false for registered address (no optional wording).
+   */
+  showOptionalLabels?: boolean;
   className?: string;
 };
 
@@ -26,8 +31,10 @@ export default function GeoLocationPicker({
   showLabels = true,
   showSummary = true,
   depthOptional = false,
+  showOptionalLabels,
   className,
 }: Props) {
+  const annotateOptional = depthOptional && (showOptionalLabels ?? true);
   const current = value || emptyGeoLocation();
   const countryCode = current.countryCode || "";
   const stateCode = current.stateCode || "";
@@ -120,10 +127,10 @@ export default function GeoLocationPicker({
   const selectedCountry = countries.find((c) => c.code === countryCode);
 
   const cityPlaceholder = hasStates && !stateCode
-    ? depthOptional
+    ? annotateOptional
       ? "Select state first (optional)"
       : "Select state first"
-    : depthOptional
+    : annotateOptional
       ? "Select city (optional)"
       : "Select city";
   const summary = useMemo(() => {
@@ -162,7 +169,7 @@ export default function GeoLocationPicker({
           <div className="geo-location-field">
             {showLabels ? (
               <span className="geo-location-field-label">
-                {depthOptional ? "State / region (optional)" : "State / region"}
+                {annotateOptional ? "State / region (optional)" : "State / region"}
               </span>
             ) : null}
             <Select
@@ -173,7 +180,7 @@ export default function GeoLocationPicker({
               placeholder={
                 loadingStates
                   ? "Loading states…"
-                  : depthOptional
+                  : annotateOptional
                     ? "Select state (optional)"
                     : "Select state"
               }
@@ -198,7 +205,7 @@ export default function GeoLocationPicker({
         <div className="geo-location-field">
           {showLabels ? (
             <span className="geo-location-field-label">
-              {depthOptional ? "City (optional)" : "City"}
+              {annotateOptional ? "City (optional)" : "City"}
             </span>
           ) : null}
           <Select

@@ -140,7 +140,7 @@ async function loadOwnedBusinessForRun(userId: string) {
   if (!owned.profileCompletedAt) {
     throw new AppError("Complete your business profile before running a visibility check", 403);
   }
-  if (!owned.name?.trim() || !owned.city?.trim() || !owned.country?.trim()) {
+  if (!owned.name?.trim() || !owned.country?.trim()) {
     throw new AppError("Business profile is incomplete", 400);
   }
   return owned;

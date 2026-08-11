@@ -44,7 +44,7 @@ export const businessProfileValidators = [
       }
       return true;
     }),
-  body("city").isString().trim().isLength({ min: 1, max: 100 }),
+  body("city").optional({ values: "falsy" }).isString().trim().isLength({ min: 1, max: 100 }),
   body("state").optional({ values: "falsy" }).isString().trim().isLength({ max: 100 }),
   body("country").isString().trim().isLength({ min: 1, max: 100 }),
   body("countryCode").optional({ values: "falsy" }).isString().trim().isLength({ max: 10 }),
@@ -53,11 +53,31 @@ export const businessProfileValidators = [
   body("nameAliases").optional().isArray({ max: 10 }),
   body("nameAliases.*").optional().isString().trim().isLength({ min: 1, max: 120 }),
   body("targetLocations").optional().isArray({ max: 15 }),
-  body("targetLocations.*.city").optional().isString().trim().isLength({ min: 1, max: 100 }),
-  body("targetLocations.*.state").optional().isString().trim().isLength({ max: 100 }),
-  body("targetLocations.*.country").optional().isString().trim().isLength({ min: 1, max: 100 }),
-  body("targetLocations.*.countryCode").optional().isString().trim().isLength({ max: 10 }),
-  body("targetLocations.*.stateCode").optional().isString().trim().isLength({ max: 10 }),
+  body("targetLocations.*.city")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ min: 1, max: 100 }),
+  body("targetLocations.*.state")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ max: 100 }),
+  body("targetLocations.*.country")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ min: 1, max: 100 }),
+  body("targetLocations.*.countryCode")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ max: 10 }),
+  body("targetLocations.*.stateCode")
+    .optional({ values: "falsy" })
+    .isString()
+    .trim()
+    .isLength({ max: 10 }),
   body("targetItems").isArray({ min: 1, max: 20 }),
   body("targetItems.*").isString().trim().isLength({ min: 1, max: 120 }),
   body("websiteUrl")
@@ -83,7 +103,7 @@ export const businessProfileValidators = [
 
 export const businessSearchValidators = [
   body("name").isString().trim().isLength({ min: 1, max: 200 }),
-  body("city").isString().trim().isLength({ min: 1, max: 100 }),
+  body("city").optional({ values: "falsy" }).isString().trim().isLength({ min: 1, max: 100 }),
   body("state").optional({ values: "falsy" }).isString().trim().isLength({ max: 100 }),
   body("country").isString().trim().isLength({ min: 1, max: 100 }),
 ];
@@ -101,7 +121,7 @@ export const generatePromptsValidators = [
     .isString()
     .trim()
     .custom((v) => (CATEGORIES as readonly string[]).includes(v)),
-  body("city").isString().trim().isLength({ min: 1, max: 100 }),
+  body("city").optional({ values: "falsy" }).isString().trim().isLength({ min: 1, max: 100 }),
   body("state").optional({ values: "falsy" }).isString().trim().isLength({ max: 100 }),
   body("country").isString().trim().isLength({ min: 1, max: 100 }),
 ];

@@ -234,6 +234,8 @@ export default function BusinessProfileForm({
         </div>
         <GeoLocationPicker
           value={headquarters}
+          depthOptional
+          showOptionalLabels={false}
           onChange={(loc) => {
             form.setFieldsValue({
               city: loc.city,
@@ -245,7 +247,7 @@ export default function BusinessProfileForm({
             onValuesChange?.();
           }}
         />
-        <Form.Item name="city" hidden rules={[{ required: true, message: "Required" }]}>
+        <Form.Item name="city" hidden>
           <Input />
         </Form.Item>
         <Form.Item name="state" hidden>

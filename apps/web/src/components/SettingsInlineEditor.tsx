@@ -372,15 +372,15 @@ export default function SettingsInlineEditor({
           label="Business location"
           editing={editingKey === "headquarters"}
           saving={savingKey === "headquarters"}
-          empty={!business?.city}
+          empty={!business?.country}
           display={formatGeoLocation(headquarters)}
           onEdit={() =>
             startEdit("headquarters", () => setDraftHeadquarters(headquarters))
           }
           onCancel={cancelEdit}
           onSave={() => {
-            if (!draftHeadquarters.city.trim() || !draftHeadquarters.country.trim()) {
-              message.error("Select country and city");
+            if (!draftHeadquarters.country.trim()) {
+              message.error("Select a country");
               return;
             }
             void saveField("headquarters", {
@@ -392,7 +392,12 @@ export default function SettingsInlineEditor({
             } as BusinessProfileFormValues);
           }}
         >
-          <GeoLocationPicker value={draftHeadquarters} onChange={setDraftHeadquarters} />
+          <GeoLocationPicker
+            value={draftHeadquarters}
+            depthOptional
+            showOptionalLabels={false}
+            onChange={setDraftHeadquarters}
+          />
         </SettingsEditableField>
 
         <SettingsEditableField
