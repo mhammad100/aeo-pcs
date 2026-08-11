@@ -249,10 +249,14 @@ export default function VisibilityWizard() {
     let cancelled = false;
     (async () => {
       try {
+        // In-progress job, or latest completed run (so action plan can be generated after re-login).
         const { job } = await api.getActiveVisibilityJob();
         if (cancelled) return;
         if (job) {
           applyJob(job);
+          if (job.status === "completed" && job.results?.length) {
+            setStepOverride(0);
+          }
         }
       } catch {
         /* resume optional */

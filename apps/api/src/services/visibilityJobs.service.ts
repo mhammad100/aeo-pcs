@@ -31,23 +31,39 @@ export async function findActiveVisibilityJobForBusiness(businessId: string) {
     .lean();
 }
 
+/**
+ * Resume payload for the visibility wizard:
+ * prefer an in-progress job, otherwise the latest completed run with results
+ * (so users can generate an action plan after logout/refresh).
+ */
 export async function getActiveVisibilityJob(userId: string) {
   const owned = await BusinessModel.findOne({ ownerUserId: userId }).select("_id").lean();
   if (!owned) {
     throw new AppError("Business not found", 404);
   }
 
-  const job = await findActiveVisibilityJobForBusiness(String(owned._id));
-  if (!job) {
+  const businessId = String(owned._id);
+  const active = await findActiveVisibilityJobForBusiness(businessId);
+  if (active) {
+    const resolved = await failIfStale(active);
+    if (ACTIVE_STATUSES.includes(resolved.status as JobStatus)) {
+      return { job: serializeJob(resolved as Record<string, unknown>) };
+    }
+  }
+
+  const latestCompleted = await VisibilityJobModel.findOne({
+    businessId: owned._id,
+    status: "completed",
+    "results.0": { $exists: true },
+  })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  if (!latestCompleted) {
     return { job: null };
   }
 
-  const resolved = await failIfStale(job);
-  if (!ACTIVE_STATUSES.includes(resolved.status as JobStatus)) {
-    return { job: null };
-  }
-
-  return { job: serializeJob(resolved as Record<string, unknown>) };
+  return { job: serializeJob(latestCompleted as Record<string, unknown>) };
 }
 
 export async function cancelVisibilityJob(input: {
