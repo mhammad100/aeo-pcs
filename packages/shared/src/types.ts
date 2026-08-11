@@ -350,7 +350,8 @@ export type SubscriptionInfo = {
   runAllowance: "subscription" | "free";
   /**
    * True when the user may generate an action plan.
-   * Paid/entitled: always true. Free-run: only if admin granted the permission.
+   * Paid/entitled: always true. Free-run: only if admin granted the permission
+   * (and free AI access is open, or a completed visibility check still has no plan).
    */
   canGenerateActionPlan: boolean;
   cancelAtPeriodEnd?: boolean;

@@ -54,6 +54,42 @@ async function hasInProgressVisibilityJob(businessId: string) {
   );
 }
 
+function planHasContent(plan: { automatable?: unknown[]; manual?: unknown[] } | null | undefined) {
+  if (!plan) return false;
+  return (plan.automatable?.length || 0) > 0 || (plan.manual?.length || 0) > 0;
+}
+
+/** Completed free visibility check that still needs an action plan. */
+async function hasCompletedVisibilityWithoutPlan(businessId: string) {
+  const jobs = await VisibilityJobModel.find({
+    businessId,
+    status: "completed",
+    results: { $exists: true, $ne: [] },
+  })
+    .select("plan")
+    .lean();
+  return jobs.some((job) => !planHasContent(job.plan as { automatable?: unknown[]; manual?: unknown[] }));
+}
+
+/**
+ * Admin-granted free-run action plan access while free AI is open,
+ * or while a completed visibility check still has no action plan.
+ */
+async function freeCanGenerateActionPlan(
+  userId: string,
+  businessId: string,
+  runsUsed: number
+) {
+  const user = await UserModel.findById(userId).select("canGenerateActionPlanOnFreeRun").lean();
+  if (!user?.canGenerateActionPlanOnFreeRun) return false;
+
+  const freeLimit = freeRunAllowance();
+  if (freeLimit <= 0) return false;
+  if (runsUsed <= freeLimit) return true;
+  if (await hasInProgressVisibilityJob(businessId)) return true;
+  return hasCompletedVisibilityWithoutPlan(businessId);
+}
+
 function freeRunAllowance() {
   return env.freeVisibilityRuns;
 }
@@ -129,8 +165,6 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
   if (!business) throw new AppError("Business not found", 404);
 
   const businessId = String(business._id);
-  const user = await UserModel.findById(userId).select("canGenerateActionPlanOnFreeRun").lean();
-  const canGenerateOnFree = Boolean(user?.canGenerateActionPlanOnFreeRun);
 
   const active = await getActiveSubscriptionForBusiness(businessId);
   if (active) {
@@ -138,6 +172,7 @@ export async function getSubscriptionInfoForUser(userId: string): Promise<Subscr
   }
 
   const freeUsed = await runsUsedLifetime(businessId);
+  const canGenerateOnFree = await freeCanGenerateActionPlan(userId, businessId, freeUsed);
   const freeInfo = freeSubscriptionInfo(businessId, freeUsed, canGenerateOnFree);
 
   const latest = await SubscriptionModel.findOne({ businessId: business._id })
@@ -217,20 +252,41 @@ export async function assertAiFeaturesAllowed(userId: string) {
 
 /**
  * Active AI access + (entitled subscription OR admin-granted free-run action plan permission).
+ * Admin grant also covers wrap-up when a completed visibility check still has no plan
+ * (survives logout/login; based on User flag + job state in Mongo).
  */
 export async function assertActionPlanAllowed(userId: string) {
-  await assertAiFeaturesAllowed(userId);
+  await assertUserAccountActive(userId);
 
   const business = await BusinessModel.findOne({ ownerUserId: userId }).lean();
   if (!business) throw new AppError("Business not found", 404);
 
-  const sub = await getActiveSubscriptionForBusiness(String(business._id));
-  if (sub) return;
+  const businessId = String(business._id);
+  const sub = await getActiveSubscriptionForBusiness(businessId);
+  if (sub) {
+    const plan = await ProductPlanModel.findById(sub.planId).lean();
+    if (!plan || !plan.active) {
+      throw new AppError(COPY.billing.planUnavailable, 403);
+    }
+    return;
+  }
 
   const user = await UserModel.findById(userId).select("canGenerateActionPlanOnFreeRun").lean();
-  if (user?.canGenerateActionPlanOnFreeRun) return;
+  if (!user?.canGenerateActionPlanOnFreeRun) {
+    throw new AppError(COPY.billing.actionPlanRequiresPlan, 403);
+  }
 
-  throw new AppError(COPY.billing.actionPlanRequiresPlan, 403);
+  const freeLimit = freeRunAllowance();
+  if (freeLimit <= 0) {
+    throw new AppError(COPY.billing.subscribeRequired, 403);
+  }
+
+  const used = await runsUsedLifetime(businessId);
+  if (used <= freeLimit) return;
+  if (await hasInProgressVisibilityJob(businessId)) return;
+  if (await hasCompletedVisibilityWithoutPlan(businessId)) return;
+
+  throw new AppError(COPY.billing.freeRunsExhausted, 403);
 }
 
 export async function assertActiveSubscription(userId: string) {

@@ -30,3 +30,11 @@ export async function setUserStatus(req: AuthedRequest, res: Response) {
   });
   res.json(result);
 }
+
+export async function setUserFreeRunActionPlan(req: AuthedRequest, res: Response) {
+  const result = await adminService.setUserFreeRunActionPlan({
+    targetUserId: req.params.userId,
+    canGenerateActionPlanOnFreeRun: req.body.canGenerateActionPlanOnFreeRun,
+  });
+  res.json(result);
+}

@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from "../middleware/auth";
 import { asyncHandler, validate } from "../middleware/validate";
 import {
   createAdminUserValidators,
+  setUserFreeRunActionPlanValidators,
   setUserStatusValidators,
   updateAeoSettingsValidators,
 } from "../validators";
@@ -25,6 +26,11 @@ adminRouter.patch(
   "/users/:userId/status",
   validate(setUserStatusValidators),
   asyncHandler(adminController.setUserStatus)
+);
+adminRouter.patch(
+  "/users/:userId/free-run-action-plan",
+  validate(setUserFreeRunActionPlanValidators),
+  asyncHandler(adminController.setUserFreeRunActionPlan)
 );
 
 adminRouter.get("/settings", asyncHandler(aeoSettingsController.getAdminAeoSettings));

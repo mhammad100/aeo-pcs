@@ -66,6 +66,18 @@ export default function UsersPage() {
     }
   }
 
+  async function toggleFreeRunActionPlan(row: AdminUserRow) {
+    if (row.role === "admin") return;
+    const next = !row.canGenerateActionPlanOnFreeRun;
+    try {
+      await api.setUserFreeRunActionPlan(row.id, next);
+      message.success(next ? "Free-run action plan allowed" : "Free-run action plan revoked");
+      await load();
+    } catch (err) {
+      message.error(err instanceof ApiError ? err.message : "Update failed");
+    }
+  }
+
   return (
     <div>
       <Space style={{ width: "100%", justifyContent: "space-between", marginBottom: 16 }}>
@@ -107,8 +119,15 @@ export default function UsersPage() {
           {
             title: "Free-run action plan",
             dataIndex: "canGenerateActionPlanOnFreeRun",
-            render: (v: boolean) => (
-              <Tag color={v ? "blue" : "default"}>{v ? "Allowed" : "No"}</Tag>
+            render: (v: boolean, row: AdminUserRow) => (
+              <Space size={8}>
+                <Tag color={v ? "blue" : "default"}>{v ? "Allowed" : "No"}</Tag>
+                {row.role !== "admin" && (
+                  <Button size="small" onClick={() => void toggleFreeRunActionPlan(row)}>
+                    {v ? "Revoke" : "Allow"}
+                  </Button>
+                )}
+              </Space>
             ),
           },
           {

@@ -7,7 +7,10 @@ const UserSchema = new Schema(
     role: { type: String, enum: ["admin", "business"], required: true },
     status: { type: String, enum: ["active", "disabled"], default: "active" },
     sessionId: { type: String, default: null, index: true },
-    /** When true, business user may generate action plans while on free-run allowance. */
+    /**
+     * When true, business user may generate action plans while on free-run allowance
+     * (including after a completed visibility check that still has no plan).
+     */
     canGenerateActionPlanOnFreeRun: { type: Boolean, default: false },
   },
   { timestamps: true }

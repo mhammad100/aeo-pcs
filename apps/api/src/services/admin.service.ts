@@ -108,3 +108,22 @@ export async function setUserStatus(input: {
   await user.save();
   return { ok: true as const };
 }
+
+export async function setUserFreeRunActionPlan(input: {
+  targetUserId: string;
+  canGenerateActionPlanOnFreeRun: boolean;
+}) {
+  const user = await UserModel.findById(input.targetUserId);
+  if (!user) {
+    throw new AppError("User not found", 404);
+  }
+  if (user.role === "admin") {
+    throw new AppError("Cannot update admin accounts here", 400);
+  }
+  user.canGenerateActionPlanOnFreeRun = Boolean(input.canGenerateActionPlanOnFreeRun);
+  await user.save();
+  return {
+    ok: true as const,
+    canGenerateActionPlanOnFreeRun: Boolean(user.canGenerateActionPlanOnFreeRun),
+  };
+}

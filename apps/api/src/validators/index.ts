@@ -27,6 +27,11 @@ export const setUserStatusValidators = [
   body("status").isIn(["active", "disabled"]),
 ];
 
+export const setUserFreeRunActionPlanValidators = [
+  param("userId").isMongoId(),
+  body("canGenerateActionPlanOnFreeRun").isBoolean(),
+];
+
 export const businessProfileValidators = [
   body("name").isString().trim().isLength({ min: 1, max: 200 }),
   body("category")

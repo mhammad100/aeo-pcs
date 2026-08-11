@@ -85,6 +85,14 @@ export const api = {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
+  setUserFreeRunActionPlan: (userId: string, canGenerateActionPlanOnFreeRun: boolean) =>
+    request<{ ok: boolean; canGenerateActionPlanOnFreeRun: boolean }>(
+      `/admin/users/${userId}/free-run-action-plan`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({ canGenerateActionPlanOnFreeRun }),
+      }
+    ),
 
   listAdminPlans: () => request<{ plans: AdminPlan[] }>("/admin/plans"),
   createAdminPlan: (body: CreatePlanBody) =>
